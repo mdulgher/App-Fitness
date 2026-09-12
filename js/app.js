@@ -35,6 +35,9 @@ function desenharCabecalho(caminhoAtual) {
   }
 
   topbar.classList.remove("hidden");
+  const cadastro = document.getElementById("meu-cadastro");
+  cadastro.href = ehProfessor() ? "#/professor/perfil" : "#/aluno/perfil";
+  cadastro.setAttribute("aria-current", caminhoAtual.endsWith("/perfil") ? "page" : "false");
   brand.href = rotaInicial();
   brand.innerHTML = `<span class="logo-crop" aria-hidden="true"></span><span class="brand-name">LEO<span>PERSONAL TRAINNING</span></span>`;
   brand.setAttribute("aria-label", APP_NAME);
@@ -89,4 +92,10 @@ iniciar();
 window.addEventListener("lpt:sessao", () => {
   navegar(rotaInicial());
   resolver();
+});
+
+// O nome no cabeçalho vem do perfil: quando ele muda em "Meu cadastro", o
+// cabeçalho precisa ser redesenhado sem recarregar a página.
+window.addEventListener("lpt:perfil", () => {
+  desenharCabecalho(location.hash.replace(/^#/, ""));
 });

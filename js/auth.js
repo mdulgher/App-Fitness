@@ -56,6 +56,15 @@ export async function entrarComoId(id) {
   return usuario;
 }
 
+// Depois de editar o próprio cadastro, o perfil em memória fica velho: o nome
+// no cabeçalho e a saudação do painel continuariam mostrando o antigo até o
+// próximo login.
+export async function recarregarPerfil() {
+  if (!usuario) return null;
+  usuario = await db.buscarPerfil(usuario.id);
+  return usuario;
+}
+
 export async function sair() {
   await db.sairDaConta();
   usuario = null;

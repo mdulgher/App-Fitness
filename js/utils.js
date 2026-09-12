@@ -106,6 +106,41 @@ export function moeda(valor) {
   }).format(valor);
 }
 
+// Campo de dinheiro no formato brasileiro.
+//
+// Um `<input type="number">` mostraria "280.5" e aceitaria ponto como decimal —
+// ninguém digita mensalidade assim no Brasil. Aqui o campo é texto e a máscara
+// trabalha em centavos: cada dígito empurra o valor para a esquerda, como na
+// maquininha do cartão, e não existe estado inválido no meio da digitação.
+
+export function moedaParaNumero(texto) {
+  const digitos = String(texto ?? "").replace(/\D/g, "");
+  if (!digitos) return null;
+  return Number(digitos) / 100;
+}
+
+export function numeroParaMoeda(valor) {
+  if (valor == null || valor === "") return "";
+  return moeda(Number(valor));
+}
+
+export function ligarMascaraDeMoeda(input) {
+  if (!input) return;
+  const formatar = () => {
+    const valor = moedaParaNumero(input.value);
+    input.value = valor == null ? "" : moeda(valor);
+  };
+  input.addEventListener("input", () => {
+    // O cursor vai sempre para o fim: como a máscara reescreve a string
+    // inteira, tentar preservar a posição faria o cursor pular para o meio do
+    // "R$" na primeira tecla.
+    formatar();
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
+  input.addEventListener("blur", formatar);
+  formatar();
+}
+
 /* ---------- vídeo ---------- */
 
 // Aceita os formatos que aparecem na prática: youtube.com/watch?v=,

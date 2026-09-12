@@ -16,6 +16,7 @@ const rotas = [
   { padrao: /^\/professor\/aluno\/([^/]+)\/ficha$/, papel: "trainer", view: () => import("./views/professor-ficha.js") },
   { padrao: /^\/professor\/exercicios$/, papel: "trainer", view: () => import("./views/professor-exercicios.js") },
   { padrao: /^\/professor\/financeiro$/, papel: "trainer", view: () => import("./views/professor-financeiro.js") },
+  { padrao: /^\/professor\/perfil$/, papel: "trainer", view: () => import("./views/perfil.js") },
 
   // Aluno
   { padrao: /^\/aluno$/, papel: "student", view: () => import("./views/aluno-painel.js") },
@@ -25,6 +26,7 @@ const rotas = [
   { padrao: /^\/aluno\/frequencia$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Frequência" },
   { padrao: /^\/aluno\/anotacoes$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Anotações" },
   { padrao: /^\/aluno\/financeiro$/, papel: "student", view: () => import("./views/aluno-financeiro.js") },
+  { padrao: /^\/aluno\/perfil$/, papel: "student", view: () => import("./views/perfil.js") },
 ];
 
 function caminhoAtual() {

@@ -51,7 +51,7 @@ export async function render(alvo) {
             .join("")}
         </div>
         <div class="row" style="gap:var(--sp-2)">
-          <button class="btn" id="config">Dados de cobrança</button>
+          <a class="btn" href="#/professor/perfil">Dados de cobrança</a>
           <button class="btn btn-primary" id="gerar">Lançar cobranças do mês</button>
         </div>
       </div>
@@ -239,97 +239,6 @@ export async function render(alvo) {
       }
     });
   }
-
-  /* ---------- dados de cobrança ---------- */
-
-  alvo.querySelector("#config").addEventListener("click", () => {
-    conteudo.innerHTML = `
-      <div class="dialog-top">
-        <span class="eyebrow">Cobrança</span>
-        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
-      </div>
-      <h2>Dados de cobrança</h2>
-      <p class="muted small">
-        A chave Pix vira o “copia e cola” das mensagens. Ela fica visível para os alunos —
-        é com ela que eles pagam.
-      </p>
-
-      <form id="form-config">
-        <div class="exercise-form-grid">
-          <div class="field"><label for="c-tipo">Tipo de chave</label>
-            <select id="c-tipo" name="pix_key_type">
-              ${[["cpf", "CPF"], ["cnpj", "CNPJ"], ["email", "Email"], ["telefone", "Telefone"], ["aleatoria", "Aleatória"]]
-                .map(([v, r]) => `<option value="${v}"${config?.pix_key_type === v ? " selected" : ""}>${r}</option>`).join("")}
-            </select></div>
-          <div class="field"><label for="c-chave">Chave Pix</label>
-            <input id="c-chave" name="pix_key" value="${esc(config?.pix_key ?? "")}" placeholder="seu@email.com" /></div>
-        </div>
-
-        <div class="exercise-form-grid">
-          <div class="field"><label for="c-nome">Nome do recebedor</label>
-            <input id="c-nome" name="pix_name" maxlength="25"
-                   value="${esc(config?.pix_name ?? PROFESSOR.nome)}" /></div>
-          <div class="field"><label for="c-cidade">Cidade</label>
-            <input id="c-cidade" name="pix_city" maxlength="15" value="${esc(config?.pix_city ?? "")}" placeholder="Sao Paulo" /></div>
-        </div>
-
-        <div class="field"><label for="c-msg">Modelo da mensagem</label>
-          <textarea id="c-msg" name="charge_message" rows="9">${esc(config?.charge_message ?? MODELO_PADRAO)}</textarea>
-          <small>Trocas automáticas: {nome} {mes} {valor} {vencimento} {chave} {copiaecola} {professor}</small></div>
-
-        <div data-erro class="alert hidden" role="alert"></div>
-        <div class="dialog-actions">
-          <button type="button" class="btn" data-fechar>Cancelar</button>
-          <button type="submit" class="btn btn-primary" id="salvar-config">Salvar</button>
-        </div>
-      </form>`;
-
-    dialogo.showModal();
-    conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
-
-    const form = conteudo.querySelector("#form-config");
-    const erro = conteudo.querySelector("[data-erro]");
-    const salvar = conteudo.querySelector("#salvar-config");
-
-    form.addEventListener("submit", async (ev) => {
-      ev.preventDefault();
-      erro.classList.add("hidden");
-      const d = Object.fromEntries(new FormData(form));
-      const patch = {
-        pix_key: d.pix_key.trim() || null,
-        pix_key_type: d.pix_key_type,
-        pix_name: d.pix_name.trim() || null,
-        pix_city: d.pix_city.trim() || null,
-        charge_message: d.charge_message.trim() || null,
-      };
-
-      // Validar aqui evita descobrir o erro só quando o banco do aluno recusar
-      // o código — quando já é tarde e o professor não sabe o que deu errado.
-      if (patch.pix_key) {
-        try {
-          pixCopiaECola({ chave: patch.pix_key, nome: patch.pix_name, cidade: patch.pix_city, valor: 1 });
-        } catch (err) {
-          erro.textContent = err.message;
-          erro.classList.remove("hidden");
-          return;
-        }
-      }
-
-      salvar.disabled = true;
-      salvar.textContent = "Salvando…";
-      try {
-        await db.salvarConfiguracaoDeCobranca(patch);
-        dialogo.close();
-        await carregar();
-        avisar("Dados de cobrança salvos.");
-      } catch (err) {
-        erro.textContent = err.message;
-        erro.classList.remove("hidden");
-        salvar.disabled = false;
-        salvar.textContent = "Salvar";
-      }
-    });
-  });
 
   /* ---------- navegação ---------- */
 

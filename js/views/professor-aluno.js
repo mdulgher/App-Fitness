@@ -14,6 +14,9 @@ import {
   plural,
   nomeDoMes,
   rotuloDiasSemana,
+  ligarMascaraDeMoeda,
+  moedaParaNumero,
+  numeroParaMoeda,
 } from "../utils.js";
 
 export async function render(alvo, { params }) {
@@ -120,9 +123,9 @@ function formularioDeEdicao(alvo, aluno) {
         <textarea id="e-restricoes" name="health_restrictions" rows="3">${esc(aluno.health_restrictions ?? "")}</textarea></div>
 
       <div class="exercise-form-grid">
-        <div class="field"><label for="e-mensalidade">Mensalidade (R$)</label>
-          <input id="e-mensalidade" name="monthly_fee" type="number" inputmode="decimal" min="0" step="0.01"
-                 value="${aluno.monthly_fee ?? ""}" placeholder="280,00" /></div>
+        <div class="field"><label for="e-mensalidade">Mensalidade</label>
+          <input id="e-mensalidade" name="monthly_fee" type="text" inputmode="numeric"
+                 value="${esc(numeroParaMoeda(aluno.monthly_fee))}" placeholder="R$ 0,00" /></div>
         <div class="field"><label for="e-vencimento">Dia do vencimento</label>
           <input id="e-vencimento" name="due_day" type="number" inputmode="numeric" min="1" max="28"
                  value="${esc(aluno.due_day ?? 5)}" /></div>
@@ -142,6 +145,7 @@ function formularioDeEdicao(alvo, aluno) {
 
   dialogo.showModal();
   conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+  ligarMascaraDeMoeda(conteudo.querySelector("#e-mensalidade"));
 
   const form = conteudo.querySelector("#form-edicao");
   const erro = conteudo.querySelector("[data-erro]");
@@ -160,7 +164,7 @@ function formularioDeEdicao(alvo, aluno) {
       health_restrictions: d.health_restrictions.trim() || null,
       // Campo vazio vira null, não 0: "sem mensalidade" e "mensalidade de zero"
       // são coisas diferentes na hora de gerar cobrança.
-      monthly_fee: d.monthly_fee === "" ? null : Number(d.monthly_fee),
+      monthly_fee: moedaParaNumero(d.monthly_fee),
       due_day: Number(d.due_day) || 5,
       active: form.elements.active.checked,
     };

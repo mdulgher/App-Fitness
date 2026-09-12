@@ -28,6 +28,23 @@ local.
 
 ## 2. Estado atual
 
+### Meu cadastro e dados de teste — 12/09/2026
+
+- **`#/professor/perfil` e `#/aluno/perfil`** — a mesma view (`views/perfil.js`)
+  para os dois papéis: nome, telefone e troca de senha. O email não se edita:
+  é o login. O professor ganha aí o bloco **Chave Pix**; o aluno vê, em leitura,
+  o que o professor definiu (objetivo, meta, mensalidade) — o banco não deixa
+  ele escrever na tabela `students`, então não é só a tela que esconde.
+- O link "Meu cadastro" fica no canto do cabeçalho, ao lado de "Sair", e não na
+  navegação de conteúdo. No celular o rótulo encurta para "Perfil".
+- Os dados de cobrança saíram do diálogo do financeiro e vivem só no perfil do
+  professor — tinha duas cópias do mesmo formulário.
+- **Campos de dinheiro com máscara brasileira** (`ligarMascaraDeMoeda` em
+  `utils.js`): o campo é texto e trabalha em centavos, como maquininha de
+  cartão. `<input type="number">` mostrava "280.5" e aceitava ponto decimal.
+- **12 alunos de teste** no banco, com frequência, mensalidades e cobranças de
+  agosto e setembro em situações diferentes. Credenciais na seção 4.
+
 ### Ficha, lista do aluno e cobrança — 12/09/2026
 
 Entregue e testado no navegador contra o banco real:
@@ -175,17 +192,41 @@ Tabelas acrescentadas em 12/09/2026:
 
 ## 4. Usuários de teste
 
-Nesta fase **não há senha**: só o email é conferido contra os dados de teste, e
-qualquer senha é aceita. A tela de login também tem botões de acesso rápido.
+Contas **reais no Supabase** (`DATA_SOURCE = "supabase"`). Todas com senha de
+verdade; o aluno pode trocar a dele em "Meu cadastro".
 
-| Papel | Email | Cenário |
-|---|---|---|
-| Professor | `leo@leopersonal.com` | Vê os três alunos |
-| Aluna | `carla@email.com` | Em dia, treinando bem, ficha A/B/C completa + 6 semanas de histórico de carga |
-| Aluno | `joao@email.com` | Mensalidade vencida, sem treinar há 10 dias, tem restrição médica (hérnia L5-S1) |
-| Aluna | `rafaela@email.com` | Aluna nova, **sem ficha** — serve para testar o estado vazio |
+| Papel | Email | Senha | Cenário |
+|---|---|---|---|
+| **Professor** | `leo@leopersonal.com` | `LeoTreino2026!` | Vê os 12 alunos |
+| Aluna | `carla.mendes@email.com` | `s5WGvgbBwtW2` | Mensalidade vencida, ficha ABC ativa (Seg·Qui / Ter·Sex) |
+| Aluno | `joao.batista@email.com` | `b4t3g7TYJWPj` | Pago, restrição médica (hérnia L5-S1), lista pessoal com 1 exercício |
+| Aluna | `ana.souza@teste.com` | `AnaTreino2026` | Em dia, treinando bem (3/4 na semana) |
+| Aluno | `bruno.carvalho@teste.com` | `x52sGABpVu9H` | Vencido, treinando pouco (1 na semana) |
+| Aluna | `camila.ribeiro@teste.com` | `ACveFtfMcqwp` | Pago, **única que bate a meta** (5/5) |
+| Aluno | `diego.fernandes@teste.com` | `8eLd8HsXphvC` | Vencido, **sem treinar há ~3 semanas**, tendinite no ombro |
+| Aluna | `eduarda.lima@teste.com` | `QA69BZZ2s9xb` | A vencer (dia 20), **nunca treinou**, pós-operatório de joelho |
+| Aluno | `felipe.andrade@teste.com` | `9qMnErUJz7dB` | Pago, frequência média |
+| Aluna | `gabriela.nunes@teste.com` | `XmDbqGUMRudM` | Vencido, treinou hoje |
+| Aluno | `henrique.tavares@teste.com` | `MjMV4pwjCu9V` | Pago, alta frequência |
+| Aluna | `isabela.moreira@teste.com` | `wwaTZvfSN7tG` | A vencer (dia 25), parou há ~10 dias |
+| Aluno | `rafael.pimentel@teste.com` | `C4BNAxu7Yhzx` | **Sem mensalidade cadastrada** — fica de fora da geração de cobranças |
 
-Na barra preta do topo há **"Recarregar dados"**, que restaura o estado inicial.
+Os `@teste.com` são fictícios, criados pelo próprio fluxo do app (Edge Function
+`criar-aluno`). Para limpar tudo de uma vez:
+
+```sql
+delete from auth.users where email like '%@teste.com';
+```
+
+As cobranças de **agosto estão todas pagas** e as de **setembro variam** entre
+pago, a vencer e vencido, para as três situações aparecerem na tela. A
+frequência foi semeada com datas relativas a 12/09/2026 — conforme o tempo
+passa, todo mundo vira "sem treinar há muito tempo".
+
+> **A chave Pix está vazia de propósito.** O nome, a cidade e o modelo da
+> mensagem já estão preenchidos; falta o Leo colar a chave real em
+> `#/professor/perfil`. Não deixei uma chave fictícia salva para ninguém cobrar
+> com ela por engano.
 
 ---
 
@@ -249,8 +290,13 @@ Declaradas em `js/router.js`, cada uma com o papel exigido:
 #/professor/aluno/:id/ficha    #/aluno/evolucao
 #/professor/exercicios         #/aluno/frequencia
 #/professor/financeiro         #/aluno/anotacoes
-                               #/aluno/financeiro
+#/professor/perfil             #/aluno/financeiro
+                               #/aluno/perfil
 ```
+
+`#/professor/perfil` e `#/aluno/perfil` são a mesma view (`views/perfil.js`),
+com dois papéis declarados no roteador: os campos editáveis são idênticos e só
+o bloco final muda.
 
 O roteador cuida do controle de acesso num lugar só: sem sessão vai para o
 login; papel errado vai para a própria área. Por isso não existe verificação de
@@ -269,7 +315,13 @@ Tudo `async`. Nomes em português, como o resto do código.
 **Perfis**
 ```
 listarPerfis()                      buscarPerfil(id)
+atualizarMeuPerfil(patch)           -- só full_name, phone, avatar_url
+alterarMinhaSenha(nova)             -- só com o banco conectado
 ```
+
+`atualizarMeuPerfil` filtra os campos de propósito: o banco revoga UPDATE na
+coluna `role` e só concede nessas. Mandar `role` volta "permission denied" — é a
+proteção contra um aluno se promover a professor, e ela foi testada.
 
 **Alunos** — `listarAlunos` e `buscarAluno` devolvem o aluno já com nome/email
 do perfil e um objeto `.resumo` calculado: `{ ultimoTreino, diasSemTreinar,
@@ -449,7 +501,9 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 15. **O nome e a cidade do Pix precisam ser ASCII sem acento e dentro do limite.** "João" ou uma cidade com mais de 15 caracteres fazem o banco do aluno recusar o código inteiro. `js/pix.js` normaliza — não contorne isso montando o payload à mão.
 
-16. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
+16. **Dinheiro na tela é `R$ 0.000,00`, no banco é número.** Use `ligarMascaraDeMoeda()` no campo e `moedaParaNumero()` ao ler o formulário. Não volte a `<input type="number">`: ele mostra "280.5", aceita ponto como decimal e no celular abre o teclado errado.
+
+17. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
 
 ---
 

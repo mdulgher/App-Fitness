@@ -120,6 +120,23 @@ export async function listarPerfis() {
   return clone(tabela("profiles"));
 }
 
+export async function atualizarMeuPerfil(patch) {
+  const id = localStorage.getItem(CHAVE_SESSAO);
+  const perfil = tabela("profiles").find((p) => p.id === id);
+  if (!perfil) throw new Error("Sua sessão expirou. Entre de novo.");
+  for (const c of ["full_name", "phone", "avatar_url"]) {
+    if (c in patch) perfil[c] = patch[c];
+  }
+  salvar();
+  return clone(perfil);
+}
+
+// No modo local não existe senha de verdade — este método só existe para a
+// assinatura bater com a do Supabase.
+export async function alterarMinhaSenha() {
+  throw new Error("Trocar senha só funciona com o banco conectado.");
+}
+
 export async function buscarPerfil(id) {
   return clone(tabela("profiles").find((p) => p.id === id) ?? null);
 }

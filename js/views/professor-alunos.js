@@ -1,7 +1,9 @@
 // Lista e cadastro de alunos, pelo professor.
 
 import { db, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
-import { esc, iniciais, textoTempoRelativo, plural, moeda } from "../utils.js";
+import {
+  esc, iniciais, textoTempoRelativo, plural, moeda, ligarMascaraDeMoeda, moedaParaNumero,
+} from "../utils.js";
 
 export async function render(alvo) {
   let alunos = [];
@@ -96,8 +98,8 @@ export async function render(alvo) {
           <small>Aparece em destaque na ficha, antes de qualquer exercício.</small></div>
 
         <div class="exercise-form-grid">
-          <div class="field"><label for="f-mensalidade">Mensalidade (R$)</label>
-            <input id="f-mensalidade" name="monthly_fee" type="number" inputmode="decimal" min="0" step="0.01" placeholder="280,00" /></div>
+          <div class="field"><label for="f-mensalidade">Mensalidade</label>
+            <input id="f-mensalidade" name="monthly_fee" type="text" inputmode="numeric" placeholder="R$ 0,00" /></div>
           <div class="field"><label for="f-vencimento">Dia do vencimento</label>
             <input id="f-vencimento" name="due_day" type="number" inputmode="numeric" min="1" max="28" value="5" /></div>
         </div>
@@ -111,6 +113,7 @@ export async function render(alvo) {
 
     dialog.showModal();
     conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", fechar));
+    ligarMascaraDeMoeda(conteudo.querySelector("#f-mensalidade"));
 
     const form = conteudo.querySelector("#form-aluno");
     const erro = conteudo.querySelector("[data-erro]");
@@ -120,6 +123,9 @@ export async function render(alvo) {
       ev.preventDefault();
       erro.classList.add("hidden");
       const dados = Object.fromEntries(new FormData(form));
+      // A máscara guarda "R$ 280,00"; o banco quer 280. Converter aqui e não no
+      // db evita que a camada de dados precise conhecer formato de tela.
+      dados.monthly_fee = moedaParaNumero(dados.monthly_fee);
       if (!dados.full_name.trim() || !dados.email.trim()) {
         erro.textContent = "Informe o nome e o email.";
         erro.classList.remove("hidden");

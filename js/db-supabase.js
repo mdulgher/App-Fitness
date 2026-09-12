@@ -64,6 +64,8 @@ function traduzErro(msg) {
   if (/email not confirmed/i.test(msg)) return "Confirme seu email antes de entrar.";
   if (/already registered|already been registered/i.test(msg)) return "Esse email já tem conta.";
   if (/password should be at least/i.test(msg)) return "A senha precisa ter pelo menos 6 caracteres.";
+  if (/different from the old password/i.test(msg)) return "A nova senha precisa ser diferente da atual.";
+  if (/weak.?password|pwned|compromised/i.test(msg)) return "Essa senha é muito fácil de adivinhar. Escolha outra.";
   return msg;
 }
 
@@ -80,6 +82,29 @@ export async function listarPerfis() {
 
 export async function buscarPerfil(id) {
   return ok(await sb.from("profiles").select("*").eq("id", id).maybeSingle());
+}
+
+// Edição do próprio cadastro, por qualquer papel.
+//
+// A lista de campos não é decoração: o banco revoga UPDATE na coluna `role` e
+// só concede nestas quatro. Mandar `role` aqui devolveria "permission denied" —
+// que é exatamente a proteção contra um aluno se promover a professor.
+const CAMPOS_DO_PROPRIO_PERFIL = ["full_name", "phone", "avatar_url"];
+
+export async function atualizarMeuPerfil(patch) {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Sua sessão expirou. Entre de novo.");
+
+  const campos = {};
+  for (const c of CAMPOS_DO_PROPRIO_PERFIL) if (c in patch) campos[c] = patch[c];
+  if (!Object.keys(campos).length) return buscarPerfil(user.id);
+
+  return ok(await sb.from("profiles").update(campos).eq("id", user.id).select().single());
+}
+
+export async function alterarMinhaSenha(nova) {
+  const { error } = await sb.auth.updateUser({ password: nova });
+  if (error) throw new Error(traduzErro(error.message));
 }
 
 /* ==================== alunos ==================== */
