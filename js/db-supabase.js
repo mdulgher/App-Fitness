@@ -22,6 +22,35 @@ function ok(res) {
   return res.data;
 }
 
+// Atualizar uma linha e ter certeza do que aconteceu.
+//
+// `update(...).select().single()` estoura com "Cannot coerce the result to a
+// single JSON object" sempre que o banco devolve zero linhas — e isso acontece
+// por dois motivos completamente diferentes: a linha não existe mais, ou o RLS
+// não deixou ler o retorno. A mensagem não distingue e não diz nada a ninguém.
+//
+// Aqui a gravação é conferida relendo a linha: se o valor já está lá, deu certo
+// e não há erro nenhum a mostrar; se a linha sumiu ou o valor não mudou, o
+// texto diz o que fazer.
+async function atualizarLinha(tabela, id, patch, oQueE) {
+  const linhas = ok(await sb.from(tabela).update(patch).eq("id", id).select());
+  if (linhas.length) return linhas[0];
+
+  const atual = ok(await sb.from(tabela).select("*").eq("id", id).maybeSingle());
+  if (!atual) {
+    throw new Error(`Esta ${oQueE} não existe mais — a tela está desatualizada. Recarregue a página.`);
+  }
+
+  const gravou = Object.entries(patch).every(
+    ([campo, valor]) => JSON.stringify(atual[campo]) === JSON.stringify(valor)
+  );
+  if (gravou) return atual;
+
+  throw new Error(
+    `O banco não aceitou esta alteração em ${oQueE}. Saia e entre de novo; se continuar, é regra de acesso.`
+  );
+}
+
 /* ==================== sessão ==================== */
 
 export async function entrarComSenha(email, senha) {
@@ -334,7 +363,7 @@ export async function criarDia({ fichaId, rotulo, ordem = 0, diasSemana = [] }) 
 }
 
 export async function atualizarDia(id, patch) {
-  return ok(await sb.from("workout_days").update(patch).eq("id", id).select().single());
+  return atualizarLinha("workout_days", id, patch, "divisão do treino");
 }
 
 export async function removerDia(id) {
@@ -360,7 +389,7 @@ export async function adicionarExercicioNoDia({ diaId, exercicioId, ...resto }) 
 }
 
 export async function atualizarItemDoDia(id, patch) {
-  return ok(await sb.from("workout_day_exercises").update(patch).eq("id", id).select().single());
+  return atualizarLinha("workout_day_exercises", id, patch, "este exercício da ficha");
 }
 
 export async function removerItemDoDia(id) {

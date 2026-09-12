@@ -103,6 +103,17 @@ export async function render(alvo, { params }) {
 
   alvo.querySelector("#editar").addEventListener("click", () => formularioDeEdicao(alvo, aluno));
 
+  const recarregar = () => render(alvo, { params: [aluno.id] });
+
+  alvo.querySelector("[data-novo-recado]")?.addEventListener("click", () =>
+    formularioDeRecado(alvo, aluno, null, recarregar)
+  );
+  alvo.querySelectorAll("[data-editar-recado]").forEach((b) =>
+    b.addEventListener("click", () =>
+      formularioDeRecado(alvo, aluno, anotacoes.find((n) => n.id === b.dataset.editarRecado), recarregar)
+    )
+  );
+
   // A aba volta para "Geral" a cada abertura da tela, de propósito: sair do
   // financeiro não pode depender de o professor lembrar de trocar antes de
   // virar o notebook para o aluno.
@@ -224,6 +235,106 @@ function formularioDeEdicao(alvo, aluno) {
       erro.classList.remove("hidden");
       salvar.disabled = false;
       salvar.textContent = "Salvar";
+    }
+  });
+}
+
+// Recado é texto e um interruptor, e nada mais. Qualquer campo a mais aqui
+// (título, categoria, data de validade) vira trabalho para o professor e
+// desculpa para não escrever.
+function formularioDeRecado(alvo, aluno, existente, aoSalvar) {
+  const dialogo = alvo.querySelector("#dialogo");
+  const conteudo = alvo.querySelector("#dialogo-conteudo");
+
+  conteudo.innerHTML = `
+    <div class="dialog-top">
+      <span class="eyebrow">Recado para ${esc(aluno.full_name)}</span>
+      <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+    </div>
+    <h2>${existente ? "Editar recado" : "Escrever recado"}</h2>
+    <p class="muted small">O aluno lê isto em “Recados”, dentro do app dele.</p>
+
+    <form id="form-recado">
+      <div class="field">
+        <label for="rec-texto">Recado</label>
+        <textarea id="rec-texto" name="content" rows="5" required maxlength="1000"
+                  placeholder="Ex.: Subi a carga do supino para 24 kg. Se fechar as 4 séries com folga, me avisa.">${esc(existente?.content ?? "")}</textarea>
+      </div>
+
+      <label class="field field-check">
+        <input type="checkbox" name="pinned" ${existente?.pinned ? "checked" : ""} />
+        <span>Fixar no topo (aparece também no painel do aluno)</span>
+      </label>
+
+      <div data-erro class="alert hidden" role="alert"></div>
+      <div class="dialog-actions">
+        ${existente ? `<button type="button" class="btn" id="excluir-recado">Excluir</button>` : ""}
+        <button type="button" class="btn" data-fechar>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="salvar-recado">
+          ${existente ? "Salvar" : "Enviar recado"}
+        </button>
+      </div>
+    </form>`;
+
+  dialogo.showModal();
+  conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+
+  const texto = conteudo.querySelector("#rec-texto");
+  texto.focus();
+
+  const form = conteudo.querySelector("#form-recado");
+  const erro = conteudo.querySelector("[data-erro]");
+  const salvar = conteudo.querySelector("#salvar-recado");
+  const mostrarErro = (msg) => {
+    erro.textContent = msg;
+    erro.classList.remove("hidden");
+  };
+
+  // Confirmação dentro do próprio diálogo, em dois toques, e não um confirm()
+  // do navegador: essas caixas somem depois de "impedir que esta página crie
+  // novas caixas de diálogo" e o botão fica sem fazer nada.
+  const excluir = conteudo.querySelector("#excluir-recado");
+  excluir?.addEventListener("click", async () => {
+    if (excluir.dataset.confirmando !== "1") {
+      excluir.dataset.confirmando = "1";
+      excluir.textContent = "Confirmar exclusão";
+      excluir.classList.add("btn-perigo");
+      return;
+    }
+    try {
+      await db.removerAnotacao(existente.id);
+      dialogo.close();
+      await aoSalvar();
+    } catch (err) {
+      mostrarErro(err.message);
+    }
+  });
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    erro.classList.add("hidden");
+
+    const conteudoDoRecado = texto.value.trim();
+    if (!conteudoDoRecado) return mostrarErro("Escreva o recado antes de enviar.");
+
+    const fixada = form.elements.pinned.checked;
+    salvar.disabled = true;
+    salvar.textContent = "Salvando…";
+    try {
+      if (existente) {
+        // Nomes em português de propósito: as duas implementações do banco
+        // traduzem só `conteudo`/`fixada` e ignoram em silêncio qualquer
+        // outra chave — mandar { content, pinned } salva nada e não dá erro.
+        await db.atualizarAnotacao(existente.id, { conteudo: conteudoDoRecado, fixada });
+      } else {
+        await db.criarAnotacao({ alunoId: aluno.id, conteudo: conteudoDoRecado, fixada });
+      }
+      dialogo.close();
+      await aoSalvar();
+    } catch (err) {
+      mostrarErro(err.message);
+      salvar.disabled = false;
+      salvar.textContent = existente ? "Salvar" : "Enviar recado";
     }
   });
 }
@@ -361,28 +472,39 @@ function linhaExercicio(item) {
     </div>`;
 }
 
+// O recado escrito aqui é o que o aluno lê em #/aluno/anotacoes. Fixar é como
+// o professor marca o que vale para o mês inteiro, e não para o treino de
+// terça — o aluno vê os fixados no topo, e também no painel dele.
 function blocoAnotacoes(anotacoes) {
   return `
     <div class="row-between" style="margin-bottom:var(--sp-3)">
-      <h2>Anotações</h2>
-      <span class="muted small">${plural(anotacoes.length, "recado", "recados")}</span>
+      <h2>Recados</h2>
+      <div class="row" style="gap:var(--sp-2)">
+        <span class="muted small">${plural(anotacoes.length, "recado", "recados")}</span>
+        <button class="btn btn-sm btn-primary" data-novo-recado>+ Escrever recado</button>
+      </div>
     </div>
     ${
       anotacoes.length
-        ? `<div class="stack">${anotacoes
-            .map(
-              (n) => `
-        <div class="card">
-          <div class="row-between" style="margin-bottom:var(--sp-2)">
-            <span class="eyebrow">${formatarData(String(n.created_at).slice(0, 10))}</span>
-            ${n.pinned ? `<span class="tag tag-solid">Fixado</span>` : ""}
-          </div>
-          <div>${esc(n.content)}</div>
-        </div>`
-            )
-            .join("")}</div>`
-        : `<div class="empty">Nenhuma anotação.</div>`
+        ? `<div class="stack">${anotacoes.map(cartaoDeRecado).join("")}</div>`
+        : `<div class="empty">
+             Nenhum recado ainda. O que você escrever aqui aparece na área do aluno.
+           </div>`
     }`;
+}
+
+function cartaoDeRecado(n) {
+  return `
+    <div class="card">
+      <div class="row-between" style="margin-bottom:var(--sp-2)">
+        <span class="eyebrow">${formatarData(String(n.created_at).slice(0, 10))}</span>
+        <div class="row" style="gap:var(--sp-2)">
+          ${n.pinned ? `<span class="tag tag-solid">Fixado</span>` : ""}
+          <button class="btn btn-sm" data-editar-recado="${esc(n.id)}">Editar</button>
+        </div>
+      </div>
+      <div style="white-space:pre-wrap;line-height:1.6">${esc(n.content)}</div>
+    </div>`;
 }
 
 function blocoFinanceiro(pagamentos) {

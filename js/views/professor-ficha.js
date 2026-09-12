@@ -9,6 +9,7 @@
 // frequência sozinho.
 
 import { db } from "../db.js";
+import { registrarErro } from "../log.js";
 import {
   esc, plural, formatarData, hoje, somarMeses, DIAS_SEMANA, rotuloDiasSemana,
   isoParaDataBR, dataBRParaIso, ligarMascaraDeData,
@@ -60,11 +61,12 @@ export async function render(alvo, { params }) {
     feedback.classList.remove("hidden");
   };
 
-  async function proteger(acao) {
+  async function proteger(acao, contexto = null) {
     try {
       await acao();
       return true;
     } catch (err) {
+      registrarErro(err, { contexto: { tela: "editor de ficha", alunoId, ...contexto } });
       avisar(err.message);
       return false;
     }
@@ -427,6 +429,7 @@ export async function render(alvo, { params }) {
         await carregar(ficha.id);
         avisar("Divisão renomeada.");
       } catch (err) {
+        registrarErro(err, { contexto: { tela: "editor de ficha", acao: "renomearDivisao", diaId: dia.id } });
         erro.textContent = err.message;
         erro.classList.remove("hidden");
       }

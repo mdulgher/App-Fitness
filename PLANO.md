@@ -563,6 +563,14 @@ pago resolve de vez.
 
 ---
 
+### 9.3 Log de erros
+
+Tabela `app_errors`, escrita pelo próprio app no navegador do usuário e lida só
+pelo professor (e por quem estiver analisando com o Claude Code, pelo MCP do
+Supabase). Não é métrica de produto nem analytics: é caixa-preta de defeito —
+rota, mensagem, pilha e o que a tela estava fazendo. Detalhes de operação em
+[`CONTEXTO.md`](CONTEXTO.md).
+
 ## 10. Design (preto e branco)
 
 - Preto `#000`/`#111`, branco `#FFF`, cinzas `#666` `#999` `#E5E5E5`. Nenhuma cor de destaque: hierarquia vem de tipografia e espaço.

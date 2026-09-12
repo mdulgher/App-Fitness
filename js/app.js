@@ -6,6 +6,8 @@ import { restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial } from ".
 import { iniciar, resolver, navegar, definirCallbackDeTroca } from "./router.js";
 import { esc, primeiroNome, iniciais } from "./utils.js";
 import { icone } from "./icons.js";
+import { ligarSincronizacaoAutomatica } from "./sync.js";
+import { configurarLog, ligarCapturaGlobal } from "./log.js";
 
 const NAV_PROFESSOR = [
   ["#/professor", "Painel"],
@@ -121,7 +123,19 @@ document.getElementById("sair").addEventListener("click", async () => {
   resolver();
 });
 
+// O log sobe antes de tudo: erro na partida é exatamente o que ninguém vê.
+// O cliente do Supabase é injetado em vez de importado para o log continuar
+// funcionando quando o problema for a própria camada de dados.
+configurarLog({
+  cliente: DATA_SOURCE === "supabase" ? (await import("./db-supabase.js")).sb : null,
+  usuarioAtual,
+});
+ligarCapturaGlobal();
+
 desenharBarraDeModo();
+
+// A fila offline reenvia sozinha, esteja o aluno na tela de treino ou não.
+ligarSincronizacaoAutomatica();
 
 definirCallbackDeTroca(desenharCabecalho);
 

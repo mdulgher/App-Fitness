@@ -48,6 +48,70 @@ Pix, perfil editável pelos dois papéis e a biblioteca de 53 exercícios.
 seção 9 — fila offline, ilustrações dos exercícios e a aba de progressão do
 professor (Fase 5).
 
+### Log de erros e o fim do "Cannot coerce the result…" — 12/09/2026
+
+**Log de erros (`js/log.js` + tabela `app_errors`).** O app roda no celular de
+outra pessoa: quando quebra lá, ninguém abre o console. Agora todo erro não
+tratado (`window.onerror`, promessa rejeitada) e os erros das telas viram uma
+linha no banco, com rota, papel, mensagem, pilha, contexto, navegador e se
+estava online.
+
+- **Por que tabela, e não arquivo nem tela de desenvolvedor:** arquivo só existe
+  no aparelho de quem teve o erro; tela de desenvolvedor é interface para
+  construir e manter sem ninguém olhar. A tabela chega sozinha e o Claude Code
+  lê direto pelo MCP do Supabase — `select * from app_errors order by created_at
+  desc` — sem login novo e sem exportar nada à mão.
+- **RLS:** qualquer sessão insere o próprio erro, **inclusive deslogada**
+  (`user_id` nulo) — senão o erro que impede de entrar nunca seria visto. Ler e
+  apagar, só o professor.
+- Três regras dentro do `log.js`: registrar erro **nunca** pode causar erro (tudo
+  dentro de try/catch que engole); a mesma mensagem na mesma rota só vai **uma
+  vez por minuto** (erro dentro de laço encheria a tabela em segundos); **nada
+  sensível** — vai mensagem, rota e o contexto que o chamador escolhe.
+- Sem rede ou no modo local, os erros ficam em `localStorage` (`lpt:erros`, os 50
+  últimos) e sobem junto com o próximo erro que conseguir subir.
+- `configurarLog` recebe o cliente do Supabase **injetado** pelo `app.js`. O log
+  não importa `db.js` de propósito: precisa funcionar quando é a camada de dados
+  que está quebrada.
+
+**"Cannot coerce the result to a single JSON object".** Era o erro ao renomear
+uma divisão. `update(...).select().single()` estoura com essa frase sempre que o
+banco devolve zero linhas — e isso acontece por dois motivos diferentes: a linha
+não existe mais, ou o RLS não deixou ler o retorno. Agora `atualizarDia` e
+`atualizarItemDoDia` passam por `atualizarLinha()`, que relê a linha: se o valor
+já está gravado, **não há erro nenhum**; se sumiu, diz que a tela está
+desatualizada; se o banco recusou, diz que é regra de acesso. **Não volte a usar
+`.single()` em UPDATE.**
+
+### Recados do professor e fila offline — 12/09/2026
+
+- **O professor escreve recado** em `#/professor/aluno/:id`, aba Geral: botão
+  "Escrever recado", com texto e um interruptor de fixar. Dá para editar e
+  excluir. É o que o aluno lê em `#/aluno/anotacoes`, e o fixado aparece
+  também no painel dele. **Armadilha:** `atualizarAnotacao` só entende
+  `{ conteudo, fixada }` — as duas implementações do banco ignoram
+  `{ content, pinned }` **em silêncio**, sem erro nenhum, e a edição "funciona"
+  sem salvar nada. Custou um teste para descobrir.
+- **Excluir recado são dois toques no próprio botão**, não um `confirm()`.
+  Mesma razão do renomear: caixa do navegador pode ser bloqueada.
+- **Fila offline (`js/sync.js`)** — falha de rede ao registrar série ou concluir
+  treino não mostra erro: guarda no aparelho e reenvia sozinha. Pontos que
+  importam para quem for mexer:
+  - A fila guarda **a intenção** ("no dia tal, série 2 do exercício tal foi
+    22,5 kg × 10"), não a chamada de banco. Guardar o id da sessão seria
+    impossível: criar a sessão já exige rede. No reenvio isso vira
+    `abrirSessao` + `registrarSerie` + `concluirSessao`.
+  - Reenviar é seguro porque as três são idempotentes (a sessão é única por
+    aluno/dia/divisão e a carga é upsert na chave sessão+exercício+série).
+  - **Só erro de rede entra na fila** (`pareceFaltaDeRede`). "Permissão negada"
+    reenviado mil vezes continuaria falhando, e esconder isso seria pior.
+  - Reenvia quando a rede volta, quando o app volta para a frente e a cada 60s;
+    `ligarSincronizacaoAutomatica()` roda no `app.js`, então a fila anda mesmo
+    com o aluno fora da tela de treino. A tela escuta o evento `lpt:fila`.
+  - Na tela, série guardada aparece com **⏳ e borda tracejada**, conta no
+    progresso e tem uma faixa com "Tentar agora". Nada de vermelho: para o
+    aluno aquilo está registrado.
+
 ### Fase 4 — a área do aluno inteira — 12/09/2026
 
 As quatro telas que faltavam existem e foram testadas no navegador, inclusive em
@@ -524,10 +588,22 @@ progressaoDoExercicio(alunoId, exercicioId)
 exerciciosComHistorico(alunoId)
 ```
 
-**Anotações**
+**Anotações** — o `patch` de `atualizarAnotacao` usa **os nomes em português**
+(`conteudo`, `fixada`). Qualquer outra chave é ignorada em silêncio: mandar
+`{ content, pinned }` não salva nada e não dá erro.
 ```
 listarAnotacoes(alunoId)                 criarAnotacao({ alunoId, conteudo, fixada })
-atualizarAnotacao(id, patch)             removerAnotacao(id)
+atualizarAnotacao(id, { conteudo, fixada })      removerAnotacao(id)
+```
+
+**Fila offline (`js/sync.js`)** — não é camada de dados; é uma casca por cima
+dela, usada só pela tela de treino.
+```
+enfileirarSerie({ alunoId, diaId, data, itemId, exercicioId, serie, peso, reps })
+enfileirarConclusao({ alunoId, diaId, data })
+seriesNaFila(alunoId, diaId, data)       conclusaoNaFila(alunoId, diaId, data)
+pareceFaltaDeRede(err)                   pendentes()
+sincronizar()                            ligarSincronizacaoAutomatica()
 ```
 
 **Financeiro**
@@ -643,7 +719,8 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 ## 9. Onde paramos e o que fazer a seguir
 
 **Atualizado em 12/09/2026, fim da sessão.** A **Fase 4 (área do aluno) está
-pronta**: treino do dia com registro de carga, evolução, frequência e recados.
+pronta**: treino do dia com registro de carga, evolução, frequência e recados —
+com **fila offline** e com o **professor podendo escrever recado**.
 O app segue publicado com 12 alunos fictícios para o Leo (o dono) avaliar.
 
 ### O estado exato
@@ -658,19 +735,15 @@ O app segue publicado com 12 alunos fictícios para o Leo (o dono) avaliar.
 
 ### O que fazer a seguir, em ordem de valor
 
-1. **Testar a Fase 4 no celular de verdade, com o banco real.** Tudo foi testado
-   no navegador (inclusive em 375 px) e contra a camada local; o registro de
-   carga contra o Supabase ainda não passou por um treino de verdade.
-2. **Escrita de recados pelo professor** — `criarAnotacao` existe, mas nenhuma
-   tela chama. Hoje o Leo não tem como mandar recado pelo app; só o aluno lê os
-   que já estão no banco.
-3. **Fase 5 — progressão no lado do professor**: a aba de evolução por exercício
+1. **Testar no celular de verdade, com o banco real.** Tudo foi testado no
+   navegador (inclusive em 375 px) e contra a camada local; o registro de carga
+   contra o Supabase ainda não passou por um treino inteiro. **O teste que mais
+   importa é o do modo avião:** registrar série sem rede, sair do app, voltar e
+   ver a fila esvaziar sozinha.
+2. **Fase 5 — progressão no lado do professor**: a aba de evolução por exercício
    dentro do aluno, que é onde ele decide a carga da próxima ficha.
    `progressaoDoExercicio` já entrega tudo; é a mesma leitura da tela do aluno.
-4. **Fila offline** (`js/sync.js` do plano) — o treino é registrado na academia,
-   onde o sinal cai. Hoje uma série salva sem rede simplesmente falha com aviso
-   na tela; não há fila.
-5. **Ilustrações dos exercícios**: o prompt pronto está em
+3. **Ilustrações dos exercícios**: o prompt pronto está em
    [`PROMPT-ILUSTRACOES.md`](PROMPT-ILUSTRACOES.md), para uma IA de imagens
    gerar 106 arquivos. Ao integrar, **separe o crédito**:
    `js/catalogo-ilustracoes.js` carimba "Ilustrações: RepDB" em qualquer arquivo
