@@ -1,6 +1,6 @@
 // Perfil do aluno, visto pelo professor
 //
-// Treino e financeiro ficam em abas separadas, e a de treino é a que abre.
+// Três abas: Geral, Fichas e Financeiro — e Geral é a que abre.
 // O motivo é físico, não estético: o professor mexe nessa tela ao lado do
 // aluno, mostrando a ficha, e dinheiro não pode aparecer junto — nem o dele,
 // nem o que o vizinho de cadastro paga. Quem quiser ver o financeiro precisa
@@ -30,8 +30,9 @@ export async function render(alvo, { params }) {
     return;
   }
 
-  const [ficha, semana, anotacoes, pagamentos, sessoes] = await Promise.all([
+  const [ficha, fichas, semana, anotacoes, pagamentos, sessoes] = await Promise.all([
     db.fichaAtiva(id),
+    db.listarFichas(id),
     db.resumoDaSemana(id),
     db.listarAnotacoes(id),
     db.listarPagamentos(id),
@@ -58,18 +59,16 @@ export async function render(alvo, { params }) {
             </div>
           </div>
         </div>
-        <div class="row" style="gap:var(--sp-2)">
-          <button class="btn" id="editar">Editar cadastro</button>
-          <a class="btn btn-primary" href="#/professor/aluno/${esc(aluno.id)}/ficha">Montar ficha <span aria-hidden="true">↗</span></a>
-        </div>
+        <button class="btn" id="editar">Editar cadastro</button>
       </div>
 
       <div class="movement-tabs" id="abas" role="tablist" style="margin-bottom:var(--sp-4)">
-        <button class="movement-tab" role="tab" data-aba="treino" aria-selected="true">Treino</button>
+        <button class="movement-tab" role="tab" data-aba="geral" aria-selected="true">Geral</button>
+        <button class="movement-tab" role="tab" data-aba="fichas" aria-selected="false">Fichas</button>
         <button class="movement-tab" role="tab" data-aba="financeiro" aria-selected="false">Financeiro</button>
       </div>
 
-      <section id="painel-treino" role="tabpanel">
+      <section id="painel-geral" role="tabpanel">
         ${blocoRestricoes(aluno)}
 
         <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
@@ -79,10 +78,15 @@ export async function render(alvo, { params }) {
             ficha ? `até ${ficha.end_date ? formatarData(ficha.end_date) : "sem prazo"}` : "aguardando treino")}
         </div>
 
-        ${blocoFicha(ficha)}
+        ${blocoCadastro(aluno)}
 
         <hr class="hr" />
         ${blocoAnotacoes(anotacoes)}
+      </section>
+
+      <section id="painel-fichas" role="tabpanel" class="hidden">
+        ${blocoListaDeFichas(aluno, fichas)}
+        ${blocoFicha(ficha)}
       </section>
 
       <section id="painel-financeiro" role="tabpanel" class="hidden">
@@ -99,7 +103,7 @@ export async function render(alvo, { params }) {
 
   alvo.querySelector("#editar").addEventListener("click", () => formularioDeEdicao(alvo, aluno));
 
-  // A aba volta para "Treino" a cada abertura da tela, de propósito: sair do
+  // A aba volta para "Geral" a cada abertura da tela, de propósito: sair do
   // financeiro não pode depender de o professor lembrar de trocar antes de
   // virar o notebook para o aluno.
   alvo.querySelector("#abas").addEventListener("click", (ev) => {
@@ -109,8 +113,9 @@ export async function render(alvo, { params }) {
     alvo.querySelectorAll("[data-aba]").forEach((b) =>
       b.setAttribute("aria-selected", String(b.dataset.aba === aba))
     );
-    alvo.querySelector("#painel-treino").classList.toggle("hidden", aba !== "treino");
-    alvo.querySelector("#painel-financeiro").classList.toggle("hidden", aba !== "financeiro");
+    ["geral", "fichas", "financeiro"].forEach((nome) =>
+      alvo.querySelector(`#painel-${nome}`).classList.toggle("hidden", nome !== aba)
+    );
   });
 }
 
@@ -244,6 +249,59 @@ function cartao(rotulo, valor, apoio) {
     </div>`;
 }
 
+// O que era ficha detalhada no "Geral" virou o cartão de cadastro: quem abre o
+// aluno quer primeiro saber quem ele é, e a prescrição inteira tem aba própria.
+function blocoCadastro(aluno) {
+  const linhas = [
+    ["Objetivo", aluno.goal ?? "—"],
+    ["Meta semanal", plural(aluno.weekly_target ?? 0, "treino", "treinos")],
+    ["Telefone", aluno.phone ?? "—"],
+    ["Situação", aluno.active ? "Ativo" : "Inativo"],
+  ];
+  return `
+    <div class="row-between" style="margin-bottom:var(--sp-3)"><h2>Cadastro</h2></div>
+    <div class="card">
+      <div class="list">
+        ${linhas.map(([r, v]) => `
+          <div class="list-item">
+            <span class="list-item-main">
+              <span class="row-between">
+                <span class="muted small">${esc(r)}</span>
+                <span class="list-item-title">${esc(String(v))}</span>
+              </span>
+            </span>
+          </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+// Todas as fichas do aluno, e não só a ativa: a ficha anterior é o histórico do
+// que ele já treinou, e o professor consulta isso na hora de montar a próxima.
+function blocoListaDeFichas(aluno, fichas) {
+  const editor = `#/professor/aluno/${esc(aluno.id)}/ficha`;
+  return `
+    <div class="row-between" style="margin-bottom:var(--sp-3);flex-wrap:wrap;gap:var(--sp-2)">
+      <h2>Fichas</h2>
+      <a class="btn btn-sm btn-primary" href="${editor}">
+        ${fichas.length ? "Editar fichas" : "Montar ficha"} <span aria-hidden="true">↗</span>
+      </a>
+    </div>
+    ${fichas.length
+      ? `<div class="list" style="margin-bottom:var(--sp-5)">${fichas.map((f) => `
+          <div class="list-item">
+            <span class="list-item-main">
+              <span class="row-between">
+                <span class="list-item-title">${esc(f.title)}</span>
+                ${f.active ? `<span class="tag tag-solid">Ativa</span>` : `<span class="tag tag-quiet">Encerrada</span>`}
+              </span>
+              <span class="muted small numeric">
+                ${formatarData(f.start_date)} &rarr; ${f.end_date ? formatarData(f.end_date) : "sem prazo"}
+              </span>
+            </span>
+          </div>`).join("")}</div>`
+      : `<div class="empty" style="margin-bottom:var(--sp-5)">Nenhuma ficha criada ainda.</div>`}`;
+}
+
 function blocoFicha(ficha) {
   if (!ficha) {
     return `
@@ -251,7 +309,7 @@ function blocoFicha(ficha) {
         <h2>Ficha</h2>
       </div>
       <div class="empty">
-        Nenhuma ficha ativa. Use “Montar ficha” para prescrever os exercícios e os dias da semana.
+        Nenhuma ficha ativa. Abra o editor acima para prescrever os exercícios e os dias da semana.
       </div>`;
   }
 

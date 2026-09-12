@@ -48,6 +48,21 @@ tela de evolução, a de frequência e a de recados — as quatro apontam para
 `views/em-construcao.js`. É aí que está o maior valor não entregue, porque é o
 que o aluno usa todo dia. Detalhes na seção 9.
 
+### Abas do aluno e renomear divisão — 12/09/2026
+
+- **A tela do aluno (professor) tem três abas: Geral, Fichas e Financeiro**, e
+  abre em Geral. Geral traz os números da semana, o cadastro e as anotações;
+  Fichas lista todas as fichas do aluno (a ativa e as encerradas) e leva ao
+  editor; Financeiro segue igual. O botão "Montar ficha" saiu do cabeçalho: a
+  porta de entrada do editor agora é a aba Fichas.
+- **Renomear divisão não usa mais `prompt()`.** O clique parecia não fazer nada
+  porque `prompt()` é uma caixa que o navegador pode engolir — some depois de
+  "impedir que esta página crie novas caixas de diálogo" e não aparece no app
+  instalado na tela inicial. Agora é o mesmo `<dialog>` do resto da tela, com
+  Enter para salvar (dentro de `<dialog>` o envio implícito do formulário não é
+  garantido, por isso o `keydown` explícito). **Não volte a usar `prompt`,
+  `alert` ou `confirm` para nada que precise funcionar.**
+
 ### Publicação no GitHub Pages — 12/09/2026
 
 - Fonte: branch `main`, pasta `/` (raiz). Sem workflow de build: o app é
@@ -628,7 +643,13 @@ dono) avaliar, com 12 alunos fictícios para as telas não aparecerem vazias.
   pagamento de todo mundo. O perfil do aluno já foi separado em abas por causa
   disso (armadilha 18), mas a lista não. Esconder os valores lá? Foi levantado
   e ficou sem resposta.
-- Ligar a proteção contra senhas vazadas no Supabase.
+- Ligar a proteção contra senhas vazadas no Supabase — **só existe no plano
+  Pro** (US$ 25/mês). No plano free dá para exigir senha longa e com dígitos,
+  maiúsculas e símbolos, que é grátis e já ajuda. Entrar com Google é a outra
+  saída: o Supabase não cobra por provedor social e o Google não cobra pelo
+  cliente OAuth; contas com o mesmo email são ligadas automaticamente, então o
+  aluno criado pelo professor continua sendo o mesmo `auth.uid()` — nada de RLS
+  muda. Falta a decisão do dono.
 - Limpar ou manter os 12 alunos fictícios depois da avaliação do Leo.
 
 O roteiro completo das fases está em [`PLANO.md`](PLANO.md) seção 13.

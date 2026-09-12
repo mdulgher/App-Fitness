@@ -240,12 +240,9 @@ export async function render(alvo, { params }) {
     );
 
     corpo.querySelectorAll("[data-renomear]").forEach((b) =>
-      b.addEventListener("click", async () => {
-        const dia = ficha.dias.find((d) => d.id === b.dataset.renomear);
-        const novo = prompt("Nome da divisão:", dia.label);
-        if (!novo?.trim()) return;
-        if (await proteger(() => db.atualizarDia(dia.id, { label: novo.trim() }))) await carregar(ficha.id);
-      })
+      b.addEventListener("click", () =>
+        formularioDeRenomear(ficha.dias.find((d) => d.id === b.dataset.renomear))
+      )
     );
 
     corpo.querySelectorAll("[data-add]").forEach((b) =>
@@ -366,6 +363,69 @@ export async function render(alvo, { params }) {
           await carregar(nova.id);
           avisar("Ficha criada. Adicione as divisões e ative para o aluno.");
         }
+      } catch (err) {
+        erro.textContent = err.message;
+        erro.classList.remove("hidden");
+      }
+    });
+  }
+
+  // Renomear era um `prompt()` do navegador, e prompt() é uma caixa que o
+  // navegador pode simplesmente engolir: some depois de "impedir que esta
+  // página crie novas caixas de diálogo", e no app instalado na tela inicial
+  // nem chega a aparecer. O clique não fazia nada e não havia erro nenhum para
+  // investigar. Agora é o mesmo <dialog> do resto da tela.
+  function formularioDeRenomear(dia) {
+    if (!dia) return;
+    dialogoConteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Divisão</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <h2>Renomear ${esc(dia.label)}</h2>
+      <form id="form-renomear">
+        <div class="field"><label for="r-nome">Nome da divisão</label>
+          <input id="r-nome" name="label" required maxlength="40" value="${esc(dia.label)}"
+                 placeholder="Treino A" />
+          <div class="field-hint">Ex.: “Treino A”, “Peito e tríceps”, “Superiores”.</div></div>
+        <div data-erro class="alert hidden" role="alert"></div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary">Salvar</button>
+        </div>
+      </form>`;
+
+    dialogo.showModal();
+    dialogoConteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", fechar));
+
+    const campo = dialogoConteudo.querySelector("#r-nome");
+    campo.focus();
+    campo.select();
+
+    const erro = dialogoConteudo.querySelector("[data-erro]");
+    const formulario = dialogoConteudo.querySelector("#form-renomear");
+
+    // Enter salva. Dentro de <dialog> o envio implícito do formulário nem
+    // sempre acontece, e o professor fica apertando Enter sem nada mudar.
+    campo.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Enter") return;
+      ev.preventDefault();
+      formulario.requestSubmit();
+    });
+
+    formulario.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      const novo = campo.value.trim();
+      if (!novo) {
+        erro.textContent = "O nome não pode ficar vazio.";
+        erro.classList.remove("hidden");
+        return;
+      }
+      try {
+        await db.atualizarDia(dia.id, { label: novo });
+        fechar();
+        await carregar(ficha.id);
+        avisar("Divisão renomeada.");
       } catch (err) {
         erro.textContent = err.message;
         erro.classList.remove("hidden");
