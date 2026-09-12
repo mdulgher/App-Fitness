@@ -1,0 +1,19 @@
+# Dependências (o projeto não tem build; `npx serve` não instala nada aqui)
+node_modules/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+npm-debug.log*
+
+# Configuração local do Claude Code (permissões da máquina, não do projeto)
+.claude/settings.local.json
+
+# A partir da Fase 8: se as chaves do Supabase saírem de config.js para um
+# arquivo próprio, ele entra aqui. A chave `anon` é pública por design e pode
+# ser versionada; a `service_role` NUNCA entra no repositório.
+js/config.local.js

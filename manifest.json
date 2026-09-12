@@ -1,0 +1,11 @@
+{
+  "name": "Leo Personal Trainning",
+  "short_name": "Leo Personal",
+  "description": "Treino, frequência e acompanhamento.",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000",
+  "lang": "pt-BR",
+  "icons": []
+}
