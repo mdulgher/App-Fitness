@@ -4,7 +4,7 @@ import { APP_NAME, DATA_SOURCE, SUPABASE } from "./config.js";
 import { db } from "./db.js";
 import { restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial } from "./auth.js";
 import { iniciar, resolver, navegar, definirCallbackDeTroca } from "./router.js";
-import { esc, primeiroNome } from "./utils.js";
+import { esc, primeiroNome, iniciais } from "./utils.js";
 import { icone } from "./icons.js";
 
 const NAV_PROFESSOR = [
@@ -38,6 +38,17 @@ function desenharCabecalho(caminhoAtual) {
   const cadastro = document.getElementById("meu-cadastro");
   cadastro.href = ehProfessor() ? "#/professor/perfil" : "#/aluno/perfil";
   cadastro.setAttribute("aria-current", caminhoAtual.endsWith("/perfil") ? "page" : "false");
+
+  // A conta vira nome + avatar. O menu fecha a cada troca de tela: ele é
+  // absoluto sobre o conteúdo e ficaria aberto por cima da tela nova.
+  document.getElementById("conta-nome").textContent = primeiroNome(usuario.full_name);
+  document.getElementById("conta-botao").setAttribute(
+    "aria-label", `Conta de ${usuario.full_name}`
+  );
+  document.getElementById("conta-avatar").innerHTML = usuario.avatar_url
+    ? `<img src="${esc(usuario.avatar_url)}" alt="" />`
+    : esc(iniciais(usuario.full_name));
+  fecharMenuDaConta();
   brand.href = rotaInicial();
   brand.innerHTML = `<span class="logo-crop" aria-hidden="true"></span><span class="brand-name">LEO<span>PERSONAL TRAINNING</span></span>`;
   brand.setAttribute("aria-label", APP_NAME);
@@ -75,7 +86,36 @@ function desenharBarraDeModo() {
   });
 }
 
+/* ---------- menu da conta ---------- */
+
+const contaBotao = document.getElementById("conta-botao");
+const contaMenu = document.getElementById("conta-menu");
+
+function fecharMenuDaConta() {
+  contaMenu.classList.add("hidden");
+  contaBotao.setAttribute("aria-expanded", "false");
+}
+
+contaBotao.addEventListener("click", (ev) => {
+  ev.stopPropagation();
+  const aberto = contaBotao.getAttribute("aria-expanded") === "true";
+  contaMenu.classList.toggle("hidden", aberto);
+  contaBotao.setAttribute("aria-expanded", String(!aberto));
+});
+
+// Clicar em qualquer lugar fora fecha, inclusive num item do próprio menu: os
+// dois itens levam para outro lugar, e menu aberto por cima da tela nova é bug.
+document.addEventListener("click", (ev) => {
+  if (ev.target.closest("#conta-botao")) return;
+  fecharMenuDaConta();
+});
+document.addEventListener("keydown", (ev) => {
+  if (ev.key !== "Escape") return;
+  fecharMenuDaConta();
+});
+
 document.getElementById("sair").addEventListener("click", async () => {
+  fecharMenuDaConta();
   await sair();
   navegar("#/login");
   resolver();

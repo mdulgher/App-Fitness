@@ -43,10 +43,46 @@ ponta a ponta: login, cadastro de alunos pelo professor, editor de ficha com
 agenda semanal, lista pessoal do aluno, financeiro com cobrança por WhatsApp +
 Pix, perfil editável pelos dois papéis e a biblioteca de 53 exercícios.
 
-**O que ainda não existe:** o treino do dia do aluno com registro de carga, a
-tela de evolução, a de frequência e a de recados — as quatro apontam para
-`views/em-construcao.js`. É aí que está o maior valor não entregue, porque é o
-que o aluno usa todo dia. Detalhes na seção 9.
+**O que ainda não existe:** nenhuma tela aponta mais para
+`views/em-construcao.js`. O que falta é acabamento (Fase 7) e os itens da
+seção 9 — fila offline, ilustrações dos exercícios e a aba de progressão do
+professor (Fase 5).
+
+### Fase 4 — a área do aluno inteira — 12/09/2026
+
+As quatro telas que faltavam existem e foram testadas no navegador, inclusive em
+375 px de largura:
+
+- **`#/aluno/treino/:diaId`** (`views/aluno-treino.js`) — o treino do dia. Cada
+  exercício mostra **a carga da última vez ao lado do campo**; é o detalhe que
+  justifica o recurso (PLANO.md 6.4), não enfeite. Três regras não óbvias:
+  **(a)** cada série é gravada ao sair do campo, nunca em lote — o celular na
+  academia perde foco, trava e volta para o bolso; **(b)** a sessão
+  (`abrirSessao`) só nasce no primeiro registro ou ao concluir, para abrir a
+  tela não virar presença no histórico; **(c)** o campo vem vazio, com a carga
+  anterior só como sugestão cinza — preencher sozinho gravaria peso que o aluno
+  não levantou. Tem cronômetro de descanso e o diálogo de vídeo e how-to (o
+  iframe é removido ao fechar, senão o vídeo continua tocando).
+- **`#/aluno/evolucao`** — peso máximo por treino, por exercício, com gráfico em
+  SVG escrito à mão (poucos pontos, sem build, sem biblioteca). Lista só os
+  exercícios com carga registrada.
+- **`#/aluno/frequencia`** — semana corrente primeiro, depois oito semanas e um
+  calendário de três meses.
+- **`#/aluno/anotacoes`** — leitura pura. A conversa é no WhatsApp; caixa de
+  resposta aqui viraria uma segunda caixa de entrada que o Leo esqueceria.
+
+O RLS já cobria tudo isso: o aluno insere e corrige a própria frequência e as
+próprias cargas, e só lê os recados. Nada de política nova foi preciso.
+
+Estilos em **`css/aluno.css`**, ligado no `index.html`.
+
+### Conta no cabeçalho vira avatar com menu — 12/09/2026
+
+- No lugar dos botões "Meu cadastro" e "Sair" há **o avatar do usuário com o
+  primeiro nome**; clicar abre um menu com os dois itens. No celular sobra só o
+  avatar. O menu fecha ao clicar fora, no Esc e a cada troca de tela — ele é
+  absoluto sobre o conteúdo e ficaria aberto por cima da tela nova.
+- O avatar usa `avatar_url` quando existe e as iniciais quando não.
 
 ### Abas do aluno e renomear divisão — 12/09/2026
 
@@ -395,9 +431,9 @@ O roteador cuida do controle de acesso num lugar só: sem sessão vai para o
 login; papel errado vai para a própria área. Por isso não existe verificação de
 login espalhada pelas telas nem "pisca" de conteúdo antes do redirecionamento.
 
-Rotas ainda não construídas apontam para `views/em-construcao.js`, que mostra em
-que fase a tela entra. Ao construir uma tela, troque o `view:` da rota e remova
-o `fase:`.
+`views/em-construcao.js` continua no projeto, mas **nenhuma rota aponta para
+ele**: serve para a próxima tela que nascer antes da hora. Ao construir uma
+tela, troque o `view:` da rota e remova o `fase:`.
 
 ---
 
@@ -606,8 +642,9 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 ## 9. Onde paramos e o que fazer a seguir
 
-**Atualizado em 12/09/2026, fim da sessão.** O app foi publicado para o Leo (o
-dono) avaliar, com 12 alunos fictícios para as telas não aparecerem vazias.
+**Atualizado em 12/09/2026, fim da sessão.** A **Fase 4 (área do aluno) está
+pronta**: treino do dia com registro de carga, evolução, frequência e recados.
+O app segue publicado com 12 alunos fictícios para o Leo (o dono) avaliar.
 
 ### O estado exato
 
@@ -621,16 +658,19 @@ dono) avaliar, com 12 alunos fictícios para as telas não aparecerem vazias.
 
 ### O que fazer a seguir, em ordem de valor
 
-1. **Treino do dia do aluno** (`#/aluno/treino/:diaId`, hoje em construção).
-   É o maior buraco: o aluno abre o app todo dia e cai numa tela vazia. Precisa
-   do registro de carga com a última carga ao lado do campo — ver armadilha 6,
-   que explica por que isso não é enfeite. A camada de dados já tem tudo
-   (`abrirSessao`, `registrarSerie`, `ultimaVezNoExercicio`).
-2. **Frequência** e **Minha evolução**: `resumoDaSemana` e
-   `progressaoDoExercicio` já entregam os dados; falta desenhar.
-3. **Recados** (`#/aluno/anotacoes`) e a escrita de anotações pelo professor —
-   `criarAnotacao` existe, mas nenhuma tela chama.
-4. **Ilustrações dos exercícios**: o prompt pronto está em
+1. **Testar a Fase 4 no celular de verdade, com o banco real.** Tudo foi testado
+   no navegador (inclusive em 375 px) e contra a camada local; o registro de
+   carga contra o Supabase ainda não passou por um treino de verdade.
+2. **Escrita de recados pelo professor** — `criarAnotacao` existe, mas nenhuma
+   tela chama. Hoje o Leo não tem como mandar recado pelo app; só o aluno lê os
+   que já estão no banco.
+3. **Fase 5 — progressão no lado do professor**: a aba de evolução por exercício
+   dentro do aluno, que é onde ele decide a carga da próxima ficha.
+   `progressaoDoExercicio` já entrega tudo; é a mesma leitura da tela do aluno.
+4. **Fila offline** (`js/sync.js` do plano) — o treino é registrado na academia,
+   onde o sinal cai. Hoje uma série salva sem rede simplesmente falha com aviso
+   na tela; não há fila.
+5. **Ilustrações dos exercícios**: o prompt pronto está em
    [`PROMPT-ILUSTRACOES.md`](PROMPT-ILUSTRACOES.md), para uma IA de imagens
    gerar 106 arquivos. Ao integrar, **separe o crédito**:
    `js/catalogo-ilustracoes.js` carimba "Ilustrações: RepDB" em qualquer arquivo

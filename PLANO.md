@@ -635,6 +635,12 @@ As fases 0 a 7 rodam **inteiras na camada local**, sem Supabase (seção 9.1).
 | **8 — Supabase** | Tabelas, regras de acesso (RLS), login e convite de verdade, migração dos dados de teste, troca de uma linha em `config.js` | **Checklist da seção 11 passa inteiro** |
 | **9 — Hospedagem** | ~~Subir no Lovable~~ → **GitHub Pages, já no ar** desde a Fase 0 | Acessível por link, chaves fora do código-fonte |
 
+**Onde estamos (12/09/2026):** as fases 0 a 4, 6, 8 e 9 estão entregues — com o
+detalhe de que o app pulou direto para o Supabase, então as fases rodaram
+contra o banco real e não na camada local. Falta a **Fase 5** (progressão no
+lado do professor) e o acabamento da **Fase 7**. O estado exato vive em
+[`CONTEXTO.md`](CONTEXTO.md) seção 9, que é atualizado a cada sessão.
+
 Sobre a hospedagem: a Lovable foi descartada porque não é um hospedeiro de site
 estático e sim uma construtora de apps em React — publicar lá significaria o
 agente dela reescrever o projeto inteiro em outra stack. O site está no GitHub

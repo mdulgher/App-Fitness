@@ -20,11 +20,11 @@ const rotas = [
 
   // Aluno
   { padrao: /^\/aluno$/, papel: "student", view: () => import("./views/aluno-painel.js") },
-  { padrao: /^\/aluno\/treino\/([^/]+)$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Treino do dia com registro de carga" },
+  { padrao: /^\/aluno\/treino\/([^/]+)$/, papel: "student", view: () => import("./views/aluno-treino.js") },
   { padrao: /^\/aluno\/lista$/, papel: "student", view: () => import("./views/aluno-lista.js") },
-  { padrao: /^\/aluno\/evolucao$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Minha evolução" },
-  { padrao: /^\/aluno\/frequencia$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Frequência" },
-  { padrao: /^\/aluno\/anotacoes$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Anotações" },
+  { padrao: /^\/aluno\/evolucao$/, papel: "student", view: () => import("./views/aluno-evolucao.js") },
+  { padrao: /^\/aluno\/frequencia$/, papel: "student", view: () => import("./views/aluno-frequencia.js") },
+  { padrao: /^\/aluno\/anotacoes$/, papel: "student", view: () => import("./views/aluno-anotacoes.js") },
   { padrao: /^\/aluno\/financeiro$/, papel: "student", view: () => import("./views/aluno-financeiro.js") },
   { padrao: /^\/aluno\/perfil$/, papel: "student", view: () => import("./views/perfil.js") },
 ];

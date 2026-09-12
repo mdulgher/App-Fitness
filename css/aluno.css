@@ -1,0 +1,85 @@
+/* Telas do aluno — Fase 4.
+   Tudo aqui é desenhado para o celular na mão, de pé, entre séries: alvo de
+   toque grande, número grande, nada que exija mira fina. */
+
+/* ---------- treino do dia ---------- */
+
+.treino-do-dia { max-width: 760px; }
+.treino-progresso { margin-bottom: var(--sp-4); position: sticky; top: 8px; z-index: 5; }
+.treino-fim { margin-top: var(--sp-5); }
+
+.exercicio-do-treino { padding-bottom: var(--sp-4); }
+.exercicio-topo { display: flex; align-items: center; gap: 14px; margin-bottom: var(--sp-3); }
+/* O nome do exercício quebra em duas linhas em vez de virar reticências: num
+   treino com "Tríceps na corda" e "Tríceps testa", "Tríceps…" não identifica
+   nada. */
+.exercicio-topo h3 { font-size: 18px; letter-spacing: -0.02em; white-space: normal; overflow-wrap: anywhere; }
+.exercicio-topo .btn { flex: 0 0 auto; }
+.exercicio-miniatura {
+  width: 64px; height: 64px; flex: 0 0 64px; border-radius: 12px;
+  object-fit: contain; background: #f0f0f0; filter: grayscale(1);
+}
+.exercicio-miniatura-vazia { display: block; }
+
+.exercicio-recado {
+  margin: 0 0 var(--sp-3); padding: 10px 14px; font-size: 14px; line-height: 1.5;
+  border-left: 3px solid #111; background: #f7f7f7; border-radius: 0 10px 10px 0;
+}
+
+/* "Da última vez" é a informação que faz a tela existir: fica acima dos campos,
+   não escondida num histórico. */
+.ultima-vez {
+  display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px;
+  padding: 10px 14px; margin-bottom: var(--sp-3);
+  border: 1px dashed #d4d4d4; border-radius: 12px; background: #fafafa;
+}
+.ultima-vez .numeric { font-weight: 700; letter-spacing: -0.01em; }
+
+.series { display: flex; flex-direction: column; gap: 10px; }
+/* Grade, não flex: com flex-wrap as duas caixas caíam uma embaixo da outra no
+   celular e cada série ocupava meia tela. Peso e reps precisam ficar lado a
+   lado — é um gesto só, entre uma série e outra. */
+.serie {
+  display: grid; grid-template-columns: 30px 1fr 1fr 16px; align-items: end; gap: 10px;
+  padding: 10px; border: 1px solid #e5e5e5; border-radius: 12px; background: #fff;
+}
+.serie-feita { border-color: #111; background: #fbfbfb; }
+.serie-numero { font-size: 13px; font-weight: 700; padding-bottom: 12px; color: #666; }
+.serie .field-inline { margin: 0; min-width: 0; }
+.serie .field-inline input { width: 100%; font-size: 17px; font-weight: 600; text-align: center; }
+.serie-ok { min-width: 20px; padding-bottom: 12px; font-weight: 700; }
+
+.descanso { margin-top: var(--sp-3); }
+.descanso[data-rodando="1"] { background: #111; color: #fff; border-color: #111; }
+
+.video-embed { aspect-ratio: 16 / 9; margin-top: var(--sp-4); border-radius: 12px; overflow: hidden; background: #000; }
+.video-embed iframe { width: 100%; height: 100%; border: 0; display: block; }
+
+/* ---------- frequência ---------- */
+
+.calendario-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.calendario-mes .dia-rotulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; text-align: center; padding-bottom: 4px; }
+.dia-celula {
+  aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px;
+  border: 1px solid #ececec; font-size: 13px; font-weight: 600; color: #999;
+}
+.dia-celula.vazia { border-color: transparent; }
+.dia-celula.treinou { background: #111; border-color: #111; color: #fff; }
+.dia-celula.hoje { outline: 2px solid #111; outline-offset: 1px; }
+
+/* ---------- evolução ---------- */
+
+.grafico-progressao { width: 100%; height: auto; display: block; }
+.grafico-progressao .linha { fill: none; stroke: #111; stroke-width: 2; }
+.grafico-progressao .ponto { fill: #111; }
+.grafico-progressao .grade { stroke: #e5e5e5; stroke-width: 1; }
+.grafico-progressao .rotulo { font-size: 10px; fill: #999; }
+
+@media (max-width: 700px) {
+  .treino-progresso { position: static; }
+  .exercicio-miniatura { width: 52px; height: 52px; flex-basis: 52px; }
+  .exercicio-topo { gap: 10px; }
+  .exercicio-topo h3 { font-size: 16px; }
+  .ultima-vez .numeric { font-size: 15px; }
+  .serie { grid-template-columns: 26px 1fr 1fr 14px; gap: 8px; padding: 8px; }
+}
