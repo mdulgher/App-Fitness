@@ -10,14 +10,16 @@ export async function render(alvo) {
     <div class="wrap">
       <div class="page-head row-between">
         <div>
-          <div class="eyebrow">Alunos</div>
-          <h1>${plural(alunos.filter((a) => a.active).length, "ativo", "ativos")}</h1>
+          <div class="eyebrow">Acompanhamento individual</div>
+          <h1>Seus alunos.</h1>
+          <p class="muted page-description">${plural(alunos.filter((a) => a.active).length, "aluno ativo", "alunos ativos")} · Cada jornada merece atenção.</p>
         </div>
         <button class="btn btn-primary" id="novo">Novo aluno</button>
       </div>
 
       <label class="field">
-        <input type="search" id="busca" placeholder="Buscar por nome ou objetivo" />
+        <span class="eyebrow">Encontre um aluno</span>
+        <input type="search" id="busca" aria-label="Buscar por nome ou objetivo" placeholder="Buscar por nome ou objetivo" />
       </label>
 
       <div class="list" id="lista"></div>

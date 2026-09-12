@@ -28,6 +28,53 @@ local.
 
 ## 2. Estado atual
 
+### Atualização visual — 12/09/2026
+
+Redesign aplicado à versão **HTML/CSS/JS desta pasta**, mantendo preto, branco,
+cinza e a camada de dados existente. A migração React/Lovable citada na seção 11
+é outro projeto; não foi alterada nesta entrega.
+
+- Login com fotografia e logo do arquivo `Logo e banner.jpg`, reaproveitadas por
+  enquadramento CSS; o arquivo original permanece intacto.
+- Cabeçalho com logo, ícones SVG locais e navegação inferior no celular.
+- Painel do professor com resumo semanal, indicadores, alunos e pendências.
+- Painel do aluno com treino sugerido em destaque, progresso circular e divisões.
+- Lista de alunos e componentes compartilhados com o mesmo acabamento.
+- Estilos novos em `css/refinement.css`, carregados após `css/style.css`.
+- `node scripts/preview.cjs --demo` abre uma prévia fictícia em
+  `http://127.0.0.1:5180`, com origem separada. A configuração Supabase do app
+  não é alterada; a substituição por `local` ocorre só na resposta desse servidor.
+- Validado: login real do professor e painel vazio; com dados fictícios, busca,
+  perfil com ficha, painel do aluno e navegação. Layout inspecionado em desktop
+  e 390px, sem overflow horizontal no painel do aluno em 320px e 390px.
+
+As telas anteriormente marcadas como fases futuras **continuam pendentes**.
+Redesign não implementa registro de séries, editor de ficha ou financeiro.
+Referências pesquisadas, sugestões e prioridades em `REDESIGN.md`.
+
+### Estado funcional anterior (mantido como histórico)
+
+> **O app em JS puro está LIGADO AO SUPABASE DE VERDADE** (`DATA_SOURCE =
+> "supabase"` em `js/config.js`). Os dados não vivem mais no navegador: são
+> reais, compartilhados e persistentes. O app em si continua rodando de
+> `localhost` — não está hospedado em lugar nenhum.
+>
+> A troca de `local` para `supabase` custou **uma linha** e nenhuma tela foi
+> alterada. É a prova da regra da seção 5.1; mantenha-a.
+>
+> Já verificado no navegador, contra o banco real: cadastro cria o perfil
+> **sempre como aluno**; login por senha funciona e o papel vem do banco;
+> tentar mudar o próprio `role` pela API é recusado (`permission denied for
+> table profiles`); a view de pagamentos respeita RLS. Falta testar com **dois
+> alunos reais** o isolamento entre eles (itens 1 a 4 e 7 do checklist).
+>
+> **Conta do professor:** `leo@leopersonal.com` / `LeoTreino2026!`
+> **Biblioteca:** 20 exercícios já cadastrados, com how-to escrito.
+>
+> **Pendência conhecida:** o Supabase está exigindo confirmação de email, o que
+> trava todo aluno novo. Desligar em Authentication → Providers → Email →
+> "Confirm email" (quem cria os alunos é o professor, por convite).
+
 **Fase 0 (Base local) — concluída e testada no navegador.**
 
 Funcionando:
@@ -66,21 +113,23 @@ npx serve . -l 5173
 Depois abrir `http://localhost:5173`. Para testar no celular (mesmo Wi-Fi), usar
 o IP da máquina na rede, ex.: `http://192.168.15.45:5173`.
 
-### Versão publicada
+### Publicação
 
-- **Site:** https://mdulgher.github.io/App-Fitness/
-- **Repositório:** https://github.com/mdulgher/App-Fitness (público)
+Não há site publicado desta versão em JS puro. O GitHub Pages chegou a ser ligado
+e foi **desligado a pedido do dono do projeto**; o repositório
+(https://github.com/mdulgher/App-Fitness) segue existindo apenas como cópia.
 
-Hospedado no GitHub Pages a partir da branch `main`, raiz do projeto. **Todo push
-para `main` republica o site automaticamente** — não há passo de build nem
-deploy manual. Por isso todos os caminhos do projeto precisam continuar
-**relativos** (`css/style.css`, e não `/css/style.css`): o site vive num
-subdiretório (`/App-Fitness/`) e caminhos absolutos quebrariam.
+O projeto migrou para a **Lovable**, reescrito em React — ver seção 11.
 
-**Atenção:** a versão publicada é demonstração, não produto. Não há senha de
-verdade e os dados vivem no `localStorage` de cada navegador — se o Leo começar
-a cadastrar alunos reais ali, ninguém mais enxerga esses dados e eles somem se
-ele limpar o navegador. Só vira utilizável de verdade na Fase 8, com o Supabase.
+### Supabase (banco de verdade, já criado)
+
+- **Projeto:** `App Fitness Leo` — ref `azifpaxbeozfooydkzxh`, região `sa-east-1` (São Paulo)
+- **URL:** `https://azifpaxbeozfooydkzxh.supabase.co`
+- É a conta **do próprio dono do projeto**, não o banco gerenciado da Lovable. Escolha deliberada: ele é dono dos dados, leva tudo junto se sair da Lovable, e o schema pode ser auditado direto por fora.
+
+O schema completo e as regras de acesso **já estão aplicados** (11 tabelas, todas
+com RLS ligado, mais a view `payments_view` e as funções `is_trainer()`,
+`handle_new_user()` e `hoje_br()`). Detalhes na seção 11.
 
 ---
 
@@ -267,6 +316,10 @@ implementação. Ao criar, seguir o mesmo padrão:
 
 ## 7. Design system
 
+**Atualização:** além dos tokens abaixo, `css/refinement.css` define o acabamento
+atual: superfícies cinza claro, cantos de 10–20px, tipografia maior, logo/fotografia
+fornecidas pelo dono e menu inferior no celular. Sem novas cores de interface.
+
 Tokens em `:root` no `css/style.css`. Preto, branco e cinzas — **sem nenhuma cor
 de destaque**. Hierarquia vem de tipografia, espaço e preenchimento.
 
@@ -306,7 +359,7 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 8. **Sempre `esc()` em texto que vai para `innerHTML`.** Nome de aluno e anotação do professor são texto livre; um `<` no meio de um recado quebra a tela — ou injeta HTML.
 
-9. **O guard do roteador é de navegação, não de privacidade.** Ele impede abrir a tela do outro, mas a camada de dados entregaria os dados se alguém pedisse pelo console. A barreira real são as regras do banco, na Fase 8. Não confunda as duas coisas nem trate o app como seguro antes disso.
+9. **O guard do roteador é de navegação, não de privacidade.** Ele impede abrir a tela do outro; quem impede o *dado* de sair são as regras de RLS no banco. As duas coisas continuam separadas — não trate um redirecionamento na tela como prova de que o dado está protegido. Com o Supabase conectado, a barreira real existe e já foi parcialmente verificada (ver seção 2).
 
 10. **Dinheiro é `numeric(10,2)` no banco.** Nunca `float` — R$ 149,90 vira 149.89999999 e as somas não fecham.
 
@@ -314,11 +367,18 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 12. **Foto de exercício vem do vídeo.** `capaDoVideo()` deriva a imagem da capa do YouTube. O professor cola um link só e ganha a foto — não construa upload de foto de exercício antes de considerar isso.
 
-13. **Os dados vivem no `localStorage` daquele navegador.** Celular e computador têm conjuntos separados, e nada é compartilhado entre professor e aluno. Isso só muda na Fase 8. Não construa nada que dependa de o professor "ver o que o aluno acabou de salvar" antes disso.
+13. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
 
 ---
 
 ## 9. Próximo passo
+
+Após o redesign de 12/09/2026: revisar a prévia visual e seguir as prioridades em
+`REDESIGN.md`. O maior ganho de produto está em completar o treino do dia com
+registro rápido e última carga, junto ao editor de fichas. Validar também qual
+versão será mantida (esta pasta ou React/Lovable) antes da próxima fase funcional.
+O plano anterior abaixo permanece como referência; não houve implementação das
+fases funcionais nesta rodada.
 
 **Fase 1 — Professor: alunos.** Cadastro e edição de aluno, e o perfil deixando
 de ser só leitura.
@@ -366,3 +426,48 @@ Todas já fechadas com o dono do projeto. O raciocínio completo está em
 motivo forte:** a interface única de dados (5.1), o status de pagamento
 derivado (8.2), a sessão de treino como contêiner das cargas (8.4) e o
 `exercise_id` redundante (8.5).
+
+---
+
+## 11. Migração para React na Lovable (em andamento)
+
+O dono do projeto decidiu abandonar a versão em JS puro e reconstruir o app em
+React na Lovable. A versão em JS puro continua nesta pasta como referência
+funcional e, principalmente, **como especificação**: foi de onde saíram o modelo
+de dados, as regras e as armadilhas que alimentaram a migração.
+
+- **Projeto Lovable:** https://lovable.dev/projects/c2aa8a9f-2818-4c41-bd83-3dad893dc3e2
+- **Preview:** https://id-preview--c2aa8a9f-2818-4c41-bd83-3dad893dc3e2.lovable.app
+- Stack da Lovable: React + TypeScript + Tailwind + shadcn/ui.
+- As regras permanentes (visual preto e branco, segurança, as cinco regras de modelagem) foram gravadas no **conhecimento do projeto** na Lovable, para valerem em toda mensagem futura ao agente e não serem revertidas sem querer.
+
+### O que mudou de importante com a migração
+
+A camada de dados local (seções 5.1 e 6) **deixa de existir** no app React: ela
+era um contorno para não haver banco. Com o Supabase de verdade desde o começo,
+some junto a limitação mais séria da versão anterior — a privacidade passa a ser
+real, e o checklist da seção anterior pode (e deve) ser executado agora, não numa
+fase futura.
+
+### Estado do banco
+
+Aplicado no Supabase do dono (`azifpaxbeozfooydkzxh`), não no banco gerenciado
+da Lovable:
+
+- 11 tabelas, **todas com RLS ligado**, seguindo o modelo do `PLANO.md` seção 6.
+- `payments_view` com o status derivado e `security_invoker = true` — sem esse parâmetro a view rodaria com os privilégios do dono e o aluno enxergaria o financeiro dos outros.
+- `is_trainer()` como `SECURITY DEFINER` para as políticas não recursarem ao consultar `profiles`.
+- `handle_new_user()` cria o perfil no cadastro **sempre como aluno**: não existe caminho para alguém se cadastrar como professor; a promoção é manual, via SQL.
+- `role` protegido por permissão de **coluna** (`revoke update ... grant update (full_name, email, phone, avatar_url)`), então nem o professor promove alguém pela API.
+- Índices únicos impedindo treino marcado duas vezes no mesmo dia e cobrança duplicada do mesmo mês.
+
+Os avisos de segurança do Supabase foram revisados e corrigidos. Resta **um**,
+intencional: `is_trainer()` é executável por usuário logado, porque as políticas
+de RLS a chamam no contexto de quem consulta. Ela só revela se você mesmo é o
+professor, nada sobre terceiros.
+
+### Pendências
+
+1. **Conectar o Supabase do dono à Lovable** — precisa ser feito no painel da Lovable (https://lovable.dev/dashboard?connectors); o MCP não adiciona conectores. Enquanto isso não acontece, o agente está construindo contra o banco gerenciado da Lovable.
+2. **Criar os usuários de teste** por cadastro real no app e promover o do Leo a `trainer` via SQL. Não há como semear usuários direto na tabela: `profiles.id` referencia `auth.users`, e inserir ali na mão é frágil.
+3. **Rodar o checklist de privacidade** (seção anterior) com dois alunos reais logados.

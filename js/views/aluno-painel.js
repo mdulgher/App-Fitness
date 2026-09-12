@@ -26,13 +26,18 @@ export async function render(alvo) {
   const pct = semana.meta ? Math.min(100, (semana.feitos / semana.meta) * 100) : 0;
 
   alvo.innerHTML = `
-    <div class="wrap">
+    <div class="wrap student-dashboard">
       <div class="page-head">
         <div class="eyebrow">Olá, ${esc(primeiroNome(usuario.full_name))}</div>
-        <h1>${ficha ? esc(ficha.title) : "Seu treino"}</h1>
+        <h1>Um treino mais perto.</h1>
+        <p class="muted page-description">${ficha ? esc(ficha.title) : "Seu próximo capítulo começa com um treino."}</p>
       </div>
 
-      <div class="card card-invert" style="margin-bottom:var(--sp-5)">
+      ${blocoRestricoes(aluno)}
+      ${blocoSugerido(sugerido)}
+      <div class="card weekly-card" style="margin-bottom:var(--sp-5)">
+        <div class="progress-ring" style="--progress:${pct}%" role="img" aria-label="${semana.feitos} de ${semana.meta} treinos concluídos"><span>${semana.feitos}<small> / ${semana.meta}</small></span></div>
+        <div class="weekly-content">
         <div class="eyebrow">Esta semana</div>
         <div class="row" style="margin:var(--sp-2) 0">
           <span class="numeric" style="font-size:32px;font-weight:800;letter-spacing:-0.03em">
@@ -40,8 +45,8 @@ export async function render(alvo) {
           </span>
           <span class="muted small">treinos concluídos</span>
         </div>
-        <div class="meter" style="border-color:var(--white)">
-          <span style="width:${pct}%;background:var(--white)"></span>
+        <div class="meter">
+          <span style="width:${pct}%"></span>
         </div>
         ${
           aluno?.resumo.ultimoTreino
@@ -50,10 +55,8 @@ export async function render(alvo) {
                </div>`
             : ""
         }
+        </div>
       </div>
-
-      ${blocoRestricoes(aluno)}
-      ${blocoSugerido(sugerido)}
       ${blocoFicha(ficha)}
       ${blocoRecados(fixadas)}
     </div>
@@ -74,16 +77,17 @@ function blocoSugerido(dia) {
   return `
     <div style="margin-bottom:var(--sp-5)">
       <div class="eyebrow" style="margin-bottom:var(--sp-3)">Sugestão de hoje</div>
-      <a class="card card-link" href="#/aluno/treino/${esc(dia.id)}">
+      <a class="card card-link workout-hero" href="#/aluno/treino/${esc(dia.id)}">
         <div class="row-between">
           <div>
-            <div class="list-item-title">${esc(dia.label)}</div>
+            <div class="eyebrow">Seu próximo treino</div>
+            <h2>${esc(dia.label)}</h2>
             <div class="muted small">
               ${plural(dia.exercicios.length, "exercício", "exercícios")}
               ${dia.weekday_suggestion ? ` · ${esc(dia.weekday_suggestion)}` : ""}
             </div>
           </div>
-          <span class="btn btn-primary btn-sm">Começar</span>
+          <span class="btn">Ver treino <span aria-hidden="true">↗</span></span>
         </div>
       </a>
     </div>`;
@@ -105,11 +109,12 @@ function blocoFicha(ficha) {
           até ${ficha.end_date ? formatarData(ficha.end_date) : "sem prazo"}
         </span>
       </div>
-      <div class="stack">
+      <div class="grid grid-3 workout-grid">
         ${ficha.dias
           .map(
-            (dia) => `
+            (dia, indice) => `
           <a class="card card-link" href="#/aluno/treino/${esc(dia.id)}">
+            <span class="workout-number" aria-hidden="true">${String(indice + 1).padStart(2, "0")}</span>
             <div class="row-between">
               <div>
                 <div class="list-item-title">${esc(dia.label)}</div>

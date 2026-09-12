@@ -1,0 +1,4683 @@
+[
+  {
+    "id": "archer-push-ups",
+    "name_en": "Archer Push Ups",
+    "name_de": "Archer-Liegestütze",
+    "name_es": "Push-Ups Arquero",
+    "description_en": "A wide push-up lowering toward one hand while the opposite arm stays straight, loading one side at a time.",
+    "description_de": "Ein breiter Liegestütz, bei dem du dich zu einer Hand absenkst, während der andere Arm gestreckt bleibt — belastet eine Seite nach der anderen.",
+    "description_es": "Una flexión ancha bajando hacia una mano mientras el brazo contrario permanece estirado, cargando un lado cada vez.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "rectus_abdominis",
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Set up in a wide push-up position with arms straight.",
+      "Lower yourself toward one hand while keeping the other arm straight.",
+      "Keep your core tight and body in a straight line.",
+      "Press back up to the start position.",
+      "Alternate sides each rep for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Nehme eine breite Liegestützposition mit gestreckten Armen ein.",
+      "Senke dich zu einer Hand hin ab, während der andere Arm gestreckt bleibt.",
+      "Halte den Rumpf gespannt und den Körper in einer geraden Linie.",
+      "Drücke zurück in die Ausgangsposition.",
+      "Wechsle für die gewünschte Anzahl von Wiederholungen die Seiten ab."
+    ],
+    "instructions_es": [
+      "Colócate en posición de push-up amplia con los brazos extendidos.",
+      "Bájate hacia una mano mientras mantienes el otro brazo extendido.",
+      "Mantén el core apretado y el cuerpo en línea recta.",
+      "Empuja de vuelta a la posición inicial.",
+      "Alterna lados en cada repetición el número de veces deseado."
+    ],
+    "tips_en": [
+      "Keep your hips square to the floor as you shift sideways.",
+      "Let the straight arm assist as little as possible.",
+      "Start from wide push-ups and shift a little further each session."
+    ],
+    "tips_de": [
+      "Halte die Hüfte parallel zum Boden, während du dich seitlich verlagerst.",
+      "Lass den gestreckten Arm so wenig wie möglich mithelfen.",
+      "Beginne mit breiten Liegestützen und verlagere dich jede Einheit etwas weiter."
+    ],
+    "tips_es": [
+      "Mantén las caderas paralelas al suelo mientras te desplazas hacia el lado.",
+      "Deja que el brazo estirado ayude lo menos posible.",
+      "Empieza con flexiones anchas y desplázate un poco más en cada sesión."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/archer-push-ups-start.webp",
+        "peak": "images/flat/archer-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "banded-chest-stretch",
+    "name_en": "Banded Chest Stretch",
+    "name_de": "Brustdehnung mit Band",
+    "name_es": "Estiramiento de Pecho con Banda",
+    "description_en": "A standing stretch that opens the chest by holding a band behind the back and drawing the arms apart.",
+    "description_de": "Eine stehende Dehnung, die mit einem Band hinter dem Rücken durch Auseinanderziehen der Arme die Brust öffnet.",
+    "description_es": "Un estiramiento de pie que abre el pecho sujetando una banda tras la espalda y separando los brazos.",
+    "category": "stretching",
+    "force_type": "static",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "resistance_band",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "mobility"
+    ],
+    "tags": [
+      "mobility",
+      "stretching"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Hold a band behind your back with both hands.",
+      "Straighten your arms and draw them apart.",
+      "Lift your chest and squeeze your shoulder blades.",
+      "Hold for 20 to 30 seconds, breathing steadily."
+    ],
+    "instructions_de": [
+      "Halte ein Band mit beiden Händen hinter dem Rücken.",
+      "Strecke die Arme und ziehe sie auseinander.",
+      "Hebe die Brust und ziehe die Schulterblätter zusammen.",
+      "Halte 20 bis 30 Sekunden und atme ruhig weiter."
+    ],
+    "instructions_es": [
+      "Sujeta una banda con ambas manos tras la espalda.",
+      "Estira los brazos y sepáralos.",
+      "Eleva el pecho y junta los omóplatos.",
+      "Mantén de 20 a 30 segundos, respirando de forma constante."
+    ],
+    "tips_en": [
+      "Keep your shoulders down away from your ears.",
+      "Stretch to mild tension, never to pain."
+    ],
+    "tips_de": [
+      "Halte die Schultern unten, weg von den Ohren.",
+      "Dehne bis zu leichter Spannung, nie bis zum Schmerz."
+    ],
+    "tips_es": [
+      "Mantén los hombros abajo, lejos de las orejas.",
+      "Estira hasta una tensión leve, nunca hasta el dolor."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "main": "images/flat/banded-chest-stretch-main.webp"
+      }
+    }
+  },
+  {
+    "id": "bench-chest-stretch",
+    "name_en": "Bench Chest Stretch",
+    "name_de": "Brustdehnung an der Bank",
+    "name_es": "Estiramiento de Pecho en Banco",
+    "description_en": "A kneeling stretch with the hands behind on a bench, sinking the hips to open the chest and shoulders.",
+    "description_de": "Eine kniende Dehnung mit den Händen hinten auf der Bank, bei der die Hüfte sinkt und Brust und Schultern öffnet.",
+    "description_es": "Un estiramiento de rodillas con las manos detrás en el banco, bajando la cadera para abrir el pecho y los hombros.",
+    "category": "stretching",
+    "force_type": "static",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "flat_bench",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "mobility"
+    ],
+    "tags": [
+      "mobility",
+      "stretching"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Kneel with your back to a bench.",
+      "Place both hands behind you on the edge of the bench.",
+      "Sink your hips down to open the chest.",
+      "Hold for 20 to 30 seconds, breathing steadily."
+    ],
+    "instructions_de": [
+      "Knie dich mit dem Rücken zur Bank.",
+      "Lege beide Hände hinter dir auf die Bankkante.",
+      "Senke die Hüfte, um die Brust zu öffnen.",
+      "Halte 20 bis 30 Sekunden und atme ruhig weiter."
+    ],
+    "instructions_es": [
+      "Arrodíllate de espaldas al banco.",
+      "Coloca ambas manos detrás en el borde del banco.",
+      "Baja la cadera para abrir el pecho.",
+      "Mantén de 20 a 30 segundos, respirando de forma constante."
+    ],
+    "tips_en": [
+      "Keep your shoulders down away from your ears.",
+      "Stretch to mild tension, never to pain."
+    ],
+    "tips_de": [
+      "Halte die Schultern unten, weg von den Ohren.",
+      "Dehne bis zu leichter Spannung, nie bis zum Schmerz."
+    ],
+    "tips_es": [
+      "Mantén los hombros abajo, lejos de las orejas.",
+      "Estira hasta una tensión leve, nunca hasta el dolor."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "main": "images/flat/bench-chest-stretch-main.webp"
+      }
+    }
+  },
+  {
+    "id": "bench-press",
+    "name_en": "Barbell Bench Press",
+    "name_de": "Langhantel-Bankdrücken",
+    "name_es": "Press de Banca con Barra",
+    "description_en": "A compound pushing movement that targets the chest, shoulders, and triceps.",
+    "description_de": "Eine Verbunddrückübung, die Brust, Schultern und Trizeps beansprucht.",
+    "description_es": "Un movimiento compuesto de empuje que trabaja el pecho, los hombros y los tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength",
+      "power"
+    ],
+    "tags": [
+      "powerlifting",
+      "push_day",
+      "big_three",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie flat on a bench with your eyes under the bar.",
+      "Grip the bar slightly wider than shoulder-width.",
+      "Unrack the bar and lower it to your mid-chest.",
+      "Press the bar back up to full arm extension.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Lege dich flach auf eine Bank mit den Augen unter der Stange.",
+      "Greife die Stange etwas breiter als schulterbreit.",
+      "Nehme die Stange ab und senke sie zur Brustmitte.",
+      "Drücke die Stange zurück in die vollständige Armstreckung.",
+      "Wiederhole die gewünschte Anzahl von Wiederholungen."
+    ],
+    "instructions_es": [
+      "Acuéstate en el banco con los ojos bajo la barra.",
+      "Agarra la barra ligeramente más ancho que la anchura de los hombros.",
+      "Saca la barra del rack y bájala hasta el centro del pecho.",
+      "Empuja la barra de vuelta hasta la extensión completa de los brazos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your feet flat on the floor.",
+      "Maintain a slight arch in your lower back.",
+      "Drive through your legs for stability."
+    ],
+    "tips_de": [
+      "Halte die Füße flach auf dem Boden.",
+      "Behalte eine leichte Wölbung im unteren Rücken.",
+      "Drücke durch die Beine für Stabilität."
+    ],
+    "tips_es": [
+      "Mantén los pies planos en el suelo.",
+      "Conserva una ligera curvatura en la zona lumbar.",
+      "Impulsa con las piernas para dar estabilidad."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/bench-press-start.webp",
+        "peak": "images/flat/bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "cable-chest-press",
+    "name_en": "Cable Chest Press",
+    "name_de": "Kabelzug Brustdrücken",
+    "name_es": "Press de Pecho con Cable",
+    "description_en": "A standing chest press on the cable machine, providing constant tension while the staggered stance demands core stability.",
+    "description_de": "Eine Drückübung am Kabelzug im Stehen, die die Brust unter konstanter Spannung über den gesamten Bewegungsweg trainiert.",
+    "description_es": "Un press de pecho de pie en polea que ofrece tensión constante sobre el pectoral durante todo el recorrido.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "cable",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "lower_back_safe",
+      "shoulder_safe",
+      "no_axial_load"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set the cables to chest height and face away from the machine.",
+      "Grip a handle in each hand and step forward into a staggered stance.",
+      "Press the handles forward until your arms are extended.",
+      "Squeeze your chest at the top.",
+      "Return under control and repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Kabel auf Brusthöhe ein und wende dem Gerät den Rücken zu.",
+      "Greife je einen Griff pro Hand und tritt in einen Ausfallschritt.",
+      "Drücke die Griffe nach vorne, bis die Arme gestreckt sind.",
+      "Spanne die Brust oben an.",
+      "Zurück unter Kontrolle und wiederhole."
+    ],
+    "instructions_es": [
+      "Ajusta los cables a la altura del pecho y colócate de espaldas a la máquina.",
+      "Sujeta un agarre en cada mano y da un paso adelante adoptando una postura escalonada.",
+      "Empuja los agarres hacia adelante hasta extender los brazos completamente.",
+      "Aprieta el pecho en la parte superior.",
+      "Vuelve de forma controlada y repite."
+    ],
+    "tips_en": [
+      "Press both handles evenly to avoid twisting your torso.",
+      "Brace your core against the backward pull of the stack.",
+      "Step forward enough that the cables stay taut throughout each rep."
+    ],
+    "tips_de": [
+      "Spanne den Rumpf fest an, damit dich der Zug nicht zurückzieht.",
+      "Drücke beide Griffe gleichmäßig nach vorn, ohne eine Seite vorlaufen zu lassen.",
+      "Halte die Schulterblätter leicht zurückgezogen, während die Arme arbeiten."
+    ],
+    "tips_es": [
+      "Evita que los hombros se adelanten al extender los brazos.",
+      "Mantén el core activo para no perder el equilibrio.",
+      "Mantén las muñecas rectas durante la fase de empuje."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/cable-chest-press-start.webp",
+        "peak": "images/flat/cable-chest-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "cable-fly",
+    "name_en": "Cable Fly",
+    "name_de": "Kabelzug Fly",
+    "name_es": "Aperturas con Cable",
+    "description_en": "An isolation movement for the chest using cable resistance for constant tension.",
+    "description_de": "Eine Isolationsübung für die Brust mit Kabelzugwiderstand für konstante Spannung.",
+    "description_es": "Un ejercicio de aislamiento para el pecho con resistencia de cable para tensión constante.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "intermediate",
+    "equipment": "cable",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "chest-fly",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Stand between two cable columns with handles attached to high pulleys.",
+      "With a slight bend in your elbows, open your arms wide.",
+      "Bring your hands together in front of your chest in a hugging motion.",
+      "Slowly return to the starting position.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Steh zwischen zwei Kabelstationen mit Griffen an den oberen Rollen.",
+      "Öffne die Arme weit mit leicht gebeugten Ellbogen.",
+      "Führe die Hände vor der Brust in einer Umarmungsbewegung zusammen.",
+      "Langsam zurück zur Ausgangsposition.",
+      "Wiederhole."
+    ],
+    "instructions_es": [
+      "Colócate entre dos columnas de cable con los agarres enganchados a las poleas altas.",
+      "Con una ligera flexión en los codos, abre los brazos hacia los lados.",
+      "Junta las manos frente al pecho en un movimiento de abrazo.",
+      "Vuelve lentamente a la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Maintain the same elbow bend throughout; do not press the weight.",
+      "Step one foot forward for a stable, balanced stance.",
+      "Control the stretch; do not let the cables yank your arms back."
+    ],
+    "tips_de": [
+      "Beuge die Ellenbogen nicht weiter, sonst wird aus der Übung eine Drückbewegung.",
+      "Spanne die Brust in der Endposition kurz bewusst an.",
+      "Lass die Arme auf dem Rückweg nur so weit öffnen, wie es deine Schultern zulassen."
+    ],
+    "tips_es": [
+      "Mantén el ángulo de los codos constante para no convertirlo en un press.",
+      "Aprieta el pecho un segundo cuando las manos se encuentren.",
+      "No adelantes los hombros cuando los brazos están abiertos."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/cable-fly-start.webp",
+        "peak": "images/flat/cable-fly-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "chest-press-machine",
+    "name_en": "Machine Chest Press",
+    "name_de": "Maschinen-Brustdrücken",
+    "name_es": "Press de Pecho en Máquina",
+    "description_en": "A machine-based pressing movement for the chest, ideal for beginners.",
+    "description_de": "Eine maschinengestützte Drückbewegung für die Brust, ideal für Einsteiger.",
+    "description_es": "Un movimiento de empuje para el pecho en máquina, ideal para principiantes.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "equipment": "chest_press_machine",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Sit in the machine with your back flat against the pad.",
+      "Grip the handles at chest level.",
+      "Push the handles forward until your arms are fully extended.",
+      "Slowly return to the starting position.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Setze dich in die Maschine mit flach anliegendem Rücken.",
+      "Greife die Griffe auf Brusthöhe.",
+      "Drücke die Griffe nach vorne, bis die Arme vollständig gestreckt sind.",
+      "Langsam zurück zur Ausgangsposition.",
+      "Wiederhole."
+    ],
+    "instructions_es": [
+      "Siéntate en la máquina con la espalda plana contra el respaldo.",
+      "Agarra los mangos a la altura del pecho.",
+      "Empuja los mangos hacia adelante hasta extender los brazos completamente.",
+      "Vuelve lentamente a la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Adjust the seat so the handles line up with mid-chest.",
+      "Keep your shoulder blades pulled back against the pad as you press.",
+      "Press to full extension without forcefully locking your elbows."
+    ],
+    "tips_de": [
+      "Stelle den Sitz so ein, dass die Griffe auf Brusthöhe liegen.",
+      "Halte Schultern und Rücken während der gesamten Bewegung am Polster.",
+      "Atme beim Drücken aus und beim Zurückführen ein."
+    ],
+    "tips_es": [
+      "Ajusta el asiento para que las manijas queden a la altura del pecho.",
+      "Empuja sin bloquear los codos de golpe.",
+      "Vuelve atrás con control, sin soltar el peso de golpe."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/chest-press-machine-start.webp",
+        "peak": "images/flat/chest-press-machine-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "clap-push-ups",
+    "name_en": "Clap Push-Ups",
+    "name_de": "Klatschen-Push-Ups",
+    "name_es": "Flexiones con Palmada",
+    "description_en": "An explosive plyometric push-up developing chest power and fast-twitch muscle fibers.",
+    "description_de": "Ein explosiver plyometrischer Push-Up zur Entwicklung von Brustpower und schnellen Muskelfasern.",
+    "description_es": "Una flexión pliométrica explosiva que desarrolla la potencia del pecho y las fibras musculares de contracción rápida.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "triceps_brachii"
+    ],
+    "goals": [
+      "power",
+      "endurance"
+    ],
+    "tags": [
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Begin in a standard push-up position.",
+      "Lower your chest to the floor.",
+      "Explosively push up so hands leave the ground.",
+      "Clap your hands together and land softly, returning to start.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Nimm die normale Push-Up-Position ein.",
+      "Senke die Brust zum Boden.",
+      "Drücke dich explosiv ab, sodass die Hände den Boden verlassen.",
+      "Klatsche in die Hände und lande weich, zurück zur Startposition.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Comienza en la posición estándar de flexión.",
+      "Baja el pecho hacia el suelo.",
+      "Empuja hacia arriba de forma explosiva para que las manos despeguen del suelo.",
+      "Da una palmada y aterriza suavemente, volviendo a la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Land with soft elbows to absorb impact.",
+      "Ensure you have enough upper body strength before attempting."
+    ],
+    "tips_de": [
+      "Lande mit leicht gebeugten Ellbogen, um den Aufprall abzufedern.",
+      "Stelle sicher, dass du über genug Oberkörperkraft verfügst, bevor du es versuchst."
+    ],
+    "tips_es": [
+      "Aterriza con los codos ligeramente flexionados para absorber el impacto.",
+      "Asegúrate de tener suficiente fuerza en la parte superior del cuerpo antes de intentarlo."
+    ],
+    "met": 7,
+    "images": {
+      "flat": {
+        "start": "images/flat/clap-push-ups-start.webp",
+        "peak": "images/flat/clap-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "close-grip-push-ups",
+    "name_en": "Close Grip Push Ups",
+    "name_de": "Enger Liegestütz",
+    "name_es": "Flexiones con Agarre Cerrado",
+    "description_en": "A push-up variation with hands placed close together to emphasize the triceps.",
+    "description_de": "Eine Liegestütz-Variante mit eng zusammenstehenden Händen, die den Trizeps betont.",
+    "description_es": "Una variante de flexión con las manos juntas que enfatiza el tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Assume a push-up position with hands directly under your shoulders.",
+      "Keep your elbows tucked close to your ribs.",
+      "Lower your chest toward the floor.",
+      "Press back up to the starting position.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Nimm eine Liegestützposition mit den Händen direkt unter den Schultern ein.",
+      "Halte die Ellbogen eng am Rumpf.",
+      "Senke die Brust in Richtung Boden ab.",
+      "Drücke dich zurück in die Ausgangsposition.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Adopta una posición de flexión con las manos directamente bajo los hombros.",
+      "Mantén los codos pegados a las costillas.",
+      "Baja el pecho hacia el suelo.",
+      "Empuja de vuelta a la posición inicial.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your elbows tracking backward, not flared out.",
+      "Maintain a rigid plank position throughout.",
+      "Slow the descent for greater triceps activation."
+    ],
+    "tips_de": [
+      "Führe die Ellbogen nach hinten, nicht seitlich abgespreizt.",
+      "Halte den Rumpf während der gesamten Bewegung stabil.",
+      "Senke langsam ab für mehr Trizeps-Aktivierung."
+    ],
+    "tips_es": [
+      "Lleva los codos hacia atrás, no hacia los lados.",
+      "Mantén el cuerpo rígido como una tabla durante todo el movimiento.",
+      "Baja despacio para mayor activación del tríceps."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/close-grip-push-ups-start.webp",
+        "peak": "images/flat/close-grip-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "db-bench-press",
+    "name_en": "Dumbbell Bench Press",
+    "name_de": "Kurzhantel-Bankdrücken",
+    "name_es": "Press de Banca con Mancuernas",
+    "description_en": "A compound chest exercise using dumbbells, allowing a greater range of motion than the barbell bench press.",
+    "description_de": "Eine Grundübung für die Brust mit Kurzhanteln, die einen größeren Bewegungsradius als das Langhantel-Bankdrücken ermöglicht.",
+    "description_es": "Un ejercicio compuesto de pecho con mancuernas que permite mayor rango de movimiento que el press de banca con barra.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a flat bench holding a dumbbell in each hand at chest level.",
+      "Press the dumbbells up until your arms are fully extended.",
+      "Lower them slowly back to the start.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine flache Bank mit je einer Kurzhantel auf Brusthöhe.",
+      "Drücke die Kurzhanteln nach oben, bis die Arme vollständig gestreckt sind.",
+      "Senke sie langsam zurück zum Start.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco plano sosteniendo una mancuerna en cada mano a la altura del pecho.",
+      "Empuja las mancuernas hacia arriba hasta extender completamente los brazos.",
+      "Bájalas lentamente hasta la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep wrists neutral throughout.",
+      "Squeeze your chest at the top of the movement."
+    ],
+    "tips_de": [
+      "Halte die Handgelenke neutral.",
+      "Spanne die Brust oben in der Bewegung an."
+    ],
+    "tips_es": [
+      "Mantén las muñecas neutras durante todo el ejercicio.",
+      "Aprieta el pecho en la parte superior del movimiento."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/db-bench-press-start.webp",
+        "peak": "images/flat/db-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "db-fly",
+    "name_en": "Dumbbell Fly",
+    "name_de": "Kurzhantel-Flys",
+    "name_es": "Aperturas con Mancuernas",
+    "description_en": "An isolation exercise that stretches and contracts the pectorals through a wide arc of motion.",
+    "description_de": "Eine Isolationsübung, die den Brustmuskel durch einen weiten Bewegungsbogen dehnt und kontrahiert.",
+    "description_es": "Un ejercicio de aislamiento que estira y contrae el pectoral a través de un amplio arco de movimiento.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "chest-fly",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie flat on a bench with dumbbells held above your chest, palms facing each other.",
+      "With a slight bend in the elbows, lower the dumbbells out to the sides.",
+      "Return to the start by squeezing your chest.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine Bank, Kurzhanteln über der Brust, Handflächen zueinander.",
+      "Senke die Kurzhanteln mit leicht gebeugten Ellbogen seitlich nach unten.",
+      "Kehre zum Start zurück, indem du die Brust anspannst.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco con las mancuernas sobre el pecho y las palmas mirándose entre sí.",
+      "Con una ligera flexión de codos, baja las mancuernas hacia los lados.",
+      "Regresa a la posición inicial apretando el pecho.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep a consistent bend in the elbows throughout.",
+      "Do not let the dumbbells go too low."
+    ],
+    "tips_de": [
+      "Behalte die Ellbogenbeugung während der gesamten Bewegung bei.",
+      "Lass die Kurzhanteln nicht zu weit nach unten sinken."
+    ],
+    "tips_es": [
+      "Mantén una flexión constante en los codos durante todo el ejercicio.",
+      "No bajes demasiado las mancuernas."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/db-fly-start.webp",
+        "peak": "images/flat/db-fly-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "db-pullover",
+    "name_en": "Dumbbell Pullover",
+    "name_de": "Kurzhantel-Pullover",
+    "name_es": "Pullover con Mancuerna",
+    "description_en": "A compound movement targeting the lats and chest with a stretching motion.",
+    "description_de": "Eine Grundübung für Latissimus und Brust mit einer Dehnungsbewegung.",
+    "description_es": "Un movimiento compuesto que trabaja los dorsales y el pecho con un movimiento de estiramiento.",
+    "category": "strength",
+    "force_type": "pull",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "latissimus_dorsi",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "pullover",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a flat bench with a dumbbell held above your chest, arms extended.",
+      "Lower the dumbbell behind your head in an arc, keeping slight bend in elbows.",
+      "Stretch until you feel tension in your lats and chest.",
+      "Pull the dumbbell back to the starting position.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine flache Bank, halte eine Kurzhantel über der Brust, Arme gestreckt.",
+      "Senke die Kurzhantel in einem Bogen hinter den Kopf, leichte Ellbogenbeugung beibehalten.",
+      "Strecke, bis du Spannung in Latissimus und Brust spürst.",
+      "Ziehe die Kurzhantel zurück zur Ausgangsposition.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco plano con una mancuerna sobre el pecho y los brazos extendidos.",
+      "Baja la mancuerna detrás de la cabeza en arco, manteniendo una ligera flexión de codos.",
+      "Estira hasta sentir tensión en los dorsales y el pecho.",
+      "Tira de la mancuerna de vuelta a la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Cup one end of the dumbbell with both hands for a secure grip.",
+      "Avoid excessive arching in your lower back during the stretch.",
+      "Lower only as far as your shoulder mobility comfortably allows."
+    ],
+    "tips_de": [
+      "Verändere den Ellenbogenwinkel nicht, die Bewegung kommt aus den Schultern.",
+      "Geh nur so tief, wie deine Schulterbeweglichkeit es erlaubt.",
+      "Halte den unteren Rücken auf der Bank, statt ins Hohlkreuz auszuweichen."
+    ],
+    "tips_es": [
+      "Baja la mancuerna solo hasta donde el hombro lo permita.",
+      "Evita arquear la zona lumbar en la fase de estiramiento.",
+      "Mantén la flexión de los codos constante durante todo el arco."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/db-pullover-start.webp",
+        "peak": "images/flat/db-pullover-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "db-svend-press",
+    "name_en": "Dumbbell Svend Press",
+    "name_de": "Kurzhantel Svend Press",
+    "name_es": "Press Svend con Mancuernas",
+    "description_en": "A standing chest exercise pressing two dumbbells together in front of the body, isolating the inner chest.",
+    "description_de": "Eine stehende Brustübung, bei der zwei Kurzhanteln vor dem Körper zusammengedrückt werden, isoliert die innere Brust.",
+    "description_es": "Un ejercicio de pecho de pie presionando dos mancuernas entre sí frente al cuerpo, aísla el pecho interno.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "chest_focus"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Stand and press two dumbbells together horizontally at chest height.",
+      "Maintain the inward squeeze on the dumbbells throughout.",
+      "Press the dumbbells forward to full arm extension.",
+      "Pull them back to the chest under control.",
+      "Repeat for the prescribed reps."
+    ],
+    "instructions_de": [
+      "Stehe und drücke zwei Kurzhanteln horizontal vor der Brust zusammen.",
+      "Halte den inneren Druck auf die Hanteln durchgehend.",
+      "Presse die Hanteln nach vorn in volle Armstreckung.",
+      "Ziehe sie kontrolliert zurück zur Brust.",
+      "Wiederhole für die vorgegebene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "De pie, junta dos mancuernas horizontalmente a la altura del pecho.",
+      "Mantén la presión hacia adentro sobre las mancuernas todo el tiempo.",
+      "Empuja las mancuernas al frente hasta extender los brazos.",
+      "Tíralas de regreso al pecho con control.",
+      "Repite el número de repeticiones indicado."
+    ],
+    "tips_en": [
+      "The squeeze on the dumbbells is what makes the exercise — do not let them separate.",
+      "Use a light load — pec activation is the goal, not load.",
+      "Keep the elbows slightly bent at the lockout."
+    ],
+    "tips_de": [
+      "Der Druck auf die Hanteln macht die Übung — sie dürfen sich nicht trennen.",
+      "Nutze leichte Last — die Brustaktivierung ist das Ziel, nicht das Gewicht.",
+      "Halte die Ellenbogen am Lockout leicht gebeugt."
+    ],
+    "tips_es": [
+      "La presión entre las mancuernas hace el ejercicio — no dejes que se separen.",
+      "Usa carga ligera — el objetivo es activar el pecho, no levantar mucho.",
+      "Mantén los codos ligeramente flexionados en el lockout."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/db-svend-press-start.webp",
+        "peak": "images/flat/db-svend-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "decline-bench-press",
+    "name_en": "Decline Bench Press",
+    "name_de": "Negativbankdrücken",
+    "name_es": "Press de Banca Declinado",
+    "description_en": "A compound chest press on a decline bench targeting the lower pectorals.",
+    "description_de": "Eine Druckübung auf der Negativbank für die untere Brust.",
+    "description_es": "Un press de pecho compuesto en banco declinado que trabaja el pectoral inferior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set the bench to a decline angle. Lie down and secure your feet.",
+      "Unrack the barbell and lower it to your lower chest.",
+      "Press back up to the start.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Bank auf Negativ. Leg dich hin und sichere die Füße.",
+      "Nimm die Langhantel ab und senke sie zur Unterseite der Brust.",
+      "Drücke zurück zum Start.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Ajusta el banco en declinación. Túmbate y asegura los pies.",
+      "Descuelga la barra y bájala hasta el pecho inferior.",
+      "Vuelve a empujar hasta la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep your back flat on the bench.",
+      "Use a spotter when working with heavier loads."
+    ],
+    "tips_de": [
+      "Halte den Rücken flach auf der Bank.",
+      "Nutze einen Sicherungspartner bei schweren Gewichten."
+    ],
+    "tips_es": [
+      "Mantén la espalda plana sobre el banco.",
+      "Usa un ayudante cuando trabajes con cargas más pesadas."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/decline-bench-press-start.webp",
+        "peak": "images/flat/decline-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "decline-bench-press-barbell",
+    "name_en": "Decline Barbell Bench Press",
+    "name_de": "Negativbank-Langhanteldrücken",
+    "name_es": "Press de Banca Declinado con Barra",
+    "description_en": "A barbell compound press on a decline bench emphasizing the lower chest.",
+    "description_de": "Langhantel-Druckübung auf der Negativbank mit Betonung der unteren Brust.",
+    "description_es": "Un press compuesto con barra en banco declinado que enfatiza el pecho inferior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set the bench to a decline angle. Lie down and secure your feet.",
+      "Grip the bar slightly wider than shoulder-width.",
+      "Lower the bar to your lower chest, then press back up.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Bank auf Negativ. Leg dich hin und sichere die Füße.",
+      "Greife die Stange etwas breiter als schulterbreit.",
+      "Senke die Stange zur Unterseite der Brust, dann zurückdrücken.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Ajusta el banco en declinación. Túmbate y asegura los pies.",
+      "Agarra la barra ligeramente más ancha que la anchura de los hombros.",
+      "Baja la barra hasta el pecho inferior y luego empuja hacia arriba.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Control the descent.",
+      "Keep elbows at about 45 degrees to the torso."
+    ],
+    "tips_de": [
+      "Senke kontrolliert ab.",
+      "Ellbogen ca. 45 Grad zum Rumpf halten."
+    ],
+    "tips_es": [
+      "Controla el descenso.",
+      "Mantén los codos a unos 45 grados respecto al torso."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/decline-bench-press-barbell-start.webp",
+        "peak": "images/flat/decline-bench-press-barbell-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "decline-bench-press-ez-bar",
+    "name_en": "Decline EZ-Bar Bench Press",
+    "name_de": "Negativbank-SZ-Stangen-Drücken",
+    "name_es": "Press de Banca Declinado con Barra Z",
+    "description_en": "A decline press using an EZ-bar for a wrist-friendly grip targeting the lower chest.",
+    "description_de": "Negativbank-Drücken mit SZ-Stange für handgelenkschonendes Training der unteren Brust.",
+    "description_es": "Un press declinado con barra Z y agarre cómodo para las muñecas que trabaja el pecho inferior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "ez_bar",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set the bench to a decline. Secure your feet and grip the EZ-bar.",
+      "Lower the bar to your lower chest.",
+      "Press back up explosively.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Bank auf Negativ. Füße sichern und SZ-Stange greifen.",
+      "Senke die Stange zur Unterseite der Brust.",
+      "Explosiv zurückdrücken.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Ajusta el banco en declinación. Asegura los pies y agarra la barra Z.",
+      "Baja la barra hasta el pecho inferior.",
+      "Empuja hacia arriba de forma explosiva.",
+      "Repite."
+    ],
+    "tips_en": [
+      "The angled grip reduces wrist strain.",
+      "Keep your core braced."
+    ],
+    "tips_de": [
+      "Der angewinkelte Griff reduziert die Handgelenkbelastung.",
+      "Rumpf angespannt halten."
+    ],
+    "tips_es": [
+      "El agarre angulado reduce la tensión en las muñecas.",
+      "Mantén el core contraído."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/decline-bench-press-ez-bar-start.webp",
+        "peak": "images/flat/decline-bench-press-ez-bar-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "decline-db-fly",
+    "name_en": "Decline Dumbbell Fly",
+    "name_de": "Negativbank-Kurzhantel-Flys",
+    "name_es": "Aperturas con Mancuernas en Banco Declinado",
+    "description_en": "An isolation fly movement performed on a decline bench to emphasize the lower chest.",
+    "description_de": "Isolations-Flybewegung auf der Negativbank mit Betonung der unteren Brust.",
+    "description_es": "Un movimiento de apertura en banco declinado para enfatizar el pecho inferior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "chest-fly",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a decline bench holding dumbbells above your chest.",
+      "With a slight elbow bend, lower the dumbbells wide to each side.",
+      "Squeeze the chest to bring them back up.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Leg dich auf die Negativbank, Kurzhanteln über der Brust.",
+      "Senke die Kurzhanteln mit leichter Ellbogenbeugung weit zur Seite.",
+      "Drücke die Brust zusammen, um sie zurückzubringen.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco declinado sosteniendo mancuernas sobre el pecho.",
+      "Con una ligera flexión de codos, baja las mancuernas ampliamente hacia los lados.",
+      "Aprieta el pecho para subirlas de nuevo.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Do not fully lock out the elbows.",
+      "Focus on the stretch at the bottom."
+    ],
+    "tips_de": [
+      "Die Ellbogen nicht vollständig durchstrecken.",
+      "Fokus auf die Dehnung unten."
+    ],
+    "tips_es": [
+      "No extiendas completamente los codos.",
+      "Concéntrate en el estiramiento en la posición inferior."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/decline-db-fly-start.webp",
+        "peak": "images/flat/decline-db-fly-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "decline-push-up",
+    "name_en": "Decline Push-Up",
+    "name_de": "Negativer Push-Up",
+    "name_es": "Flexión Declinada",
+    "description_en": "A bodyweight push-up with feet elevated to increase upper chest and shoulder activation.",
+    "description_de": "Ein Push-Up mit erhöhten Füßen zur stärkeren Aktivierung der oberen Brust und Schultern.",
+    "description_es": "Una flexión con los pies elevados para aumentar la activación del pecho superior y los hombros.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "endurance"
+    ],
+    "tags": [
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Place your feet on an elevated surface and hands on the ground.",
+      "Lower your chest to the floor in a controlled manner.",
+      "Push back up to the start.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Füße auf eine erhöhte Fläche und die Hände auf den Boden.",
+      "Senke die Brust kontrolliert zum Boden.",
+      "Drücke zurück zum Start.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Coloca los pies en una superficie elevada y las manos en el suelo.",
+      "Baja el pecho hacia el suelo de forma controlada.",
+      "Vuelve a empujar hasta la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep your body in a straight line.",
+      "The higher the elevation, the more upper chest is targeted."
+    ],
+    "tips_de": [
+      "Halte den Körper in einer geraden Linie.",
+      "Je höher die Elevation, desto mehr wird die obere Brust beansprucht."
+    ],
+    "tips_es": [
+      "Mantén el cuerpo en línea recta.",
+      "Cuanto mayor sea la elevación, más se trabaja el pecho superior."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/decline-push-up-start.webp",
+        "peak": "images/flat/decline-push-up-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "deficit-push-ups",
+    "name_en": "Deficit Push Ups",
+    "name_de": "Defizit-Push-Ups",
+    "name_es": "Flexiones en Déficit",
+    "description_en": "A push-up variation with hands on raised supports, lowering the chest below hand level for a greater range of motion.",
+    "description_de": "Eine Liegestütz-Variante mit den Händen auf Erhöhungen, bei der die Brust unter Handniveau abgesenkt wird, um den Bewegungsweg zu vergrößern.",
+    "description_es": "Una flexión de brazos con las manos sobre soportes elevados, que aumenta el rango de movimiento y el estiramiento del pectoral.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Place your hands on two elevated surfaces like parallettes or blocks.",
+      "Assume a plank position with hands under your shoulders.",
+      "Lower your chest below the level of your hands.",
+      "Press back up to extend your arms.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Stelle die Hände auf zwei erhöhte Flächen wie Parallettes oder Blöcke.",
+      "Nimm die Plank-Position ein, Hände unter den Schultern.",
+      "Senke die Brust unter das Niveau der Hände.",
+      "Drücke zurück, um die Arme zu strecken.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Coloca las manos en dos superficies elevadas como parallettes o bloques.",
+      "Adopta la posición de plancha con las manos bajo los hombros.",
+      "Baja el pecho por debajo del nivel de las manos.",
+      "Empuja hacia arriba para extender los brazos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Avoid letting your hips sag during the deep stretch.",
+      "Work within a pain-free depth and increase it gradually.",
+      "Keep your elbows tracking back rather than flaring wide."
+    ],
+    "tips_de": [
+      "Senke dich nur so tief ab, wie deine Schultern schmerzfrei bleiben.",
+      "Halte den Körper in einer Linie, ohne die Hüfte durchhängen zu lassen.",
+      "Lass die Ellenbogen nicht weit nach außen wandern."
+    ],
+    "tips_es": [
+      "Baja solo hasta donde tus hombros toleren el estiramiento.",
+      "Mantén el cuerpo en línea recta, sin hundir la cadera.",
+      "Progresa desde las flexiones normales antes de añadir déficit."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/deficit-push-ups-start.webp",
+        "peak": "images/flat/deficit-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "diamond-push-ups",
+    "name_en": "Diamond Push Ups",
+    "name_de": "Diamant-Push-Ups",
+    "name_es": "Flexiones en Diamante",
+    "description_en": "A close-hand push-up with thumbs and index fingers forming a diamond, shifting the emphasis onto the triceps.",
+    "description_de": "Ein enger Liegestütz, bei dem Daumen und Zeigefinger eine Raute formen — verlagert die Belastung auf den Trizeps.",
+    "description_es": "Una flexión con las manos juntas formando un diamante con pulgares e índices, trasladando el énfasis a los tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Assume a push-up position with hands close together forming a diamond.",
+      "Keep your elbows tucked close to your sides.",
+      "Lower your chest toward your hands.",
+      "Press back up to extend your arms.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Nimm die Push-Up-Position ein, Hände eng zusammen und bilden ein Diamantmuster.",
+      "Halte die Ellbogen nah an den Seiten.",
+      "Senke die Brust zu den Händen.",
+      "Drücke zurück, um die Arme zu strecken.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Adopta la posición de flexión con las manos juntas formando un diamante.",
+      "Mantén los codos pegados a los costados.",
+      "Baja el pecho hacia las manos.",
+      "Empuja hacia arriba para extender los brazos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your elbows tracking back along your sides, not flared out.",
+      "Hold your body in a rigid straight line from head to heels.",
+      "Lower with control until your chest reaches your hands."
+    ],
+    "tips_de": [
+      "Führe die Ellbogen eng am Körper nach hinten, nicht nach außen.",
+      "Halte den Körper in einer festen geraden Linie von Kopf bis Fersen.",
+      "Senke dich kontrolliert ab, bis die Brust deine Hände erreicht."
+    ],
+    "tips_es": [
+      "Lleva los codos hacia atrás pegados a los costados, sin abrirlos.",
+      "Mantén el cuerpo en una línea recta y rígida de la cabeza a los talones.",
+      "Baja con control hasta que el pecho llegue a las manos."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/diamond-push-ups-start.webp",
+        "peak": "images/flat/diamond-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "dips",
+    "name_en": "Chest Dips",
+    "name_de": "Chest Dips",
+    "name_es": "Fondos para Pecho",
+    "description_en": "A compound bodyweight exercise targeting the lower chest and triceps.",
+    "description_de": "Eine zusammengesetzte Körpergewichtsübung für die untere Brust und den Trizeps.",
+    "description_es": "Un ejercicio compuesto de peso corporal que trabaja el pecho inferior y los tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "dip_station",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe"
+    ],
+    "variation_group": "dips",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Grip parallel dip bars and lift yourself to the top position with arms locked.",
+      "Lean your torso forward slightly.",
+      "Lower your body by bending your elbows until shoulders are below elbows.",
+      "Press back up to the starting position.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Greife die parallelen Dip-Stangen und hebe dich mit gestreckten Armen in die obere Position.",
+      "Lehne den Oberkörper leicht nach vorne.",
+      "Senke den Körper durch Beugen der Ellbogen, bis die Schultern unter den Ellbogen sind.",
+      "Drücke zurück in die Ausgangsposition.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Agarra las barras paralelas y súbete a la posición superior con los brazos extendidos.",
+      "Inclina el torso ligeramente hacia adelante.",
+      "Baja el cuerpo doblando los codos hasta que los hombros queden por debajo de los codos.",
+      "Vuelve a empujar hasta la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep your shoulders pulled down away from your ears.",
+      "Bend your knees and cross your ankles to minimize swinging.",
+      "Stop the descent if you feel pinching in your shoulders."
+    ],
+    "tips_de": [
+      "Senke dich kontrolliert ab, statt nach unten zu fallen.",
+      "Halte die Schultern aktiv weg von den Ohren.",
+      "Arbeite ohne Schwung aus den Beinen."
+    ],
+    "tips_es": [
+      "Acentúa la inclinación del torso si quieres más trabajo de pecho.",
+      "Detén la bajada si notas molestia en el hombro.",
+      "Evita encoger los hombros hacia las orejas al empujar."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/dips-start.webp",
+        "peak": "images/flat/dips-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "doorway-chest-stretch",
+    "name_en": "Doorway Chest Stretch",
+    "name_de": "Türrahmen-Brustdehnung",
+    "name_es": "Estiramiento de Pecho en el Marco",
+    "description_en": "An open-arm stretch that lengthens the chest and front shoulders by drawing the arms back.",
+    "description_de": "Eine Dehnung mit geöffneten Armen, die durch das Zurückführen der Arme Brust und vordere Schultern dehnt.",
+    "description_es": "Un estiramiento de brazos abiertos que alarga el pecho y los hombros frontales al llevar los brazos atrás.",
+    "category": "stretching",
+    "force_type": "static",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "mobility"
+    ],
+    "tags": [
+      "mobility",
+      "stretching"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Stand tall and raise your arms into a goalpost position.",
+      "Bend your elbows ninety degrees, forearms vertical.",
+      "Draw your elbows back and squeeze your shoulder blades.",
+      "Hold for 20 to 30 seconds, breathing steadily."
+    ],
+    "instructions_de": [
+      "Stehe aufrecht und hebe die Arme in eine Torpfosten-Position.",
+      "Beuge die Ellbogen um neunzig Grad, die Unterarme senkrecht.",
+      "Führe die Ellbogen zurück und ziehe die Schulterblätter zusammen.",
+      "Halte 20 bis 30 Sekunden und atme ruhig weiter."
+    ],
+    "instructions_es": [
+      "Párate erguido y sube los brazos en posición de portería.",
+      "Flexiona los codos noventa grados, antebrazos verticales.",
+      "Lleva los codos atrás y junta los omóplatos.",
+      "Mantén de 20 a 30 segundos, respirando de forma constante."
+    ],
+    "tips_en": [
+      "Keep your ribs down and avoid arching your back.",
+      "Stretch to mild tension, never to pain."
+    ],
+    "tips_de": [
+      "Halte die Rippen unten und vermeide ein Hohlkreuz.",
+      "Dehne bis zu leichter Spannung, nie bis zum Schmerz."
+    ],
+    "tips_es": [
+      "Mantén las costillas abajo y evita arquear la espalda.",
+      "Estira hasta una tensión leve, nunca hasta el dolor."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "main": "images/flat/doorway-chest-stretch-main.webp"
+      }
+    }
+  },
+  {
+    "id": "dumbbell-floor-press",
+    "name_en": "Dumbbell Floor Press",
+    "name_de": "Kurzhantel Floor Press",
+    "name_es": "Press de Suelo con Mancuernas",
+    "description_en": "A dumbbell press performed lying on the floor, restricting the range of motion for joint-friendly pressing.",
+    "description_de": "Ein Kurzhanteldrücken auf dem Boden, das den Bewegungsradius begrenzt und die Gelenke schont.",
+    "description_es": "Un press con mancuernas realizado tumbado en el suelo, que limita el rango de movimiento para un press más amigable con las articulaciones.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on the floor with a dumbbell in each hand at chest level.",
+      "Press the dumbbells upward until arms are extended.",
+      "Lower under control until elbows touch the floor.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Lege dich auf den Boden mit je einer Kurzhantel auf Brusthöhe.",
+      "Drücke die Kurzhanteln nach oben, bis die Arme gestreckt sind.",
+      "Senke kontrolliert, bis die Ellbogen den Boden berühren.",
+      "Wiederhole die Übung."
+    ],
+    "instructions_es": [
+      "Túmbate en el suelo con una mancuerna en cada mano a la altura del pecho.",
+      "Empuja las mancuernas hacia arriba hasta que los brazos queden extendidos.",
+      "Baja de forma controlada hasta que los codos toquen el suelo.",
+      "Repite."
+    ],
+    "tips_en": [
+      "The floor limits shoulder strain at the bottom.",
+      "Keep wrists stacked over elbows."
+    ],
+    "tips_de": [
+      "Der Boden begrenzt die Schulterbelastung am unteren Umkehrpunkt.",
+      "Handgelenke über Ellbogen halten."
+    ],
+    "tips_es": [
+      "El suelo limita la tensión en el hombro en la posición inferior.",
+      "Mantén las muñecas alineadas sobre los codos."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/dumbbell-floor-press-start.webp",
+        "peak": "images/flat/dumbbell-floor-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "ez-bar-bench-press",
+    "name_en": "EZ-Bar Bench Press",
+    "name_de": "Bankdrücken mit SZ-Stange",
+    "name_es": "Press de Banca con Barra Z",
+    "description_en": "A flat-bench chest press performed with an EZ bar, whose angled grips are easier on the wrists while still loading the pectorals, front delts, and triceps.",
+    "description_de": "Ein Bankdrücken auf der Flachbank mit einer SZ-Stange, deren abgewinkelte Griffe die Handgelenke schonen und dabei Brust, vordere Schultern und Trizeps trainieren.",
+    "description_es": "Un press de pecho en banco plano realizado con una barra Z, cuyos agarres angulados son más cómodos para las muñecas mientras trabajan el pectoral, los deltoides anteriores y los tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "ez_bar",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie flat on a bench with your feet planted on the floor, gripping the EZ bar's angled bends over your chest.",
+      "Unrack the bar and hold it over your lower chest with your arms extended.",
+      "Lower the bar under control toward your lower chest.",
+      "Press the bar back up to full arm extension.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Lege dich flach auf eine Bank, stelle die Füße fest auf den Boden und greife die abgewinkelten Biegungen der SZ-Stange über der Brust.",
+      "Hebe die Stange aus der Halterung und halte sie mit gestreckten Armen über der unteren Brust.",
+      "Senke die Stange kontrolliert zur unteren Brust ab.",
+      "Drücke die Stange wieder nach oben, bis die Arme vollständig gestreckt sind.",
+      "Wiederhole die Bewegung für die gewünschte Wiederholungszahl."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco plano con los pies apoyados en el suelo y agarra las curvas anguladas de la barra Z sobre el pecho.",
+      "Desengancha la barra y sostenla sobre la parte baja del pecho con los brazos extendidos.",
+      "Baja la barra de forma controlada hacia la parte baja del pecho.",
+      "Empuja la barra de nuevo hacia arriba hasta extender completamente los brazos.",
+      "Repite durante el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your feet flat on the floor and maintain a slight arch in your lower back for a stable base.",
+      "The EZ bar's angled grip is easier on the wrists than a straight barbell.",
+      "Lower the bar to your lower chest and keep your elbows tucked at roughly 45 degrees to protect the shoulders."
+    ],
+    "tips_de": [
+      "Halte die Füße flach auf dem Boden und ein leichtes Hohlkreuz für einen stabilen Stand.",
+      "Der abgewinkelte Griff der SZ-Stange ist handgelenkschonender als eine gerade Langhantel.",
+      "Senke die Stange zur unteren Brust und halte die Ellbogen in etwa 45 Grad angelegt, um die Schultern zu schonen."
+    ],
+    "tips_es": [
+      "Mantén los pies apoyados en el suelo y un ligero arco en la zona lumbar para una base estable.",
+      "El agarre angulado de la barra Z es más cómodo para las muñecas que una barra recta.",
+      "Baja la barra hacia la parte baja del pecho y mantén los codos a unos 45 grados para proteger los hombros."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/ez-bar-bench-press-start.webp",
+        "peak": "images/flat/ez-bar-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "fish-pose",
+    "name_en": "Fish Pose",
+    "name_de": "Fisch-Haltung",
+    "name_es": "Postura del Pez",
+    "description_en": "A supine backbend supported on the forearms with the chest lifted and the head tilted back, opening the front of the chest and the throat.",
+    "description_de": "Eine Rückbeuge in Rückenlage, auf den Unterarmen gestützt, mit angehobenem Brustkorb und zurückgeneigtem Kopf - öffnet Brust und Kehle.",
+    "description_es": "Una extensión boca arriba apoyada en los antebrazos, con el pecho elevado y la cabeza inclinada atrás, que abre la parte frontal del pecho y la garganta.",
+    "category": "stretching",
+    "force_type": "static",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "body_part": "chest",
+    "primary_muscles": [
+      "erector_spinae",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "hip_flexors"
+    ],
+    "goals": [
+      "mobility"
+    ],
+    "tags": [
+      "mobility",
+      "stretching"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Lie on your back with the legs straight and the arms alongside the body, palms down under the hips.",
+      "Press the forearms into the floor and lift the chest towards the ceiling.",
+      "Let the crown of the head rest lightly on the floor without putting weight through the neck.",
+      "Hold the position for the prescribed time, breathing into the upper chest.",
+      "Lift the head, then lower the back down."
+    ],
+    "instructions_de": [
+      "Leg dich auf den Rücken, die Beine gestreckt, die Arme am Körper, die Handflächen unter dem Gesäß.",
+      "Druck die Unterarme in den Boden und heb den Brustkorb Richtung Decke.",
+      "Lass den Scheitel leicht auf dem Boden ruhen, ohne Gewicht in den Nacken zu geben.",
+      "Halte die Position für die vorgegebene Zeit und atme in den oberen Brustkorb.",
+      "Heb den Kopf an und leg den Rücken ab."
+    ],
+    "instructions_es": [
+      "Túmbate boca arriba con las piernas estiradas y los brazos junto al cuerpo, las palmas bajo las caderas.",
+      "Presiona los antebrazos contra el suelo y eleva el pecho hacia el techo.",
+      "Deja que la coronilla apoye ligeramente en el suelo sin cargar peso en el cuello.",
+      "Mantén la posición durante el tiempo indicado, respirando hacia la parte alta del pecho.",
+      "Levanta la cabeza y baja la espalda al suelo."
+    ],
+    "tips_en": [
+      "Carry the weight in the forearms, not the head; the neck only guides the position.",
+      "Place a block lengthwise under the upper back if the floor version pinches.",
+      "Keep the legs active and the thighs rolling slightly inwards."
+    ],
+    "tips_de": [
+      "Das Gewicht liegt in den Unterarmen, nicht im Kopf - der Nacken führt die Position nur.",
+      "Leg einen Block längs unter den oberen Rücken, wenn die Bodenvariante zwickt.",
+      "Halte die Beine aktiv und die Oberschenkel leicht nach innen gedreht."
+    ],
+    "tips_es": [
+      "El peso va en los antebrazos, no en la cabeza; el cuello solo guía la posición.",
+      "Coloca un bloque a lo largo bajo la espalda alta si la versión en el suelo pincha.",
+      "Mantén las piernas activas y los muslos rotando ligeramente hacia dentro."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "main": "images/flat/fish-pose-main.webp"
+      }
+    }
+  },
+  {
+    "id": "floor-ez-bar-press",
+    "name_en": "Floor EZ-Bar Press",
+    "name_de": "Boden SZ-Stangen-Press",
+    "name_es": "Press en Suelo con Barra Z",
+    "description_en": "A floor press variation using an EZ-bar for a more comfortable wrist and elbow position.",
+    "description_de": "Eine Floor-Press-Variante mit der SZ-Stange für eine komfortablere Handgelenk- und Ellbogenposition.",
+    "description_es": "Una variación del press en suelo con barra Z para una posición más cómoda de muñecas y codos.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "ez_bar",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on the floor holding an EZ-bar over your chest.",
+      "Lower the bar until your elbows touch the floor.",
+      "Press back up to full extension.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Lege dich auf den Boden und halte die SZ-Stange über deiner Brust.",
+      "Senke die Stange ab, bis deine Ellbogen den Boden berühren.",
+      "Drücke zurück in die volle Streckung.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Túmbate en el suelo sujetando una barra Z sobre el pecho.",
+      "Baja la barra hasta que los codos toquen el suelo.",
+      "Empuja de vuelta hasta la extensión completa.",
+      "Repite."
+    ],
+    "tips_en": [
+      "The EZ-bar reduces wrist strain vs. a straight bar.",
+      "Keep your feet flat on the floor."
+    ],
+    "tips_de": [
+      "Die SZ-Stange reduziert die Handgelenkbelastung gegenüber einer geraden Stange.",
+      "Halte die Füße flach auf dem Boden."
+    ],
+    "tips_es": [
+      "La barra Z reduce la tensión en las muñecas en comparación con una barra recta.",
+      "Mantén los pies planos sobre el suelo."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/floor-ez-bar-press-start.webp",
+        "peak": "images/flat/floor-ez-bar-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "floor-press",
+    "name_en": "Floor Press",
+    "name_de": "Floor Press",
+    "name_es": "Press en Suelo",
+    "description_en": "A barbell pressing movement performed on the floor, limiting range of motion and taking the lower body out of the equation.",
+    "description_de": "Eine Langhantel-Drückbewegung auf dem Boden, die die Bewegungsamplitude begrenzt und den Unterkörper ausschließt.",
+    "description_es": "Un movimiento de press con barra realizado en el suelo, limitando el rango de movimiento y eliminando la participación del tren inferior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on the floor and position yourself under a barbell in a rack.",
+      "Lower the barbell to your chest until elbows touch the floor.",
+      "Press back up to lockout.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Lege dich auf den Boden und positioniere dich unter einer Langhantel im Rack.",
+      "Senke die Langhantel zur Brust ab, bis die Ellbogen den Boden berühren.",
+      "Drücke zurück bis zum Lockout.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Túmbate en el suelo y colócate bajo una barra en el rack.",
+      "Baja la barra hasta el pecho hasta que los codos toquen el suelo.",
+      "Empuja de vuelta hasta el bloqueo.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Elbows touching the floor provides a natural stopping point.",
+      "Useful for addressing lockout weakness."
+    ],
+    "tips_de": [
+      "Die Ellbogen auf dem Boden bilden einen natürlichen Stopppunkt.",
+      "Nützlich für die Verbesserung der Lockout-Schwäche."
+    ],
+    "tips_es": [
+      "El contacto de los codos con el suelo proporciona un punto de parada natural.",
+      "Útil para trabajar la debilidad en la fase final de extensión."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/floor-press-start.webp",
+        "peak": "images/flat/floor-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "incline-bench-ez-bar-press",
+    "name_en": "Incline EZ-Bar Bench Press",
+    "name_de": "Schrägbankdrücken mit SZ-Stange",
+    "name_es": "Press en banco inclinado con barra Z",
+    "description_en": "An incline press with an EZ-bar targeting the upper chest with a joint-friendly grip.",
+    "description_de": "Schrägbankdrücken mit der SZ-Stange für den oberen Brustbereich – gelenkschonender Griff.",
+    "description_es": "Un press en banco inclinado con barra Z que trabaja la parte superior del pecho con un agarre cómodo para las articulaciones.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "ez_bar",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set bench to 30–45 degrees. Grip the EZ-bar with hands on the angled sections.",
+      "Lower the bar to your upper chest.",
+      "Press back up to full extension.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Bank auf 30–45 Grad. Greife die SZ-Stange an den angewinkelten Abschnitten.",
+      "Senke die Stange zur oberen Brust.",
+      "Drücke sie zurück in die Streckung.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Ajusta el banco a 30–45 grados. Agarra la barra Z con las manos en las secciones anguladas.",
+      "Baja la barra hasta la parte superior del pecho.",
+      "Empuja de vuelta hasta la extensión completa.",
+      "Repite."
+    ],
+    "tips_en": [
+      "The incline shifts emphasis to the upper pectorals.",
+      "Control the descent to avoid shoulder strain."
+    ],
+    "tips_de": [
+      "Die Neigung verlagert den Fokus auf den oberen Pectoralis.",
+      "Kontrollierte Abwärtsbewegung, um die Schultern zu schonen."
+    ],
+    "tips_es": [
+      "La inclinación desplaza el énfasis hacia la parte superior del pectoral.",
+      "Controla el descenso para evitar tensión en los hombros."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/incline-bench-ez-bar-press-start.webp",
+        "peak": "images/flat/incline-bench-ez-bar-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "incline-bench-press",
+    "name_en": "Incline Barbell Bench Press",
+    "name_de": "Schrägbankdrücken mit Langhantel",
+    "name_es": "Press en banco inclinado con barra",
+    "description_en": "A barbell pressing movement on an incline bench targeting the upper chest.",
+    "description_de": "Langhanteldrücken auf der Schrägbank mit Fokus auf den oberen Brustbereich.",
+    "description_es": "Un movimiento de press con barra en banco inclinado que trabaja la parte superior del pecho.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on an incline bench set to 30-45 degrees.",
+      "Grip the bar slightly wider than shoulder-width and unrack.",
+      "Lower the bar to your upper chest.",
+      "Press the bar back up to full extension.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine Schrägbank, eingestellt auf 30–45 Grad.",
+      "Greife die Stange etwas schulterbreiter und nimm sie aus der Ablage.",
+      "Senke die Stange zur oberen Brust.",
+      "Drücke die Stange zurück in die volle Streckung.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Acuéstate en un banco inclinado a 30-45 grados.",
+      "Agarra la barra ligeramente más ancha que los hombros y desrackea.",
+      "Baja la barra hasta la parte superior del pecho.",
+      "Empuja la barra de vuelta hasta la extensión completa.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep your shoulder blades pinched together against the bench.",
+      "Lower the bar without bouncing it off your chest.",
+      "Keep your feet planted and your glutes on the bench."
+    ],
+    "tips_de": [
+      "Ziehe die Schulterblätter zusammen und halte sie fest auf der Bank.",
+      "Senke die Stange kontrolliert, ohne sie auf der Brust abprallen zu lassen.",
+      "Lass dich bei schweren Sätzen von einem Trainingspartner absichern."
+    ],
+    "tips_es": [
+      "Retrae las escápulas y mantenlas pegadas al banco.",
+      "Evita rebotar la barra en el pecho.",
+      "Pide asistencia cuando trabajes con cargas pesadas."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/incline-bench-press-start.webp",
+        "peak": "images/flat/incline-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "incline-db-press",
+    "name_en": "Incline Dumbbell Press",
+    "name_de": "Schrägbankdrücken mit Kurzhanteln",
+    "name_es": "Press con mancuernas en banco inclinado",
+    "description_en": "An incline pressing movement emphasizing the upper chest.",
+    "description_de": "Schrägbankdrücken mit Kurzhanteln, Schwerpunkt auf dem oberen Brustbereich.",
+    "description_es": "Un movimiento de press en banco inclinado que enfatiza la parte superior del pecho.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set bench to 30-degree incline and sit back with dumbbells at shoulder level.",
+      "Press dumbbells up and together until arms are fully extended.",
+      "Lower dumbbells back to shoulder level with control.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Bank auf 30 Grad, setz dich zurück mit Kurzhanteln auf Schulterhöhe.",
+      "Drücke die Kurzhanteln nach oben zusammen, bis die Arme gestreckt sind.",
+      "Senke sie kontrolliert zurück auf Schulterhöhe.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Ajusta el banco a 30 grados de inclinación y siéntate con las mancuernas a la altura de los hombros.",
+      "Empuja las mancuernas hacia arriba y juntas hasta que los brazos estén completamente extendidos.",
+      "Baja las mancuernas de vuelta a la altura de los hombros con control.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep your wrists stacked directly over your elbows.",
+      "Press up without banging the dumbbells together at the top.",
+      "Keep your shoulder blades pulled back against the bench."
+    ],
+    "tips_de": [
+      "Halte die Füße fest am Boden und den Rücken stabil an der Bank.",
+      "Senke die Hanteln so weit, wie es deine Schultern schmerzfrei erlauben.",
+      "Bewege beide Hanteln gleichmäßig und im selben Tempo."
+    ],
+    "tips_es": [
+      "Mantén los pies firmes en el suelo y las escápulas retraídas.",
+      "Evita chocar las mancuernas en la parte alta.",
+      "Baja hasta sentir un estiramiento suave en el pecho."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/incline-db-press-start.webp",
+        "peak": "images/flat/incline-db-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "incline-dumbbell-fly",
+    "name_en": "Incline Dumbbell Fly",
+    "name_de": "Schrägbank-Kurzhantelflys",
+    "name_es": "Apertura con mancuernas en banco inclinado",
+    "description_en": "An incline isolation exercise opening dumbbells in a wide arc, stretching and targeting the upper chest.",
+    "description_de": "Eine Isolationsübung auf der Schrägbank, bei der du Kurzhanteln in einem weiten Bogen öffnest und die obere Brust dehnst und trainierst.",
+    "description_es": "Un ejercicio de aislamiento en banco inclinado que abre las mancuernas en un arco amplio, estirando y trabajando el pecho superior.",
+    "category": "strength",
+    "force_type": "pull",
+    "mechanic": "isolation",
+    "difficulty": "intermediate",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "biceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "chest-fly",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie back on an incline bench holding dumbbells above your chest.",
+      "Press the dumbbells up with palms facing each other.",
+      "Maintain a slight bend in your elbows throughout.",
+      "Lower the dumbbells in a wide arc until you feel a chest stretch.",
+      "Squeeze your chest to bring the dumbbells back together.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine Schrägbank und halte Kurzhanteln über der Brust.",
+      "Drücke die Kurzhanteln hoch, Handflächen zueinander.",
+      "Behalte eine leichte Ellbogenbeugung bei.",
+      "Senke die Kurzhanteln in einem weiten Bogen, bis du eine Dehnung in der Brust spürst.",
+      "Spanne die Brustmuskeln an, um die Kurzhanteln wieder zusammenzuführen.",
+      "Wiederhole die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Acuéstate en un banco inclinado con mancuernas sobre el pecho.",
+      "Sube las mancuernas con las palmas enfrentadas.",
+      "Mantén una ligera flexión en los codos durante todo el movimiento.",
+      "Baja las mancuernas en un arco amplio hasta sentir el estiramiento del pecho.",
+      "Aprieta el pecho para juntar las mancuernas de nuevo.",
+      "Repite el número deseado de repeticiones."
+    ],
+    "tips_en": [
+      "Keep a fixed slight bend in your elbows throughout.",
+      "Lower only as far as a comfortable chest stretch allows.",
+      "Squeeze your chest to bring the dumbbells back together."
+    ],
+    "tips_de": [
+      "Halte die Ellbogen durchgehend leicht und unverändert gebeugt.",
+      "Senke nur so weit, wie es eine angenehme Brustdehnung zulässt.",
+      "Spanne die Brust an, um die Kurzhanteln wieder zusammenzuführen."
+    ],
+    "tips_es": [
+      "Mantén una ligera flexión fija en los codos en todo momento.",
+      "Baja solo hasta donde permita un estiramiento cómodo del pecho.",
+      "Aprieta el pecho para volver a juntar las mancuernas."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/incline-dumbbell-fly-start.webp",
+        "peak": "images/flat/incline-dumbbell-fly-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "incline-push-ups",
+    "name_en": "Incline Push-Up",
+    "name_de": "Incline Push-Up",
+    "name_es": "Push-up inclinado",
+    "description_en": "A beginner-friendly push-up variation with hands elevated on a bench or step.",
+    "description_de": "Eine einsteigerfreundliche Push-Up-Variante mit erhöhten Händen auf einer Bank oder Stufe.",
+    "description_es": "Una variación del push-up apta para principiantes con las manos elevadas sobre un banco o escalón.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "endurance"
+    ],
+    "tags": [
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Place your hands on a bench or elevated surface, shoulder-width apart.",
+      "Extend your legs behind you into a plank position.",
+      "Lower your chest toward the bench by bending your elbows.",
+      "Push back up to the starting position.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stelle die Hände schulterbreit auf eine Bank oder erhöhte Fläche.",
+      "Strecke die Beine in eine Plank-Position.",
+      "Senke die Brust zur Bank, indem du die Ellbogen beugst.",
+      "Drücke zurück in die Ausgangsposition.",
+      "Wiederholen."
+    ],
+    "instructions_es": [
+      "Coloca las manos sobre un banco o superficie elevada, a la anchura de los hombros.",
+      "Extiende las piernas hacia atrás en posición de plancha.",
+      "Baja el pecho hacia el banco flexionando los codos.",
+      "Empuja de vuelta a la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Check that the elevated surface is stable before starting.",
+      "Keep your elbows tucked rather than flared out wide.",
+      "Progress to a lower surface as you get stronger."
+    ],
+    "tips_de": [
+      "Spanne Rumpf und Gesäß an, damit die Hüfte nicht durchhängt.",
+      "Führe die Ellbogen leicht nach hinten statt weit nach außen.",
+      "Nutze eine niedrigere Erhöhung, sobald du stärker wirst."
+    ],
+    "tips_es": [
+      "Aprieta el abdomen para que la cadera no se hunda.",
+      "Cuanto más alta la superficie, más fácil el ejercicio.",
+      "Asegúrate de que el banco no se mueva antes de empezar."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/incline-push-ups-start.webp",
+        "peak": "images/flat/incline-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "kettlebell-floor-press",
+    "name_en": "Kettlebell Floor Press",
+    "name_de": "Kettlebell Floor Press",
+    "name_es": "Press de suelo con pesas rusas",
+    "description_en": "A two-arm chest press performed lying on the floor with a kettlebell in each hand. The floor caps the ROM (triceps hit the floor before full stretch), making it shoulder-friendly and a great home option.",
+    "description_de": "Brustdrücken auf dem Boden liegend mit je einem Kettlebell in beiden Händen. Der Boden begrenzt den Bewegungsradius (Trizeps trifft den Boden vor der vollen Dehnung) – schulterfreundlich und ideal für zuhause.",
+    "description_es": "Un press de pecho con dos brazos realizado tumbado en el suelo con una pesa rusa en cada mano. El suelo limita el rango de movimiento (los tríceps tocan el suelo antes del estiramiento completo), haciéndolo amigable para los hombros y una excelente opción en casa.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "kettlebell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day"
+    ],
+    "variation_group": "floor-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on your back on the floor with knees bent, feet flat.",
+      "Hold a kettlebell in each hand at the chest, bells resting on the outer forearms.",
+      "Press both kettlebells straight up until the arms are fully extended.",
+      "Lower under control until the triceps touch the floor — do not bounce.",
+      "Repeat for the recommended number of repetitions."
+    ],
+    "instructions_de": [
+      "Leg dich auf den Rücken, Knie gebeugt, Füße flach auf dem Boden.",
+      "Halte je ein Kettlebell in beiden Händen an der Brust, Glocken auf den Unterarmen außen.",
+      "Drücke beide Kettlebells senkrecht nach oben, bis die Arme gestreckt sind.",
+      "Kontrolliert absenken, bis der Trizeps den Boden berührt – nicht abprallen.",
+      "Wiederhole die empfohlene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Acuéstate boca arriba en el suelo con las rodillas flexionadas y los pies apoyados.",
+      "Sostén una pesa rusa en cada mano a la altura del pecho, con las campanas apoyadas en el antebrazo externo.",
+      "Empuja ambas pesas rusas hacia arriba hasta que los brazos estén completamente extendidos.",
+      "Baja con control hasta que los tríceps toquen el suelo — no rebotes.",
+      "Repite el número recomendado de repeticiones."
+    ],
+    "tips_en": [
+      "Elbows stay about 45 degrees from the torso; do not flare.",
+      "The grip matters: keep the bells stable against the outside of the forearms.",
+      "The floor limits ROM by design — this is the feature, not the bug."
+    ],
+    "tips_de": [
+      "Ellbogen ca. 45 Grad vom Körper – nicht ausflären.",
+      "Griff sichern: Glocken stabil auf der Außenseite der Unterarme.",
+      "Der Boden begrenzt den Bewegungsradius bewusst – das ist gewollt."
+    ],
+    "tips_es": [
+      "Los codos se mantienen a unos 45 grados del torso; no los abras.",
+      "El agarre importa: mantén las campanas estables contra el exterior de los antebrazos.",
+      "El suelo limita el rango de movimiento por diseño — esta es la ventaja, no el problema."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/kettlebell-floor-press-start.webp",
+        "peak": "images/flat/kettlebell-floor-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "kettlebell-svend-press",
+    "name_en": "Kettlebell Svend Press",
+    "name_de": "Kettlebell Svend Press",
+    "name_es": "Press Svend con Kettlebells",
+    "description_en": "A standing chest exercise pressing two kettlebells together at the bells, isolating the inner chest.",
+    "description_de": "Eine stehende Brustübung, bei der zwei Kettlebells an den Kugeln zusammengedrückt werden, isoliert die innere Brust.",
+    "description_es": "Un ejercicio de pecho de pie presionando dos kettlebells unidas por las bolas, aísla el pecho interno.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "kettlebell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "chest_focus"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Stand and press two kettlebells together by squeezing the bells at chest height.",
+      "Hold the kettlebells horizontal — bells touching, handles outward.",
+      "Press the kettlebells forward to full arm extension.",
+      "Pull them back to the chest under control.",
+      "Repeat for the prescribed reps."
+    ],
+    "instructions_de": [
+      "Stehe und drücke zwei Kettlebells an den Kugeln auf Brusthöhe zusammen.",
+      "Halte die Kettlebells waagrecht — Kugeln aneinander, Griffe nach außen.",
+      "Presse die Kettlebells nach vorn in volle Armstreckung.",
+      "Ziehe sie kontrolliert zurück zur Brust.",
+      "Wiederhole für die vorgegebene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "De pie, junta dos kettlebells por las bolas a la altura del pecho.",
+      "Mantén las kettlebells horizontales — bolas tocándose, asas hacia afuera.",
+      "Empuja las kettlebells al frente hasta extender los brazos.",
+      "Tíralas de regreso al pecho con control.",
+      "Repite el número de repeticiones indicado."
+    ],
+    "tips_en": [
+      "The squeeze on the bells is what makes the exercise.",
+      "Use very light kettlebells — the awkward grip dictates the load.",
+      "Keep the elbows slightly bent at the lockout."
+    ],
+    "tips_de": [
+      "Der Druck an den Kugeln macht die Übung.",
+      "Nutze sehr leichte Kettlebells — der ungewöhnliche Griff bestimmt die Last.",
+      "Halte die Ellenbogen am Lockout leicht gebeugt."
+    ],
+    "tips_es": [
+      "La presión entre las bolas hace el ejercicio.",
+      "Usa kettlebells muy ligeras — el agarre incómodo dicta la carga.",
+      "Mantén los codos ligeramente flexionados en el lockout."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/kettlebell-svend-press-start.webp",
+        "peak": "images/flat/kettlebell-svend-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "knee-push-ups",
+    "name_en": "Knee Push Ups",
+    "name_de": "Knie Push-Up",
+    "name_es": "Push-Up en Rodillas",
+    "description_en": "A beginner-friendly push-up variation performed from the knees, reducing bodyweight load while building chest and triceps strength.",
+    "description_de": "Eine einsteigerfreundliche Liegestütz-Variante mit aufgesetzten Knien, die Brust, vordere Schultern und Trizeps trainiert.",
+    "description_es": "Una variante de flexión apta para principiantes, con las rodillas apoyadas en el suelo para reducir la carga sobre el tren superior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "rectus_abdominis",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Start in a push-up position with your knees on the floor.",
+      "Place your hands shoulder-width apart on the ground.",
+      "Keep your body in a straight line from knees to shoulders.",
+      "Lower your chest toward the floor by bending your elbows.",
+      "Press through your hands to return to the starting position.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Nimm die Push-Up-Position ein, mit Knien auf dem Boden.",
+      "Platziere die Hände schulterbreit auf dem Boden.",
+      "Halte den Körper in einer geraden Linie von den Knien bis zu den Schultern.",
+      "Senke die Brust zum Boden, indem du die Ellbogen beugst.",
+      "Drücke durch die Hände zurück in die Ausgangsposition.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Comienza en posición de push-up con las rodillas en el suelo.",
+      "Coloca las manos a la anchura de los hombros en el suelo.",
+      "Mantén el cuerpo en línea recta desde las rodillas hasta los hombros.",
+      "Baja el pecho hacia el suelo doblando los codos.",
+      "Empuja con las manos para volver a la posición inicial.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Squeeze your glutes to keep your hips from sagging.",
+      "Keep your elbows at roughly a 45-degree angle from your torso.",
+      "Lower with control instead of dropping your chest quickly."
+    ],
+    "tips_de": [
+      "Spanne Bauch und Gesäß an, damit die Hüfte nicht durchhängt.",
+      "Setze die Hände unter den Schultern auf, nicht weit davor.",
+      "Führe die Ellbogen schräg nach hinten statt seitlich weit nach außen."
+    ],
+    "tips_es": [
+      "No abras los codos en exceso hacia los lados.",
+      "Aprieta los glúteos y el abdomen durante todo el movimiento.",
+      "Mira al suelo para mantener el cuello neutro."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/knee-push-ups-start.webp",
+        "peak": "images/flat/knee-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "machine-chest-fly",
+    "name_en": "Machine Chest Fly",
+    "name_de": "Butterfly-Maschine",
+    "name_es": "Aperturas en Máquina",
+    "description_en": "A chest isolation exercise performed on a machine that arcs the handles together in front of the body.",
+    "description_de": "Eine Brust-Isolationsübung an einer Maschine, bei der die Griffe in einem Bogen vor dem Körper zusammengeführt werden.",
+    "description_es": "Un ejercicio de aislamiento de pecho realizado en una máquina que junta las palancas en un arco frente al cuerpo.",
+    "category": "strength",
+    "force_type": "pull",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "chest_fly_machine",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "chest-fly",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Sit in the chest fly machine and adjust the seat so the handles align with your chest.",
+      "Grip the handles with a slight bend in your elbows.",
+      "Bring the handles together in front of your chest in a smooth arc.",
+      "Squeeze your pectorals at the point of peak contraction.",
+      "Return under control to the starting position without slamming the weight.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Setze dich in die Butterfly-Maschine und stelle den Sitz so ein, dass die Griffe auf Brusthöhe sind.",
+      "Greife die Griffe mit leicht gebeugten Ellbogen.",
+      "Führe die Griffe in einer runden Bewegung vor der Brust zusammen.",
+      "Spanne die Brustmuskulatur am Punkt der stärksten Kontraktion an.",
+      "Kehre kontrolliert zur Ausgangsposition zurück, ohne das Gewicht aufschlagen zu lassen.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Siéntate en la máquina de aperturas y ajusta el asiento para que las palancas queden a la altura del pecho.",
+      "Sujeta las palancas con una ligera flexión de codos.",
+      "Junta las palancas frente al pecho en un arco suave.",
+      "Contrae el pectoral en el punto de máxima contracción.",
+      "Vuelve con control a la posición inicial sin dejar caer el peso.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep a slight, fixed bend in your elbows throughout.",
+      "Focus on squeezing the chest rather than pushing with the arms.",
+      "Control the return instead of letting the weight stack slam."
+    ],
+    "tips_de": [
+      "Halte die Ellbogen während der gesamten Bewegung leicht und konstant gebeugt.",
+      "Konzentriere dich auf das Anspannen der Brust statt auf das Drücken mit den Armen.",
+      "Kontrolliere die Rückbewegung, statt das Gewicht aufschlagen zu lassen."
+    ],
+    "tips_es": [
+      "Mantén una flexión de codo ligera y constante durante todo el movimiento.",
+      "Enfócate en contraer el pecho en lugar de empujar con los brazos.",
+      "Controla el regreso en vez de dejar caer la pila de pesas."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/machine-chest-fly-start.webp",
+        "peak": "images/flat/machine-chest-fly-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "one-arm-kettlebell-floor-glute-bridge-press",
+    "name_en": "One Arm Kettlebell Floor Glute Bridge Press",
+    "name_de": "Einarmiges Kettlebell-Bodendrücken mit Glute Bridge",
+    "name_es": "Press en Puente de Glúteos en Suelo con Pesa Rusa a Un Brazo",
+    "description_en": "A combined glute bridge and single-arm floor press, training the glutes and chest in one movement.",
+    "description_de": "Eine Kombination aus Glute Bridge und einarmigem Kettlebell Floor Press, die Gesäß und Brust gleichzeitig kräftigt.",
+    "description_es": "Un ejercicio combinado en el suelo que une un puente de glúteos con un press de pesa rusa a un brazo.",
+    "category": "strength",
+    "force_type": "pull",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "kettlebell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "gluteus_maximus",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "hamstrings",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "hip-thrust",
+    "is_unilateral": true,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on your back with knees bent and feet flat on the floor.",
+      "Hold a kettlebell in one hand at your shoulder.",
+      "Drive your hips up into a glute bridge.",
+      "Press the kettlebell straight up toward the ceiling.",
+      "Lower the kettlebell and your hips with control.",
+      "Complete reps on one side, then switch."
+    ],
+    "instructions_de": [
+      "Leg dich auf den Rücken mit angewinkelten Knien und flachen Füßen auf dem Boden.",
+      "Halte eine Kettlebell mit einer Hand auf Schulterhöhe.",
+      "Hebe die Hüften in eine Glute Bridge.",
+      "Drücke die Kettlebell senkrecht zur Decke.",
+      "Senke die Kettlebell und die Hüften kontrolliert.",
+      "Wiederhole auf einer Seite, dann wechseln."
+    ],
+    "instructions_es": [
+      "Túmbate boca arriba con las rodillas dobladas y los pies planos en el suelo.",
+      "Sostén una pesa rusa en una mano a la altura del hombro.",
+      "Eleva las caderas en un puente de glúteos.",
+      "Empuja la pesa rusa recto hacia el techo.",
+      "Baja la pesa rusa y las caderas con control.",
+      "Completa las repeticiones de un lado y luego cambia."
+    ],
+    "tips_en": [
+      "Hold the bridge steady at the top while pressing.",
+      "Keep your wrist straight and stacked under the kettlebell.",
+      "Extend your free arm along the floor for extra stability."
+    ],
+    "tips_de": [
+      "Lass die Hüfte oben nicht zur freien Seite abkippen.",
+      "Drücke die Fersen fest in den Boden und spanne das Gesäß bewusst an.",
+      "Halte das Handgelenk gerade und behalte die Kettlebell im Blick."
+    ],
+    "tips_es": [
+      "Mantén las caderas elevadas y firmes mientras haces el press.",
+      "Sujeta la pesa con la muñeca recta y firme.",
+      "Evita que la cadera rote hacia el lado cargado."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/one-arm-kettlebell-floor-glute-bridge-press-start.webp",
+        "peak": "images/flat/one-arm-kettlebell-floor-glute-bridge-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "one-arm-kettlebell-floor-press",
+    "name_en": "One Arm Kettlebell Floor Press",
+    "name_de": "Einarmiges Kettlebell-Bodendrücken",
+    "name_es": "Press en Suelo con Pesa Rusa a Un Brazo",
+    "description_en": "A unilateral kettlebell press performed lying on the floor, where the limited range reduces shoulder strain.",
+    "description_de": "Ein einarmiger Kettlebell Floor Press in Rückenlage, der die Brust trainiert, während der Boden die Absenkbewegung natürlich begrenzt.",
+    "description_es": "Un press de pecho unilateral con pesa rusa ejecutado tumbado en el suelo, que acorta el recorrido y trabaja pectoral y tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "kettlebell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": true,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie flat on the floor with knees bent.",
+      "Hold a kettlebell at your shoulder with one hand.",
+      "Press the kettlebell straight up until your arm is fully extended.",
+      "Lower the kettlebell until your upper arm touches the floor.",
+      "Keep your core braced throughout.",
+      "Complete reps on one side, then switch."
+    ],
+    "instructions_de": [
+      "Leg dich flach auf den Boden mit angewinkelten Knien.",
+      "Halte eine Kettlebell mit einer Hand auf Schulterhöhe.",
+      "Drücke die Kettlebell senkrecht nach oben, bis der Arm vollständig gestreckt ist.",
+      "Senke die Kettlebell, bis der Oberarm den Boden berührt.",
+      "Halte den Rumpf durchgehend angespannt.",
+      "Wiederhole auf einer Seite, dann wechseln."
+    ],
+    "instructions_es": [
+      "Túmbate boca arriba en el suelo con las rodillas dobladas.",
+      "Sostén una pesa rusa en un hombro con una mano.",
+      "Empuja la pesa rusa recto hacia arriba hasta que el brazo quede completamente extendido.",
+      "Baja la pesa rusa hasta que la parte superior del brazo toque el suelo.",
+      "Mantén el core contraído durante todo el ejercicio.",
+      "Completa las repeticiones de un lado y luego cambia."
+    ],
+    "tips_en": [
+      "Keep your forearm vertical throughout the press.",
+      "Tuck your elbow to roughly 45 degrees from your torso.",
+      "Let your upper arm touch down gently rather than bouncing off the floor."
+    ],
+    "tips_de": [
+      "Halte das Handgelenk gerade und fest unter der Kettlebell.",
+      "Lass den Oberarm unten kurz aufsetzen, ohne die Spannung zu verlieren.",
+      "Strecke den freien Arm zur Seite aus, das gibt zusätzliche Stabilität."
+    ],
+    "tips_es": [
+      "Apoya el brazo en el suelo con suavidad, sin rebotar.",
+      "Sujeta la pesa con la muñeca firme, sin dejar que se doble.",
+      "Evita abrir el codo en exceso hacia el lado."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/one-arm-kettlebell-floor-press-start.webp",
+        "peak": "images/flat/one-arm-kettlebell-floor-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "paused-bench-press",
+    "name_en": "Paused Bench Press",
+    "name_de": "Bankdrücken mit Pause",
+    "name_es": "Press de Banca con Pausa",
+    "description_en": "A bench press variation pausing the bar on the chest, removing momentum to build strict pressing strength.",
+    "description_de": "Ein Langhantel-Bankdrücken mit kurzer Pause der Stange auf der Brust, das Kontrolle und Druckkraft aus der unteren Position schult.",
+    "description_es": "Un press de banca con barra en el que la pausa sobre el pecho elimina el rebote y endurece la fase inicial del empuje.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a flat bench and grip the barbell slightly wider than shoulder-width.",
+      "Unrack the bar and lower it to your chest.",
+      "Pause on your chest for 1-2 seconds.",
+      "Press the bar back up until your arms are fully extended.",
+      "Control the descent on every rep.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine flache Bank und greife die Stange etwas breiter als schulterbreit.",
+      "Nehme die Stange aus dem Rack und senke sie zur Brust.",
+      "1–2 Sekunden auf der Brust halten.",
+      "Drücke die Stange zurück, bis die Arme vollständig gestreckt sind.",
+      "Jede Wiederholung kontrolliert absenken.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco plano y agarra la barra ligeramente más abierta que la anchura de los hombros.",
+      "Saca la barra del rack y bájala hasta el pecho.",
+      "Haz una pausa sobre el pecho durante 1-2 segundos.",
+      "Empuja la barra hacia arriba hasta que los brazos queden completamente extendidos.",
+      "Controla el descenso en cada repetición.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Stay tight during the pause instead of letting the bar sink.",
+      "Keep your shoulder blades pinched and your feet planted throughout.",
+      "Touch the bar to the same spot on your chest every rep."
+    ],
+    "tips_de": [
+      "Halte die Stange während der Pause unter voller Spannung auf der Brust.",
+      "Ziehe die Schulterblätter zusammen und halte sie auf der Bank fixiert.",
+      "Drücke die Füße fest in den Boden für stabilen Beinantrieb."
+    ],
+    "tips_es": [
+      "No dejes que la barra se hunda en el pecho durante la pausa.",
+      "Mantén los omóplatos retraídos y pegados al banco.",
+      "Pide que alguien te asista cuando muevas cargas altas."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/paused-bench-press-start.webp",
+        "peak": "images/flat/paused-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "paused-incline-bench-press",
+    "name_en": "Paused Incline Bench Press",
+    "name_de": "Schrägbankdrücken mit Pause",
+    "name_es": "Press Inclinado con Pausa",
+    "description_en": "An incline bench press with a pause on the upper chest, emphasizing strict control and upper-pec strength.",
+    "description_de": "Ein Schrägbankdrücken mit Langhantel und kurzer Pause am untersten Punkt, das Brust und vordere Schultern stärkt.",
+    "description_es": "Un press inclinado con barra y pausa sobre la parte alta del pecho, que elimina el rebote y enfatiza pectoral superior y deltoides anterior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "anterior_deltoid",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on an incline bench and grip the barbell slightly wider than shoulder-width.",
+      "Unrack the bar and lower it to your upper chest.",
+      "Pause on your chest for 1-2 seconds.",
+      "Press the bar back up until your arms are fully extended.",
+      "Keep your shoulder blades retracted throughout.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Leg dich auf eine Schrägbank und greife die Stange etwas breiter als schulterbreit.",
+      "Nehme die Stange aus dem Rack und senke sie zur Oberbrust.",
+      "1–2 Sekunden auf der Brust halten.",
+      "Drücke die Stange zurück, bis die Arme vollständig gestreckt sind.",
+      "Schulterblätter durchgehend zusammengezogen halten.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco inclinado y agarra la barra ligeramente más abierta que la anchura de los hombros.",
+      "Saca la barra del rack y bájala hasta el pecho superior.",
+      "Haz una pausa sobre el pecho durante 1-2 segundos.",
+      "Empuja la barra hacia arriba hasta que los brazos queden completamente extendidos.",
+      "Mantén los omóplatos retraídos durante todo el ejercicio.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your wrists stacked over your elbows during the pause.",
+      "Maintain full-body tension while the bar rests on your chest.",
+      "Avoid bouncing the bar off your chest after the pause."
+    ],
+    "tips_de": [
+      "Lass die Stange in der Pause nicht in die Brust einsinken.",
+      "Halte die Handgelenke gerade und direkt über den Ellbogen.",
+      "Lass das Gesäß während des gesamten Satzes fest auf der Bank."
+    ],
+    "tips_es": [
+      "No acortes la pausa cuando la carga se haga pesada.",
+      "Mantén las muñecas firmes sobre los codos durante el recorrido.",
+      "Mantén los pies firmes en el suelo durante toda la serie."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/paused-incline-bench-press-start.webp",
+        "peak": "images/flat/paused-incline-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "pec-deck",
+    "name_en": "Pec Deck",
+    "name_de": "Pec Deck",
+    "name_es": "Pec Deck",
+    "description_en": "A chest isolation machine with fixed elbow pads that targets the pectorals through horizontal adduction.",
+    "description_de": "Eine Brustmaschine mit festen Ellenbogenpolstern, die den Brustmuskel durch horizontale Adduktion isoliert.",
+    "description_es": "Una máquina de aislamiento de pecho con almohadillas de codo fijas que trabaja los pectorales mediante aducción horizontal.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "pec_deck",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "chest-fly",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Sit in the pec deck machine and place your forearms against the pads.",
+      "Adjust the seat so pads align with mid-chest height.",
+      "Squeeze the pads together in front of your chest.",
+      "Hold the contraction briefly at the center.",
+      "Return under control to the starting position.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Setz dich in die Pec-Deck-Maschine und lege die Unterarme gegen die Polster.",
+      "Stelle den Sitz so ein, dass die Polster auf mittlere Brusthöhe ausgerichtet sind.",
+      "Drücke die Polster vor der Brust zusammen.",
+      "Kurz in der Kontraktion halten.",
+      "Kontrolliert in die Ausgangsposition zurückführen.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Siéntate en la máquina pec deck y coloca los antebrazos contra las almohadillas.",
+      "Ajusta el asiento para que las almohadillas queden a la altura media del pecho.",
+      "Junta las almohadillas frente al pecho apretando.",
+      "Mantén la contracción brevemente en el centro.",
+      "Regresa con control a la posición inicial.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your shoulders down and back against the seat.",
+      "Avoid letting the pads fly back past a comfortable stretch.",
+      "Focus on squeezing your chest rather than pressing with your arms."
+    ],
+    "tips_de": [
+      "Öffne die Arme nur so weit, wie es deine Schultern schmerzfrei zulassen.",
+      "Halte den Rücken während der gesamten Bewegung fest an der Lehne.",
+      "Führe die Pads aus der Brust zusammen, statt nur mit den Armen zu drücken."
+    ],
+    "tips_es": [
+      "No dejes que los brazos viajen demasiado atrás al abrir.",
+      "Mantén la espalda y los hombros pegados al respaldo.",
+      "Exhala al juntar las almohadillas e inhala al abrir."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/pec-deck-start.webp",
+        "peak": "images/flat/pec-deck-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "planche",
+    "name_en": "Planche",
+    "name_de": "Planche",
+    "name_es": "Plancha Calisténica",
+    "description_en": "An advanced calisthenics hold requiring exceptional upper body and core strength to hold the body parallel to the ground.",
+    "description_de": "Eine fortgeschrittene Kalisthenics-Halteposition, die außergewöhnliche Oberkörper- und Rumpfkraft erfordert, um den Körper parallel zum Boden zu halten.",
+    "description_es": "Una posición avanzada de calistenia que requiere una fuerza excepcional del tren superior y el core para mantener el cuerpo paralelo al suelo.",
+    "category": "strength",
+    "force_type": "static",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "body_part": "chest",
+    "primary_muscles": [
+      "anterior_deltoid",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "strength",
+      "power"
+    ],
+    "tags": [
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "static-hold",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Begin in a push-up position with hands turned outward.",
+      "Lean forward until your center of mass is over your hands.",
+      "Lift your feet off the ground keeping the body horizontal.",
+      "Hold the position.",
+      "Return to the floor with control."
+    ],
+    "instructions_de": [
+      "Beginne in einer Push-Up-Position mit nach außen gedrehten Händen.",
+      "Lehne dich nach vorne, bis dein Schwerpunkt über den Händen liegt.",
+      "Hebe die Füße vom Boden, Körper horizontal.",
+      "Halte die Position.",
+      "Kehre kontrolliert zum Boden zurück."
+    ],
+    "instructions_es": [
+      "Comienza en posición de flexión con las manos giradas hacia afuera.",
+      "Inclínate hacia adelante hasta que tu centro de masa quede sobre las manos.",
+      "Levanta los pies del suelo manteniendo el cuerpo horizontal.",
+      "Mantén la posición.",
+      "Regresa al suelo con control."
+    ],
+    "tips_en": [
+      "Progress through tuck, straddle, and full planche.",
+      "Build wrist and shoulder strength before attempting."
+    ],
+    "tips_de": [
+      "Stufenweise vorgehen: Tuck, Straddle, vollständige Planche.",
+      "Erst Handgelenk- und Schulterkraft aufbauen, bevor du es versuchst."
+    ],
+    "tips_es": [
+      "Progresa a través de la posición encogida, en estrella y la plancha completa.",
+      "Desarrolla la fuerza de muñecas y hombros antes de intentarlo."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "main": "images/flat/planche-main.webp"
+      }
+    }
+  },
+  {
+    "id": "plyo-push-up",
+    "name_en": "Plyo Push-Up",
+    "name_de": "Plyometrischer Liegestütz",
+    "name_es": "Flexión Pliométrica",
+    "description_en": "An explosive push-up where the hands leave the floor at the top, training upper-body power.",
+    "description_de": "Ein explosiver Liegestütz, bei dem die Hände am oberen Ende den Boden verlassen.",
+    "description_es": "Una flexión explosiva en la que las manos despegan del suelo al subir, entrena potencia del tren superior.",
+    "category": "plyometrics",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "power"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Set up in a standard push-up position with hands shoulder-width.",
+      "Lower yourself with control until the chest nearly touches the floor.",
+      "Drive up explosively so the hands leave the floor.",
+      "Land softly with the elbows slightly bent.",
+      "Repeat without pausing for the prescribed reps."
+    ],
+    "instructions_de": [
+      "Beginne in einer normalen Liegestütz-Position, Hände schulterbreit.",
+      "Senke dich kontrolliert ab, bis die Brust den Boden fast berührt.",
+      "Drücke explosiv hoch, sodass die Hände den Boden verlassen.",
+      "Lande weich mit leicht gebeugten Ellenbogen.",
+      "Wiederhole ohne Pause für die vorgegebene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Colócate en posición de flexión estándar, manos a la anchura de los hombros.",
+      "Baja con control hasta que el pecho casi toque el suelo.",
+      "Empuja explosivamente para que las manos despeguen del suelo.",
+      "Aterriza suave con los codos ligeramente flexionados.",
+      "Repite sin pausa el número de repeticiones indicado."
+    ],
+    "tips_en": [
+      "Keep the body in a straight line — no piking or sagging.",
+      "Land softly with bent elbows to absorb impact.",
+      "Drop to knees if you cannot clear the floor cleanly."
+    ],
+    "tips_de": [
+      "Halte den Körper in einer geraden Linie — nicht durchhängen oder klappen.",
+      "Lande weich mit gebeugten Ellenbogen.",
+      "Gehe auf die Knie, wenn du den Boden nicht sauber verlassen kannst."
+    ],
+    "tips_es": [
+      "Mantén el cuerpo en línea recta — sin doblar ni hundir.",
+      "Aterriza suave con los codos flexionados.",
+      "Apoya las rodillas si no puedes despegar limpiamente."
+    ],
+    "met": 7,
+    "images": {
+      "flat": {
+        "start": "images/flat/clap-push-ups-start.webp",
+        "peak": "images/flat/clap-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "pseudo-planche-push-ups",
+    "name_en": "Pseudo Planche Push Ups",
+    "name_de": "Pseudo Planche Push-Ups",
+    "name_es": "Push-Ups de Pseudo Plancha",
+    "description_en": "A push-up with hands turned back and shoulders leaned far past the wrists, mimicking planche loading.",
+    "description_de": "Ein Liegestütz mit nach hinten gedrehten Händen und weit über die Handgelenke nach vorn gelehnten Schultern — imitiert die Planche-Belastung.",
+    "description_es": "Una flexión con las manos giradas hacia atrás y los hombros inclinados muy por delante de las muñecas, imitando la carga de la plancha.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "body_part": "chest",
+    "primary_muscles": [
+      "anterior_deltoid",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Start in a push-up position with your hands turned so fingers point back.",
+      "Lean your shoulders forward past your wrists.",
+      "Lower your chest toward the floor by bending your elbows.",
+      "Keep your body in a straight line.",
+      "Press back up while maintaining the forward lean.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Gehe in die Push-Up-Position und drehe die Hände so, dass die Finger nach hinten zeigen.",
+      "Lehne deine Schultern nach vorne über deine Handgelenke.",
+      "Senke deine Brust durch Beugen der Ellbogen Richtung Boden.",
+      "Halte deinen Körper in einer geraden Linie.",
+      "Drücke dich nach oben und behalte dabei die Vorlage bei.",
+      "Wiederhole für die gewünschte Wiederholungszahl."
+    ],
+    "instructions_es": [
+      "Comienza en posición de push-up con las manos giradas de modo que los dedos apunten hacia atrás.",
+      "Inclina los hombros hacia adelante por delante de las muñecas.",
+      "Baja el pecho hacia el suelo flexionando los codos.",
+      "Mantén el cuerpo en línea recta.",
+      "Empuja hacia arriba manteniendo la inclinación hacia adelante.",
+      "Repite el número deseado de repeticiones."
+    ],
+    "tips_en": [
+      "The further you lean forward, the harder each rep becomes.",
+      "Keep your elbows close to your body as you lower.",
+      "Keep your shoulder blades protracted and your body rigid."
+    ],
+    "tips_de": [
+      "Je weiter du dich nach vorn lehnst, desto schwerer wird jede Wiederholung.",
+      "Halte die Ellbogen beim Absenken eng am Körper.",
+      "Halte die Schulterblätter nach vorn gezogen und den Körper starr."
+    ],
+    "tips_es": [
+      "Cuanto más te inclines hacia delante, más difícil será cada repetición.",
+      "Mantén los codos pegados al cuerpo al bajar.",
+      "Mantén las escápulas protraídas y el cuerpo rígido."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/pseudo-planche-push-ups-start.webp",
+        "peak": "images/flat/pseudo-planche-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "push-up",
+    "name_en": "Push-Up",
+    "name_de": "Push-Up",
+    "name_es": "Push-Up",
+    "description_en": "A fundamental bodyweight exercise for the chest, shoulders, and triceps.",
+    "description_de": "Eine grundlegende Körpergewichtsübung für Brust, Schultern und Trizeps.",
+    "description_es": "Un ejercicio fundamental con el peso corporal para el pecho, los hombros y los tríceps.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "hypertrophy",
+      "endurance"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Start in a high plank position with hands shoulder-width apart.",
+      "Lower your body until your chest nearly touches the floor.",
+      "Push back up to the starting position.",
+      "Keep your body in a straight line throughout.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Beginne in der hohen Plank-Position, Hände schulterbreit.",
+      "Senke deinen Körper, bis die Brust fast den Boden berührt.",
+      "Drücke dich zurück in die Ausgangsposition.",
+      "Halte deinen Körper die ganze Zeit in einer geraden Linie.",
+      "Wiederhole."
+    ],
+    "instructions_es": [
+      "Comienza en posición de plancha alta con las manos a la anchura de los hombros.",
+      "Baja el cuerpo hasta que el pecho casi toque el suelo.",
+      "Empuja hacia arriba hasta la posición inicial.",
+      "Mantén el cuerpo en línea recta en todo momento.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Tuck your elbows toward your body rather than flaring them out wide.",
+      "Brace your core and squeeze your glutes to prevent sagging hips.",
+      "Keep your neck neutral by gazing slightly ahead of your hands."
+    ],
+    "tips_de": [
+      "Spanne Bauch und Gesäß an, damit die Hüfte nicht durchhängt.",
+      "Lass die Ellbogen nicht weit nach außen wandern.",
+      "Halte den Nacken neutral und schaue zum Boden."
+    ],
+    "tips_es": [
+      "Aprieta el abdomen y los glúteos para evitar que la cadera caiga.",
+      "No abras los codos en exceso; mantenlos cerca del torso.",
+      "Mantén el cuello neutro mirando al suelo."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/push-up-start.webp",
+        "peak": "images/flat/push-up-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "ring-dips",
+    "name_en": "Ring Dips",
+    "name_de": "Ring Dips",
+    "name_es": "Fondos en Anillas",
+    "description_en": "A challenging bodyweight dip performed on gymnastic rings, demanding greater stabilization than bar dips.",
+    "description_de": "Ein anspruchsvolles Körpergewichts-Dip an Turnringen, der mehr Stabilisation erfordert als Dips an der Stange.",
+    "description_es": "Un fondo con el peso corporal desafiante realizado en anillas de gimnasia, que exige mayor estabilización que los fondos en barra.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "equipment": "rings",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe"
+    ],
+    "variation_group": "dips",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Support yourself on the rings with arms locked out.",
+      "Lower your body by bending the elbows until upper arms are parallel to the ground.",
+      "Press back up to the starting position.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Stütze dich auf den Ringen mit gestreckten Armen.",
+      "Senke deinen Körper durch Beugen der Ellbogen, bis die Oberarme parallel zum Boden sind.",
+      "Drücke dich zurück in die Ausgangsposition.",
+      "Wiederhole."
+    ],
+    "instructions_es": [
+      "Apóyate en las anillas con los brazos bloqueados.",
+      "Baja el cuerpo flexionando los codos hasta que los brazos queden paralelos al suelo.",
+      "Empuja hacia arriba hasta la posición inicial.",
+      "Repite."
+    ],
+    "tips_en": [
+      "Keep the rings close to your body.",
+      "Turn the rings out at the top for additional chest activation."
+    ],
+    "tips_de": [
+      "Halte die Ringe nah am Körper.",
+      "Drehe die Ringe oben nach außen für zusätzliche Brustaktivierung."
+    ],
+    "tips_es": [
+      "Mantén las anillas cerca del cuerpo.",
+      "Gira las anillas hacia afuera en la parte superior para mayor activación del pecho."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/ring-dips-start.webp",
+        "peak": "images/flat/ring-dips-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "ring-push-up",
+    "name_en": "Ring Push-Up",
+    "name_de": "Ring Push-Up",
+    "name_es": "Flexión en Anillas",
+    "description_en": "A push-up performed on gymnastic rings, increasing the demand on stabilizers in the chest, shoulders, and core.",
+    "description_de": "Ein Liegestütz an Turnringen, der die Stabilisatoren in Brust, Schulter und Rumpf zusätzlich fordert.",
+    "description_es": "Una flexión sobre anillas de gimnasia, que exige más a los estabilizadores del pecho, hombros y core.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "rings",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set the rings just above floor height.",
+      "Grip the rings and assume a plank position with arms straight.",
+      "Lower the chest toward the rings, keeping the elbows close to the body.",
+      "Press back up to full arm extension.",
+      "Repeat for the prescribed reps."
+    ],
+    "instructions_de": [
+      "Stelle die Ringe knapp über Bodenhöhe ein.",
+      "Fasse die Ringe und nimm eine Plank-Position mit gestreckten Armen ein.",
+      "Senke die Brust zu den Ringen, Ellenbogen nah am Körper.",
+      "Drücke zurück in volle Armstreckung.",
+      "Wiederhole für die vorgegebene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Coloca las anillas justo por encima del suelo.",
+      "Sujeta las anillas y adopta posición de plank con los brazos rectos.",
+      "Baja el pecho hacia las anillas, codos pegados al cuerpo.",
+      "Empuja arriba hasta extender los brazos.",
+      "Repite el número de repeticiones indicado."
+    ],
+    "tips_en": [
+      "Keep the rings turned out at the top to engage the chest.",
+      "Brace the core — the rings will magnify any wobble.",
+      "Drop to knees to scale the difficulty."
+    ],
+    "tips_de": [
+      "Drehe die Ringe oben nach außen für mehr Brustspannung.",
+      "Spanne den Rumpf an — Ringe verstärken jedes Wackeln.",
+      "Gehe auf die Knie, um die Übung zu skalieren."
+    ],
+    "tips_es": [
+      "Gira las anillas hacia afuera arriba para activar más el pecho.",
+      "Activa el core — las anillas amplifican cualquier oscilación.",
+      "Apoya las rodillas para escalar la dificultad."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/ring-push-up-start.webp",
+        "peak": "images/flat/ring-push-up-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "single-db-svend-press",
+    "name_en": "Single Dumbbell Svend Press",
+    "name_de": "Svend Press mit einer Kurzhantel",
+    "name_es": "Press Svend con una Mancuerna",
+    "description_en": "A standing chest press holding one dumbbell upright between the palms, where the inward squeeze rather than the load is what works the pecs.",
+    "description_de": "Ein stehendes Brustdrücken, bei dem eine einzelne Kurzhantel hochkant zwischen den Handflächen gehalten wird — nicht die Last, sondern der Druck nach innen belastet die Brustmuskeln.",
+    "description_es": "Un press de pecho de pie sosteniendo una sola mancuerna en vertical entre las palmas, donde lo que trabaja los pectorales es la presión hacia adentro y no la carga.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "dumbbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "chest_focus"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Stand tall and hold a single dumbbell upright in front of your sternum, the handle running vertically between your flat palms.",
+      "Squeeze your palms hard into the dumbbell so the chest takes the tension and the weight cannot slip.",
+      "Press the dumbbell straight forward until your arms are fully extended, keeping it at chest height the whole way out.",
+      "Pause briefly without letting the squeeze go, then draw the dumbbell back to your chest under control.",
+      "Repeat for the recommended number of repetitions."
+    ],
+    "instructions_de": [
+      "Stell dich aufrecht hin und halte eine einzelne Kurzhantel hochkant vor dem Brustbein, die Stange senkrecht zwischen den flachen Handflächen.",
+      "Drücke die Handflächen fest gegen die Hantel, sodass die Spannung in die Brust geht und das Gewicht nicht wegrutschen kann.",
+      "Presse die Kurzhantel gerade nach vorn, bis die Arme vollständig gestreckt sind, und halte sie dabei durchgehend auf Brusthöhe.",
+      "Halte kurz, ohne den Druck nachzulassen, und führe die Hantel dann kontrolliert zur Brust zurück.",
+      "Wiederhole für die empfohlene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "De pie y erguido, sostén una sola mancuerna en vertical frente al esternón, con el mango entre las palmas planas.",
+      "Aprieta con fuerza las palmas contra la mancuerna para que la tensión vaya al pecho y el peso no resbale.",
+      "Empuja la mancuerna recto hacia adelante hasta extender por completo los brazos, manteniéndola a la altura del pecho todo el recorrido.",
+      "Haz una breve pausa sin soltar la presión y devuelve la mancuerna al pecho con control.",
+      "Repite el número de repeticiones recomendado."
+    ],
+    "tips_en": [
+      "The squeeze on the dumbbell is what makes the exercise. If you are gripping the handle instead of crushing the weight between flat palms, the chest is not working.",
+      "Use a light dumbbell. Your palms hold it up on friction alone, so the grip sets the ceiling long before the chest does.",
+      "Keep the elbows slightly bent at the lockout and the dumbbell at sternum height throughout; letting it sag toward the hips takes the pecs out of it."
+    ],
+    "tips_de": [
+      "Der Druck auf die Hantel macht die Übung. Wer den Griff umfasst, statt das Gewicht zwischen flachen Handflächen zusammenzupressen, trainiert die Brust nicht.",
+      "Nimm eine leichte Kurzhantel. Die Handflächen halten sie allein über die Reibung, also setzt der Griff die Grenze — lange bevor die Brust es tut.",
+      "Halte die Ellenbogen am Lockout leicht gebeugt und die Hantel durchgehend auf Sternumhöhe; sackt sie Richtung Hüfte ab, ist die Brust raus."
+    ],
+    "tips_es": [
+      "La presión sobre la mancuerna hace el ejercicio. Si agarras el mango en lugar de aplastar el peso entre las palmas planas, el pecho no trabaja.",
+      "Usa una mancuerna ligera. Las palmas la sostienen solo por fricción, así que el agarre marca el límite mucho antes que el pecho.",
+      "Mantén los codos ligeramente flexionados en el lockout y la mancuerna a la altura del esternón; si baja hacia las caderas, los pectorales dejan de trabajar."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/single-db-svend-press-start.webp",
+        "peak": "images/flat/single-db-svend-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "smith-machine-bench-press",
+    "name_en": "Smith Machine Bench Press",
+    "name_de": "Smith Machine Bankdrücken",
+    "name_es": "Press de Banca en Máquina Smith",
+    "description_en": "A bench press variation in the Smith machine, where the guided bar path adds stability for the chest.",
+    "description_de": "Ein Bankdrücken an der Multipresse, bei dem die geführte Stange die Balancearbeit reduziert und die Brust im Fokus steht.",
+    "description_es": "Un press de banca en máquina Smith cuyo recorrido guiado permite entrenar el pecho con menos demanda de estabilización.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "equipment": "smith_machine",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a flat bench set inside a Smith machine.",
+      "Grip the bar slightly wider than shoulder-width and unrack it.",
+      "Lower the bar under control to your mid-chest.",
+      "Pause briefly without bouncing.",
+      "Press the bar back up until your arms are fully extended.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Lege dich auf eine flache Bank im Smith Machine.",
+      "Greife die Stange etwas breiter als schulterbreit und entracke sie.",
+      "Senke die Stange kontrolliert zur Mitte der Brust.",
+      "Kurz pausieren ohne Abfedern.",
+      "Drücke die Stange zurück nach oben, bis die Arme vollständig gestreckt sind.",
+      "Wiederhole die Übung für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Acuéstate en un banco plano dentro de la máquina Smith.",
+      "Agarra la barra ligeramente más ancho que el ancho de hombros y desbloquéala.",
+      "Baja la barra con control hasta el centro del pecho.",
+      "Haz una breve pausa sin rebotar.",
+      "Empuja la barra hacia arriba hasta extender completamente los brazos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Align the bench so the bar lands at mid-chest, not the neck.",
+      "Keep your shoulder blades pulled back and down against the bench.",
+      "Keep your feet planted and your glutes on the bench."
+    ],
+    "tips_de": [
+      "Richte die Bank so aus, dass die Stange deine mittlere Brust trifft.",
+      "Zieh die Schulterblätter zusammen und halte die Füße fest am Boden.",
+      "Drehe die Stange am Satzende sicher zurück in die Sicherungshaken."
+    ],
+    "tips_es": [
+      "Alinea el banco para que la barra baje a la mitad del pecho.",
+      "Mantén los pies firmes en el suelo durante toda la serie.",
+      "Aprende el giro de muñeca para enganchar la barra antes de cargar peso."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/smith-machine-bench-press-start.webp",
+        "peak": "images/flat/smith-machine-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "smith-machine-decline-bench-press",
+    "name_en": "Smith Machine Decline Bench Press",
+    "name_de": "Smith Machine Negativbankdrücken",
+    "name_es": "Press de Banca Declinado en Máquina Smith",
+    "description_en": "A bench press on a decline bench under the Smith machine, where the head-down angle and the guided bar path put the work on the lower chest.",
+    "description_de": "Ein Bankdrücken auf der Negativbank unter der Smith Machine, bei dem der kopfüber geneigte Winkel und die geführte Stangenbahn die Arbeit auf die untere Brust legen.",
+    "description_es": "Un press de banca en banco declinado bajo la máquina Smith, donde el ángulo con la cabeza abajo y la trayectoria guiada llevan el trabajo al pectoral inferior.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "equipment": "smith_machine",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set a decline bench in the machine so the bar lines up with your lower chest when you lie down, and hook your legs under the pads.",
+      "Lie back with your head at the low end, take an overhand grip slightly wider than your shoulders and unrack the bar.",
+      "Lower the bar under control until it touches your lower chest, keeping your elbows at roughly forty-five degrees from your torso.",
+      "Press the bar back up until your arms are extended, without locking the elbows out hard.",
+      "Repeat for the desired number of repetitions, then rack the bar before releasing your legs."
+    ],
+    "instructions_de": [
+      "Stelle eine Negativbank so in die Maschine, dass die Stange im Liegen auf Höhe deiner unteren Brust steht, und hake die Beine unter den Polstern ein.",
+      "Lege dich mit dem Kopf am tiefen Ende zurück, nimm einen Obergriff etwas weiter als schulterbreit und entracke die Stange.",
+      "Senke die Stange kontrolliert ab, bis sie die untere Brust berührt; die Ellenbogen bleiben etwa fünfundvierzig Grad zum Rumpf.",
+      "Drücke die Stange wieder nach oben, bis die Arme gestreckt sind, ohne die Ellenbogen hart durchzudrücken.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen und racke die Stange ab, bevor du die Beine löst."
+    ],
+    "instructions_es": [
+      "Coloca un banco declinado en la máquina de modo que la barra quede alineada con tu pecho inferior al tumbarte, y engancha las piernas bajo los rodillos.",
+      "Túmbate con la cabeza en el extremo bajo, toma un agarre prono algo más ancho que los hombros y desengancha la barra.",
+      "Baja la barra de forma controlada hasta que toque el pecho inferior, manteniendo los codos a unos cuarenta y cinco grados del torso.",
+      "Empuja la barra hacia arriba hasta extender los brazos, sin bloquear los codos con fuerza.",
+      "Repite el número de repeticiones deseado y vuelve a enganchar la barra antes de soltar las piernas."
+    ],
+    "tips_en": [
+      "Line the bench up before you load it. The bar only moves in one plane, so if the bench is a few centimetres out the bar will meet your throat or your stomach instead of your lower chest.",
+      "Secure your legs under the pads first. Head-down and unsecured, you slide toward the low end of the bench on the first hard rep.",
+      "Come down and sit up slowly between sets. Long sets with the head below the heart make people light-headed, and this variation is where it happens."
+    ],
+    "tips_de": [
+      "Richte die Bank aus, bevor du sie belädst. Die Stange bewegt sich nur in einer Ebene — steht die Bank ein paar Zentimeter daneben, trifft die Stange deine Kehle oder deinen Bauch statt der unteren Brust.",
+      "Sichere zuerst die Beine unter den Polstern. Kopfüber und ungesichert rutschst du bei der ersten schweren Wiederholung zum tiefen Ende der Bank.",
+      "Komm zwischen den Sätzen langsam hoch und setz dich langsam auf. Lange Sätze mit dem Kopf unterhalb des Herzens machen viele Menschen benommen, und genau bei dieser Variante passiert das."
+    ],
+    "tips_es": [
+      "Alinea el banco antes de cargarlo. La barra solo se mueve en un plano, así que si el banco está unos centímetros desviado la barra te llegará a la garganta o al estómago en lugar del pecho inferior.",
+      "Asegura primero las piernas bajo los rodillos. Con la cabeza abajo y sin sujeción, te deslizarás hacia el extremo bajo del banco en la primera repetición dura.",
+      "Incorpórate despacio entre series. Las series largas con la cabeza por debajo del corazón marean a mucha gente, y esta es la variante donde ocurre."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/smith-machine-decline-bench-press-start.webp",
+        "peak": "images/flat/smith-machine-decline-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "smith-machine-incline-bench-press",
+    "name_en": "Smith Machine Incline Bench Press",
+    "name_de": "Smith Machine Schrägbankdrücken",
+    "name_es": "Press Inclinado en Máquina Smith",
+    "description_en": "An incline press in the Smith machine, guiding the bar to target the upper chest and front delts.",
+    "description_de": "Ein Schrägbankdrücken an der Multipresse, das die obere Brust und die vordere Schulter mit geführter Stange trainiert.",
+    "description_es": "Un press inclinado en máquina Smith que enfatiza la parte superior del pecho y los deltoides anteriores con una trayectoria guiada.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "equipment": "smith_machine",
+    "body_part": "chest",
+    "primary_muscles": [
+      "anterior_deltoid",
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Set an incline bench at 30-45 degrees inside a Smith machine.",
+      "Lie back and grip the bar slightly wider than shoulder-width.",
+      "Unrack and lower the bar to your upper chest.",
+      "Pause briefly at the bottom.",
+      "Press the bar back up until your arms are extended.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Stelle eine Schrägbank auf 30–45 Grad im Smith Machine ein.",
+      "Lege dich zurück und greife die Stange etwas breiter als schulterbreit.",
+      "Entracke die Stange und senke sie zur Oberbrustmuskulatur.",
+      "Kurz unten pausieren.",
+      "Drücke die Stange zurück nach oben, bis die Arme gestreckt sind.",
+      "Wiederhole die Übung für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Ajusta un banco inclinado a 30-45 grados dentro de la máquina Smith.",
+      "Recuéstate y agarra la barra ligeramente más ancho que el ancho de hombros.",
+      "Desbloquea y baja la barra hasta la parte superior del pecho.",
+      "Haz una breve pausa en la parte inferior.",
+      "Empuja la barra hacia arriba hasta extender los brazos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Position the bench so the bar lands on the upper chest, not the throat.",
+      "Stack your wrists directly above your elbows.",
+      "Avoid driving your head forward off the bench as you press."
+    ],
+    "tips_de": [
+      "Schiebe die Bank so unter die Stange, dass sie die obere Brust trifft.",
+      "Halte das Gesäß während des Drückens auf der Bank.",
+      "Lass die Stange nicht auf der Brust abprallen."
+    ],
+    "tips_es": [
+      "Ajusta la posición del banco para que la barra llegue a la parte alta del pecho.",
+      "Baja la barra sin rebotarla en el pecho.",
+      "Mantén los glúteos en el banco y los pies bien apoyados."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/smith-machine-incline-bench-press-start.webp",
+        "peak": "images/flat/smith-machine-incline-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "spoto-press",
+    "name_en": "Spoto Press",
+    "name_de": "Spoto Press",
+    "name_es": "Press Spoto",
+    "description_en": "A bench press variation pausing the bar just above the chest to build control and pressing power.",
+    "description_de": "Eine Bankdrück-Variante mit Langhantel, bei der die Stange knapp über der Brust pausiert, ohne sie zu berühren.",
+    "description_es": "Un press de banca con barra que incluye una pausa con la barra suspendida sobre el pecho, eliminando el rebote.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a flat bench and grip the barbell slightly wider than shoulders.",
+      "Unrack the bar and hold it over your chest with arms extended.",
+      "Lower the bar until it is one inch above your chest.",
+      "Pause there for a full second without touching the chest.",
+      "Press the bar back up until your arms are extended.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Lege dich auf eine flache Bank und greife die Langhantel etwas breiter als schulterbreit.",
+      "Entracke die Stange und halte sie über der Brust mit gestreckten Armen.",
+      "Senke die Stange, bis sie zwei bis drei Zentimeter über der Brust ist.",
+      "Halte dort eine volle Sekunde inne, ohne die Brust zu berühren.",
+      "Drücke die Stange zurück, bis die Arme gestreckt sind.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco plano y agarra la barra ligeramente más ancha que los hombros.",
+      "Desrackea la barra y sostenla sobre el pecho con los brazos extendidos.",
+      "Baja la barra hasta que quede a un centímetro por encima del pecho.",
+      "Mantén esa posición un segundo completo sin tocar el pecho.",
+      "Empuja la barra hacia arriba hasta que los brazos estén extendidos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your shoulder blades retracted and pinned to the bench.",
+      "Hold the bar motionless during the pause instead of letting it drift.",
+      "Use a lighter load than your standard bench press."
+    ],
+    "tips_de": [
+      "Ziehe die Schulterblätter zusammen und presse sie in die Bank.",
+      "Halte die Spannung während der Pause, statt das Gewicht durchsacken zu lassen.",
+      "Lass die Handgelenke nicht nach hinten abknicken."
+    ],
+    "tips_es": [
+      "Detén la barra a un par de centímetros del pecho.",
+      "Mantén la pausa un segundo completo sin tocar el pecho.",
+      "Conserva los omóplatos retraídos durante todo el recorrido."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/spoto-press-start.webp",
+        "peak": "images/flat/spoto-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "stability-ball-push-up",
+    "name_en": "Stability Ball Push-Up",
+    "name_de": "Stability-Ball-Push-Up",
+    "name_es": "Push-Up con Balón de Estabilidad",
+    "description_en": "A push-up performed with the feet on a stability ball, adding a strong anti-rotation demand to a standard push-up.",
+    "description_de": "Ein Push-Up mit den Füßen auf einem Stability Ball, der dem normalen Push-Up eine starke Anti-Rotationsanforderung hinzufügt.",
+    "description_es": "Un push-up realizado con los pies sobre un balón de estabilidad, que añade una fuerte demanda antirotación al push-up estándar.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "stability_ball",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "rectus_abdominis",
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "core"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics",
+      "core"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Kneel in front of a stability ball and place your shins or feet on top of it.",
+      "Set the hands on the floor under the shoulders in a high-plank position.",
+      "Brace the core hard — the ball will want to roll sideways.",
+      "Lower the chest to the floor by bending the elbows.",
+      "Press back up to the starting position without letting the ball wobble.",
+      "Repeat for the recommended number of repetitions."
+    ],
+    "instructions_de": [
+      "Knie vor dem Stability Ball und lege Schienbeine oder Füße darauf ab.",
+      "Hände auf dem Boden unter den Schultern in der hohen Plank-Position.",
+      "Spanne den Core fest an — der Ball will zur Seite rollen.",
+      "Senke die Brust zum Boden, indem du die Ellbogen beugst.",
+      "Drücke zurück in die Ausgangsposition, ohne den Ball wackeln zu lassen.",
+      "Wiederhole für die empfohlene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Arrodíllate frente a un balón de estabilidad y coloca las espinillas o los pies encima.",
+      "Apoya las manos en el suelo bajo los hombros en posición de plancha alta.",
+      "Contrae fuerte el core: el balón querrá rodar hacia los lados.",
+      "Baja el pecho al suelo doblando los codos.",
+      "Vuelve a empujar hasta la posición inicial sin dejar que el balón se tambalee.",
+      "Repite el número de repeticiones recomendado."
+    ],
+    "tips_en": [
+      "Start with shins on the ball; feet-only is much harder.",
+      "If the ball drifts side to side, you're lacking core bracing — slow down."
+    ],
+    "tips_de": [
+      "Beginne mit Schienbeinen auf dem Ball; nur Füße ist deutlich schwerer.",
+      "Driftet der Ball seitwärts, fehlt die Core-Spannung — verlangsame."
+    ],
+    "tips_es": [
+      "Comienza con las espinillas sobre el balón; solo con los pies es mucho más difícil.",
+      "Si el balón se desplaza de lado a lado, falta contracción del core: reduce la velocidad."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/stability-ball-push-up-start.webp",
+        "peak": "images/flat/stability-ball-push-up-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "stability-ball-push-up-hands-on-ball",
+    "name_en": "Stability Ball Push-Up (Hands on Ball)",
+    "name_de": "Stability-Ball-Liegestütz (Hände auf dem Ball)",
+    "name_es": "Flexión sobre pelota de estabilidad (manos en la pelota)",
+    "description_en": "An incline push-up performed with both hands on a stability ball and the feet on the floor. The unstable surface forces the chest, shoulders, and triceps to work harder while the core fights to keep the body rigid.",
+    "description_de": "Ein Liegestütz in Schräglage, bei dem beide Hände auf einem Gymnastikball und die Füße auf dem Boden ruhen. Die instabile Unterlage fordert Brust, Schultern und Trizeps zusätzlich, während der Rumpf den Körper stabil hält.",
+    "description_es": "Una flexión inclinada realizada con ambas manos sobre una pelota de estabilidad y los pies en el suelo. La superficie inestable exige más al pecho, los hombros y los tríceps, mientras el core mantiene el cuerpo rígido.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "stability_ball",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "rectus_abdominis",
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "core"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics",
+      "core"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Place both hands on top of a stability ball and walk your feet back into a straight-arm plank, body in a straight line from head to heels.",
+      "Brace your core and keep the ball steady beneath your hands.",
+      "Bend your elbows to lower your chest toward the ball under control.",
+      "Press back up to full arm extension without letting the ball roll.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Lege beide Hände auf einen Gymnastikball und wandere mit den Füßen zurück in eine Liegestützposition mit gestreckten Armen, den Körper in einer geraden Linie von Kopf bis Ferse.",
+      "Spanne den Rumpf an und halte den Ball ruhig unter den Händen.",
+      "Beuge die Ellbogen und senke die Brust kontrolliert zum Ball ab.",
+      "Drücke dich wieder nach oben in die volle Armstreckung, ohne den Ball wegrollen zu lassen.",
+      "Wiederhole die Bewegung für die gewünschte Wiederholungszahl."
+    ],
+    "instructions_es": [
+      "Coloca ambas manos sobre una pelota de estabilidad y camina con los pies hacia atrás hasta una plancha con los brazos extendidos, el cuerpo en línea recta de la cabeza a los talones.",
+      "Activa el core y mantén la pelota firme bajo las manos.",
+      "Flexiona los codos para bajar el pecho hacia la pelota de forma controlada.",
+      "Empuja de nuevo hasta la extensión completa de los brazos sin dejar que la pelota ruede.",
+      "Repite las repeticiones deseadas."
+    ],
+    "tips_en": [
+      "Keep your body in a rigid straight line — do not let your hips sag or pike up.",
+      "Move slowly and deliberately; the wobble of the ball is what makes the exercise work, so resist it rather than fight it fast.",
+      "Set your hands slightly wider than shoulder width on the ball for a more stable base, and keep your elbows tucked to about 45 degrees."
+    ],
+    "tips_de": [
+      "Halte den Körper in einer stabilen geraden Linie – lass die Hüfte weder durchhängen noch nach oben knicken.",
+      "Bewege dich langsam und bewusst; das Wackeln des Balls ist der Trainingsreiz – widerstehe ihm, statt schnell dagegen zu arbeiten.",
+      "Setze die Hände etwas breiter als schulterbreit auf den Ball und halte die Ellbogen bei etwa 45 Grad angelegt."
+    ],
+    "tips_es": [
+      "Mantén el cuerpo en una línea recta y rígida: no dejes que las caderas se hundan ni se eleven.",
+      "Muévete lento y con control; la inestabilidad de la pelota es lo que hace efectivo el ejercicio, así que resístela en lugar de combatirla con rapidez.",
+      "Coloca las manos algo más anchas que los hombros sobre la pelota y mantén los codos a unos 45 grados."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/stability-ball-push-up-hands-on-ball-start.webp",
+        "peak": "images/flat/stability-ball-push-up-hands-on-ball-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "straight-bar-dips",
+    "name_en": "Straight Bar Dips",
+    "name_de": "Dips an der geraden Stange",
+    "name_es": "Fondos en Barra Recta",
+    "description_en": "A dip variation performed hanging from a straight pull-up bar instead of parallel dip bars, pressing the body up through a small range of motion.",
+    "description_de": "Eine Dip-Variante, die hängend an einer geraden Klimmzugstange statt an parallelen Dip-Barren ausgeführt wird und den Körper über einen kleinen Bewegungsradius nach oben drückt.",
+    "description_es": "Una variante de fondos realizada colgando de una barra recta de dominadas en lugar de barras paralelas de fondos, empujando el cuerpo hacia arriba en un rango de movimiento reducido.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "pull_up_bar",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe"
+    ],
+    "variation_group": "dips",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Grip a straight overhead bar with both hands, hanging with arms extended and feet off the floor.",
+      "Keeping your body straight, press down through the bar to raise your shoulders and chest.",
+      "Pause briefly at the top of the movement.",
+      "Lower back down under control to the hanging position.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Greife eine gerade Überkopfstange mit beiden Händen und hänge mit gestreckten Armen, die Füße frei vom Boden.",
+      "Halte den Körper gerade und drücke dich an der Stange nach unten, um Schultern und Brust anzuheben.",
+      "Halte kurz oben in der Bewegung inne.",
+      "Senke dich kontrolliert zurück in die Hängeposition ab.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Agarra una barra recta por encima de la cabeza con ambas manos, colgando con los brazos extendidos y los pies fuera del suelo.",
+      "Manteniendo el cuerpo recto, empuja hacia abajo a través de la barra para elevar los hombros y el pecho.",
+      "Haz una breve pausa en la parte superior del movimiento.",
+      "Baja con control de vuelta a la posición colgante.",
+      "Repite el número deseado de repeticiones."
+    ],
+    "tips_en": [
+      "Keep the movement controlled -- this is a small range of motion compared to parallel-bar dips.",
+      "Engage your core to keep your body from swinging.",
+      "This is a harder wrist and shoulder position than standard dips -- build up volume gradually."
+    ],
+    "tips_de": [
+      "Führe die Bewegung kontrolliert aus -- der Bewegungsradius ist deutlich kleiner als bei Dips am Barren.",
+      "Spanne den Rumpf an, um ein Schwingen des Körpers zu vermeiden.",
+      "Diese Handgelenk- und Schulterposition ist anspruchsvoller als bei normalen Dips -- steigere das Volumen langsam."
+    ],
+    "tips_es": [
+      "Mantén el movimiento controlado -- es un rango de movimiento pequeño comparado con los fondos en barras paralelas.",
+      "Contrae el core para evitar que el cuerpo se balancee.",
+      "Esta posición de muñeca y hombro es más exigente que los fondos estándar -- aumenta el volumen gradualmente."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/straight-bar-dips-start.webp",
+        "peak": "images/flat/straight-bar-dips-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "svend-press",
+    "name_en": "Svend Press",
+    "name_de": "Svend Press",
+    "name_es": "Press Svend",
+    "description_en": "A plate-squeeze press that loads the pecs through isometric adduction as you extend the weight away from the chest.",
+    "description_de": "Ein Plattendrücken mit isometrischer Adduktion, das die Brustmuskeln belastet, während das Gewicht von der Brust weggedrückt wird.",
+    "description_es": "Un press con apretón de disco que carga los pectorales a través de la aducción isométrica mientras se extiende el peso alejándolo del pecho.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "isolation",
+    "difficulty": "beginner",
+    "equipment": "plates",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day"
+    ],
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Stand upright holding a single weight plate (or two pressed together) between your palms at chest height.",
+      "Squeeze the plates hard to generate tension through the pecs.",
+      "Press the plates straight out in front of you until the arms are fully extended.",
+      "Pause briefly, keeping the squeeze, then return the plates to the chest.",
+      "Repeat for the recommended number of repetitions."
+    ],
+    "instructions_de": [
+      "Stehe aufrecht und halte eine Gewichtsscheibe (oder zwei zusammengedrückte) zwischen den Handflächen auf Brusthöhe.",
+      "Drücke die Scheiben fest zusammen, um Spannung in den Brustmuskeln aufzubauen.",
+      "Drücke die Scheiben gerade nach vorne, bis die Arme vollständig gestreckt sind.",
+      "Kurz pausieren, Druck halten, dann die Scheiben zur Brust zurückführen.",
+      "Wiederhole für die empfohlene Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Párate erguido sosteniendo un disco de pesas (o dos apretados juntos) entre las palmas a la altura del pecho.",
+      "Aprieta fuerte los discos para generar tensión en los pectorales.",
+      "Empuja los discos recto hacia adelante hasta que los brazos estén completamente extendidos.",
+      "Haz una breve pausa manteniendo el apretón, luego devuelve los discos al pecho.",
+      "Repite el número de repeticiones recomendado."
+    ],
+    "tips_en": [
+      "The harder you squeeze the plates, the more chest activation you get.",
+      "Keep the plates at sternum height throughout — do not let them drop toward the hips."
+    ],
+    "tips_de": [
+      "Je fester du die Scheiben zusammendrückst, desto mehr Brustaktivierung erhältst du.",
+      "Halte die Scheiben durchgehend auf Sternumhöhe — nicht Richtung Hüfte absinken lassen."
+    ],
+    "tips_es": [
+      "Cuanto más fuerte aprietes los discos, mayor activación del pecho obtendrás.",
+      "Mantén los discos a la altura del esternón durante todo el ejercicio: no dejes que caigan hacia las caderas."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/svend-press-start.webp",
+        "peak": "images/flat/svend-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "trx-chest-press",
+    "name_en": "TRX Chest Press",
+    "name_de": "TRX Brustpresse",
+    "name_es": "Press de Pecho con TRX",
+    "description_en": "A compound push exercise using a suspension trainer to build chest strength and stability.",
+    "description_de": "Eine Verbundübung mit dem Schlingentrainer, um Brustkraft und Stabilität aufzubauen.",
+    "description_es": "Un ejercicio compuesto de empuje que utiliza un entrenador de suspensión para desarrollar fuerza y estabilidad en el pecho.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "equipment": "suspension_trainer",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "rectus_abdominis",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "calisthenics"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Adjust the suspension trainer handles to mid-calf height.",
+      "Stand facing away from the anchor point, holding a handle in each hand, arms extended.",
+      "Lean forward into a plank position, keeping your body straight from head to heels.",
+      "Lower your chest towards your hands by bending your elbows, maintaining tension in the straps.",
+      "Press back up to the starting position, fully extending your arms and squeezing your chest."
+    ],
+    "instructions_de": [
+      "Stelle die Griffe des Schlingentrainers auf Wadenhöhe ein.",
+      "Stelle dich mit dem Rücken zum Ankerpunkt, halte je einen Griff in jeder Hand, Arme ausgestreckt.",
+      "Lehne dich in eine Plank-Position nach vorne, halte deinen Körper gerade von Kopf bis Fersen.",
+      "Senke deine Brust zu deinen Händen, indem du die Ellbogen beugst und die Spannung in den Gurten hältst.",
+      "Drücke dich zurück in die Startposition, strecke die Arme vollständig aus und spanne die Brust an."
+    ],
+    "instructions_es": [
+      "Ajusta las asas del entrenador de suspensión a la altura de la mitad de la pantorrilla.",
+      "Ponte de espaldas al punto de anclaje, sosteniendo un asa en cada mano, con los brazos extendidos.",
+      "Inclínate hacia adelante en una posición de plancha, manteniendo tu cuerpo recto de la cabeza a los talones.",
+      "Baja tu pecho hacia tus manos doblando los codos, manteniendo la tensión en las correas.",
+      "Empuja hacia arriba a la posición inicial, extendiendo completamente los brazos y contrayendo el pecho."
+    ],
+    "tips_en": [
+      "Keep your core engaged throughout the movement to maintain a rigid plank.",
+      "Control the eccentric (lowering) phase for better muscle activation.",
+      "Adjust your foot position to modify difficulty: closer to the anchor for easier, further for harder.",
+      "Ensure your elbows track slightly out and back, not flaring wide."
+    ],
+    "tips_de": [
+      "Halte deinen Rumpf während der gesamten Bewegung angespannt, um eine stabile Plank zu bewahren.",
+      "Kontrolliere die exzentrische (senkende) Phase für eine bessere Muskelaktivierung.",
+      "Passe deine Fußposition an, um die Schwierigkeit zu ändern: näher am Anker für leichter, weiter weg für schwerer.",
+      "Achte darauf, dass deine Ellbogen leicht nach außen und hinten zeigen, nicht weit ausgestellt sind."
+    ],
+    "tips_es": [
+      "Mantén tu core activado durante todo el movimiento para mantener una plancha rígida.",
+      "Controla la fase excéntrica (descenso) para una mejor activación muscular.",
+      "Ajusta la posición de tus pies para modificar la dificultad: más cerca del anclaje para más fácil, más lejos para más difícil.",
+      "Asegúrate de que tus codos se muevan ligeramente hacia afuera y hacia atrás, sin abrirlos demasiado."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/trx-chest-press-start.webp",
+        "peak": "images/flat/trx-chest-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "wall-push-ups",
+    "name_en": "Wall Push Ups",
+    "name_de": "Wand-Push-Ups",
+    "name_es": "Push-Ups en Pared",
+    "description_en": "A beginner-friendly push-up performed standing against a wall, reducing load on the chest and arms.",
+    "description_de": "Eine einsteigerfreundliche Liegestütz-Variante an der Wand, die Brust, Schultern und Trizeps mit geringem Widerstand trainiert.",
+    "description_es": "Una flexión de pie contra la pared apta para principiantes, que trabaja el pecho con carga reducida.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "beginner",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Stand facing a wall and place your palms on it at shoulder height.",
+      "Step your feet back until your arms are fully extended.",
+      "Bend your elbows to bring your chest toward the wall.",
+      "Keep your body in a straight line throughout.",
+      "Press back to the starting position.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Stehe vor einer Wand und lege die Handflächen auf Schulterhöhe an.",
+      "Gehe mit den Füßen zurück, bis die Arme vollständig gestreckt sind.",
+      "Beuge die Ellbogen, um die Brust zur Wand zu bringen.",
+      "Halte den Körper in einer geraden Linie.",
+      "Drücke zurück zur Startposition.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Párate frente a una pared y coloca las palmas sobre ella a la altura de los hombros.",
+      "Retrocede con los pies hasta que los brazos estén completamente extendidos.",
+      "Flexiona los codos para acercar el pecho a la pared.",
+      "Mantén el cuerpo en línea recta durante todo el movimiento.",
+      "Empuja de vuelta a la posición inicial.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Avoid flaring your elbows straight out to the sides.",
+      "Step your feet farther from the wall to increase the difficulty.",
+      "Keep your core engaged so your hips do not sag."
+    ],
+    "tips_de": [
+      "Spanne Bauch und Gesäß an, damit die Hüfte nicht durchhängt.",
+      "Lass die Ellenbogen leicht nach hinten zeigen statt weit nach außen.",
+      "Vergrößere den Abstand zur Wand, wenn du mehr Widerstand möchtest."
+    ],
+    "tips_es": [
+      "Apoya las palmas a la altura de los hombros.",
+      "Mantén el cuerpo en línea recta de la cabeza a los pies.",
+      "Acerca el pecho a la pared flexionando los codos."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/wall-push-ups-start.webp",
+        "peak": "images/flat/wall-push-ups-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "weighted-dips",
+    "name_en": "Weighted Dips",
+    "name_de": "Dips mit Zusatzgewicht",
+    "name_es": "Fondos Lastrados",
+    "description_en": "A parallel-bar dip performed with extra load — most often a plate hung from a dip belt between the legs — to keep the movement in a strength rep range once bodyweight dips are easy.",
+    "description_de": "Ein Dip am Barren mit zusätzlicher Last — meist eine Hantelscheibe, die an einem Dipgürtel zwischen den Beinen hängt —, damit die Übung im Kraftbereich bleibt, sobald Dips mit dem eigenen Körpergewicht leicht fallen.",
+    "description_es": "Un fondo en paralelas con carga añadida — normalmente un disco colgado de un cinturón de lastre entre las piernas — para mantener el ejercicio en un rango de fuerza cuando los fondos con el propio peso ya resultan fáciles.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "advanced",
+    "equipment": "dip_station",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major",
+      "triceps_brachii"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid"
+    ],
+    "goals": [
+      "strength",
+      "hypertrophy"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe"
+    ],
+    "variation_group": "dips",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Attach a plate to a dip belt around your waist so the weight hangs between your legs.",
+      "Grip the parallel dip bars and press yourself up to the top position with your arms locked out and your feet off the floor.",
+      "Lean your torso slightly forward and lower your body by bending your elbows until your shoulders are below them.",
+      "Press back up through your palms until your arms are locked out again, keeping the hanging plate from swinging.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Häng eine Hantelscheibe in den Dipgürtel und leg ihn so um die Hüfte, dass das Gewicht frei zwischen den Beinen hängt.",
+      "Greif die parallelen Dipstangen und drück dich nach oben in die Startposition mit gestreckten Armen und Füßen frei über dem Boden.",
+      "Neig den Oberkörper leicht nach vorn und senk dich ab, indem du die Ellbogen beugst, bis die Schultern tiefer als die Ellbogen sind.",
+      "Drück dich über die Handflächen wieder nach oben, bis die Arme gestreckt sind, und halte dabei die hängende Scheibe ruhig.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Cuelga un disco del cinturón de lastre y ajústalo a la cintura de modo que el peso quede suelto entre las piernas.",
+      "Agarra las barras paralelas y súbete hasta la posición inicial con los brazos estirados y los pies separados del suelo.",
+      "Inclina ligeramente el torso hacia delante y baja el cuerpo flexionando los codos hasta que los hombros queden por debajo de ellos.",
+      "Empuja con las palmas para volver a subir hasta estirar los brazos, evitando que el disco colgante se balancee.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Add weight only once you can do clean bodyweight dips through a full range — small jumps of 2.5–5 kg are enough, since the load stacks on top of your own bodyweight.",
+      "Keep your legs together and your core braced so the plate does not start swinging; a swinging weight throws off the bottom of the rep.",
+      "Keep your shoulders pulled down away from your ears and stop the descent if you feel pinching at the front of the shoulder."
+    ],
+    "tips_de": [
+      "Nimm erst Gewicht dazu, wenn saubere Dips über den vollen Bewegungsumfang sitzen — 2,5 bis 5 kg pro Schritt reichen, denn die Last kommt auf das eigene Körpergewicht obendrauf.",
+      "Halte die Beine zusammen und den Rumpf fest, damit die Scheibe nicht ins Schwingen kommt; ein schwingendes Gewicht bringt den unteren Umkehrpunkt durcheinander.",
+      "Zieh die Schultern von den Ohren weg nach unten und brich die Abwärtsbewegung ab, sobald es vorn in der Schulter zwickt."
+    ],
+    "tips_es": [
+      "Añade peso solo cuando hagas fondos limpios con el propio peso en todo el recorrido: saltos de 2,5 a 5 kg son suficientes, porque la carga se suma a tu propio peso corporal.",
+      "Mantén las piernas juntas y el core apretado para que el disco no empiece a balancearse; un peso que oscila estropea la parte baja de la repetición.",
+      "Mantén los hombros alejados de las orejas y detén el descenso si notas pinzamiento en la parte delantera del hombro."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/weighted-dips-start.webp",
+        "peak": "images/flat/weighted-dips-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "wide-grip-bench-press",
+    "name_en": "Wide-Grip Bench Press",
+    "name_de": "Bankdrücken mit breitem Griff",
+    "name_es": "Press de Banca en Agarre Ancho",
+    "description_en": "A bench press variation with a wider-than-shoulder-width grip to maximize chest activation.",
+    "description_de": "Eine Bankdrücken-Variante mit breiterem Schultergriff zur maximalen Brustaktivierung.",
+    "description_es": "Una variante del press de banca con un agarre más ancho que los hombros para maximizar la activación del pectoral.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "equipment": "barbell",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "push_day",
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "requires_bench"
+    ],
+    "variation_group": "bench-press",
+    "is_unilateral": false,
+    "is_bodyweight": false,
+    "instructions_en": [
+      "Lie on a flat bench. Grip the barbell wider than shoulder-width.",
+      "Lower the bar to mid-chest.",
+      "Press back up to full extension.",
+      "Repeat."
+    ],
+    "instructions_de": [
+      "Lege dich auf eine flache Bank und greife die Langhantel breiter als schulterbreit.",
+      "Senke die Stange zur Brustmitte.",
+      "Drücke zurück bis zur vollen Streckung.",
+      "Wiederhole."
+    ],
+    "instructions_es": [
+      "Túmbate en un banco plano. Agarra la barra más ancha que los hombros.",
+      "Baja la barra hasta la mitad del pecho.",
+      "Empuja de vuelta a la extensión completa.",
+      "Repite."
+    ],
+    "tips_en": [
+      "A wider grip reduces triceps involvement.",
+      "Avoid excessive wrist bending."
+    ],
+    "tips_de": [
+      "Ein breiterer Griff reduziert die Trizepsbeteiligung.",
+      "Vermeide übermäßiges Abknicken der Handgelenke."
+    ],
+    "tips_es": [
+      "Un agarre más ancho reduce la participación de los tríceps.",
+      "Evita doblar las muñecas en exceso."
+    ],
+    "met": 6,
+    "images": {
+      "flat": {
+        "start": "images/flat/wide-grip-bench-press-start.webp",
+        "peak": "images/flat/wide-grip-bench-press-peak.webp"
+      }
+    }
+  },
+  {
+    "id": "wide-grip-push-ups",
+    "name_en": "Wide Grip Push Ups",
+    "name_de": "Liegestütz weiter Griff",
+    "name_es": "Flexiones con Agarre Ancho",
+    "description_en": "A push-up variation with a wider hand placement to emphasize the chest.",
+    "description_de": "Eine Liegestütz-Variante mit breiterer Handposition, die die Brust betont.",
+    "description_es": "Una variante de flexión con las manos colocadas más separadas para enfatizar el pecho.",
+    "category": "strength",
+    "force_type": "push",
+    "mechanic": "compound",
+    "difficulty": "intermediate",
+    "body_part": "chest",
+    "primary_muscles": [
+      "pectoralis_major"
+    ],
+    "secondary_muscles": [
+      "anterior_deltoid",
+      "serratus_anterior",
+      "triceps_brachii"
+    ],
+    "goals": [
+      "hypertrophy",
+      "strength"
+    ],
+    "tags": [
+      "knee_safe",
+      "no_axial_load",
+      "lower_back_safe",
+      "shoulder_safe"
+    ],
+    "variation_group": "push-up",
+    "is_unilateral": false,
+    "is_bodyweight": true,
+    "instructions_en": [
+      "Start in a high plank with hands wider than shoulder-width.",
+      "Keep your body in a straight line from head to heels.",
+      "Lower your chest toward the floor by bending your elbows.",
+      "Keep your core braced and glutes engaged.",
+      "Press back up until your arms are extended.",
+      "Repeat for the desired number of reps."
+    ],
+    "instructions_de": [
+      "Starte in einer hohen Plank-Position mit Händen breiter als schulterbreit.",
+      "Halte den Körper in einer geraden Linie von Kopf bis Fersen.",
+      "Senke die Brust durch Beugen der Ellbogen in Richtung Boden ab.",
+      "Halte den Rumpf angespannt und das Gesäß aktiv.",
+      "Drücke dich zurück, bis die Arme gestreckt sind.",
+      "Wiederhole für die gewünschte Anzahl an Wiederholungen."
+    ],
+    "instructions_es": [
+      "Comienza en una plancha alta con las manos más separadas que el ancho de hombros.",
+      "Mantén el cuerpo en línea recta de la cabeza a los talones.",
+      "Baja el pecho hacia el suelo flexionando los codos.",
+      "Mantén el core activado y los glúteos contraídos.",
+      "Empuja de vuelta hasta extender los brazos.",
+      "Repite el número de repeticiones deseado."
+    ],
+    "tips_en": [
+      "Keep your elbows at roughly 45 degrees from your torso.",
+      "Maintain a straight line from head to heels.",
+      "Lower until your chest is close to the floor."
+    ],
+    "tips_de": [
+      "Halte die Ellbogen in etwa 45 Grad zum Rumpf.",
+      "Halte eine gerade Linie von Kopf bis Fersen.",
+      "Senke ab, bis die Brust nah am Boden ist."
+    ],
+    "tips_es": [
+      "Mantén los codos a unos 45 grados respecto al torso.",
+      "Mantén una línea recta de la cabeza a los talones.",
+      "Baja hasta que el pecho quede cerca del suelo."
+    ],
+    "met": 5,
+    "images": {
+      "flat": {
+        "start": "images/flat/wide-grip-push-ups-start.webp",
+        "peak": "images/flat/wide-grip-push-ups-peak.webp"
+      }
+    }
+  }
+]

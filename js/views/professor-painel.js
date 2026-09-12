@@ -5,6 +5,7 @@
 
 import { db, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import { DIAS_SEM_TREINAR_ALERTA } from "../config.js";
+import { usuarioAtual } from "../auth.js";
 import {
   esc,
   iniciais,
@@ -30,16 +31,20 @@ export async function render(alvo) {
     .reduce((t, p) => t + (p.amount ?? 0), 0);
 
   alvo.innerHTML = `
-    <div class="wrap">
+    <div class="wrap dashboard">
       <div class="page-head row-between">
         <div>
-          <div class="eyebrow">Painel</div>
-          <h1>${plural(alunos.length, "aluno ativo", "alunos ativos")}</h1>
+          <div class="eyebrow">Seu espaço de acompanhamento</div>
+          <h1>Vamos evoluir, ${esc(primeiroNome(usuarioAtual().full_name))}.</h1>
+          <p class="muted page-description">Uma visão clara de quem conta com você.</p>
         </div>
-        <a class="btn btn-primary" href="#/professor/alunos">Novo aluno</a>
+        <a class="btn btn-primary" href="#/professor/alunos">Gerenciar alunos <span aria-hidden="true">↗</span></a>
       </div>
 
-      ${secaoAtencao(alertas)}
+      <section class="overview-banner">
+        <div><div class="eyebrow">Visão geral · ${esc(nomeDoMes(mes))}</div><h2>Presença faz<br>a diferença.</h2><p>${plural(alunos.length, "aluno ativo", "alunos ativos")} sob seu acompanhamento.</p></div>
+        <div class="banner-stat"><strong>${alunos.filter(a => a.resumo.metaSemanal > 0 && a.resumo.treinosNaSemana >= a.resumo.metaSemanal).length}<span> / ${alunos.length}</span></strong><span>alunos atingiram a meta da semana</span></div>
+      </section>
 
       <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
         ${cartao("Treinos esta semana", `${alunos.reduce((t, a) => t + a.resumo.treinosNaSemana, 0)}`, "somando todos os alunos")}
@@ -47,9 +52,11 @@ export async function render(alvo) {
         ${cartao("Sem ficha ativa", `${alunos.filter((a) => !a.resumo.temFichaAtiva).length}`, "alunos aguardando treino")}
       </div>
 
-      <h2 style="margin-bottom:var(--sp-3)">Alunos</h2>
-      <div class="list">
-        ${alunos.map(linhaAluno).join("")}
+      <div class="dashboard-columns">
+        <section class="panel"><div class="section-heading"><div><div class="eyebrow">Acompanhamento</div><h2>Seus alunos <span class="count-pill">${alunos.length}</span></h2></div><a class="text-link" href="#/professor/alunos">Ver todos ↗</a></div>
+          <div class="list">${alunos.length ? alunos.map(linhaAluno).join("") : '<div class="empty">Seus alunos aparecerão aqui quando forem cadastrados.</div>'}</div>
+        </section>
+        ${secaoAtencao(alertas)}
       </div>
     </div>
   `;
@@ -104,17 +111,18 @@ function montarAlertas(alunos) {
 function secaoAtencao(alertas) {
   if (!alertas.length) {
     return `
-      <div class="card card-invert" style="margin-bottom:var(--sp-5)">
+      <section class="panel attention-panel">
         <div class="eyebrow">Precisa de atenção</div>
-        <p style="margin:var(--sp-2) 0 0">Nada pendente. Todos treinando e em dia.</p>
-      </div>`;
+        <h2>Tudo em dia.</h2><p class="muted">Nenhuma pendência encontrada no acompanhamento.</p>
+      </section>`;
   }
 
   return `
-    <div style="margin-bottom:var(--sp-5)">
+    <section class="panel attention-panel">
       <div class="eyebrow" style="margin-bottom:var(--sp-3)">
-        Precisa de atenção · ${alertas.length}
+        Seu próximo passo
       </div>
+      <h2 class="attention-title">Precisa de atenção <span class="count-pill">${alertas.length}</span></h2>
       <div class="stack">
         ${alertas
           .map(
@@ -128,12 +136,12 @@ function secaoAtencao(alertas) {
           )
           .join("")}
       </div>
-    </div>`;
+    </section>`;
 }
 
 function cartao(rotulo, valor, apoio) {
   return `
-    <div class="card">
+    <div class="card stat-card">
       <div class="eyebrow">${esc(rotulo)}</div>
       <div class="numeric" style="font-size:28px;font-weight:800;letter-spacing:-0.03em;margin:var(--sp-1) 0">
         ${esc(valor)}

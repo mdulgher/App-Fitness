@@ -6,14 +6,15 @@
 
 import { DATA_SOURCE } from "./config.js";
 import { hoje } from "./utils.js";
+import { importarPeito } from "./catalogo-peito.js";
 
 const impl =
   DATA_SOURCE === "supabase"
     ? await import("./db-supabase.js")
     : await import("./db-local.js");
 
-export const db = impl;
-export default impl;
+export const db = { ...impl, importarCatalogoPeito: () => importarPeito(impl) };
+export default db;
 
 /* ==================== regras de domínio compartilhadas ====================
    Ficam aqui porque valem para as duas implementações e para as telas.      */

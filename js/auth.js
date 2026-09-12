@@ -1,25 +1,21 @@
-// Leo Personal Trainning — sessão e controle de acesso
+// Leo Personal Trainning — sessão e papel
 //
-// FASE LOCAL: não existe senha de verdade. A tela de login é a definitiva,
-// mas a verificação apenas confere se o email existe nos dados de teste.
-// Na Fase 8 só o corpo de entrar() e sair() muda — o resto do app não sabe
-// a diferença.
+// Fino de proposito: quem sabe autenticar é a camada de dados (db-local.js
+// finge, db-supabase.js faz de verdade). Aqui só se guarda o perfil carregado
+// e se responde "quem é" e "para onde vai".
 
 import { db } from "./db.js";
-
-const CHAVE = "lpt.session.v1";
 
 let usuario = null;
 
 export async function restaurarSessao() {
   try {
-    const id = localStorage.getItem(CHAVE);
-    if (!id) return null;
-    usuario = await db.buscarPerfil(id);
-    return usuario;
+    const conta = await db.usuarioDaSessao();
+    usuario = conta ? await db.buscarPerfil(conta.id) : null;
   } catch {
-    return null;
+    usuario = null;
   }
+  return usuario;
 }
 
 export function usuarioAtual() {
@@ -30,41 +26,41 @@ export function ehProfessor() {
   return usuario?.role === "trainer";
 }
 
-export async function entrar(email) {
-  const perfis = await db.listarPerfis();
-  const alvo = perfis.find(
-    (p) => p.email?.toLowerCase().trim() === email.toLowerCase().trim()
-  );
-  if (!alvo) {
-    throw new Error("Email não encontrado.");
-  }
-  usuario = alvo;
-  try {
-    localStorage.setItem(CHAVE, alvo.id);
-  } catch {
-    // Sem localStorage a sessão dura só enquanto a aba estiver aberta.
-  }
-  return alvo;
-}
-
-export async function entrarComoId(id) {
-  usuario = await db.buscarPerfil(id);
-  if (usuario) {
-    try {
-      localStorage.setItem(CHAVE, id);
-    } catch {}
+export async function entrar(email, senha) {
+  const conta = await db.entrarComSenha(email, senha);
+  usuario = await db.buscarPerfil(conta.id);
+  if (!usuario) {
+    // Conta existe mas o perfil não foi criado (gatilho falhou, ou cadastro
+    // feito fora do app). Melhor falhar com mensagem clara do que deixar o
+    // app rodar com um usuário sem papel.
+    await db.sairDaConta();
+    throw new Error("Sua conta existe mas está sem perfil. Avise o professor.");
   }
   return usuario;
 }
 
-export function sair() {
-  usuario = null;
-  try {
-    localStorage.removeItem(CHAVE);
-  } catch {}
+export async function criarConta(email, senha, nome) {
+  const conta = await db.criarConta(email, senha, nome);
+  usuario = conta ? await db.buscarPerfil(conta.id) : null;
+  // Perfil vazio aqui significa que o cadastro não abriu sessão: o Supabase
+  // está exigindo confirmação por email. Sem tratar isso, a tela ficava
+  // travada sem dizer nada ao usuário.
+  return { precisaConfirmar: !usuario, usuario };
 }
 
-// Área inicial de cada papel.
+// Só existe no modo local: atalho para testar sem digitar email.
+export async function entrarComoId(id) {
+  if (!db.entrarComoId) throw new Error("Atalho indisponível com o banco conectado.");
+  await db.entrarComoId(id);
+  usuario = await db.buscarPerfil(id);
+  return usuario;
+}
+
+export async function sair() {
+  await db.sairDaConta();
+  usuario = null;
+}
+
 export function rotaInicial() {
   if (!usuario) return "#/login";
   return ehProfessor() ? "#/professor" : "#/aluno";

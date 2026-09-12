@@ -13,7 +13,7 @@ const rotas = [
   { padrao: /^\/professor$/, papel: "trainer", view: () => import("./views/professor-painel.js") },
   { padrao: /^\/professor\/alunos$/, papel: "trainer", view: () => import("./views/professor-alunos.js") },
   { padrao: /^\/professor\/aluno\/([^/]+)$/, papel: "trainer", view: () => import("./views/professor-aluno.js") },
-  { padrao: /^\/professor\/exercicios$/, papel: "trainer", view: () => import("./views/em-construcao.js"), fase: "2 — Biblioteca de exercícios" },
+  { padrao: /^\/professor\/exercicios$/, papel: "trainer", view: () => import("./views/professor-exercicios.js") },
   { padrao: /^\/professor\/financeiro$/, papel: "trainer", view: () => import("./views/em-construcao.js"), fase: "6 — Financeiro do professor" },
 
   // Aluno

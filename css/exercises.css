@@ -1,0 +1,80 @@
+.exercise-library { max-width: 1280px; }
+.exercise-library .page-head { align-items: center; }
+.exercise-library .page-head h1 { font-size: clamp(28px,3vw,40px); }
+.muscle-tabs { display: flex; gap: 8px; flex-wrap: wrap; padding-bottom: 26px; border-bottom: var(--border); }
+.muscle-tab, .movement-tab { font: inherit; font-size: 14px; min-height: 48px; cursor: pointer; border: 1px solid #dedede; border-radius: 10px; background: #fff; padding: 0 20px; color: #555; }
+.muscle-tab[aria-pressed="true"] { background: #111; color: #fff; border-color: #111; }
+.muscle-tab:hover, .movement-tab:hover { border-color: #555; }
+.library-toolbar { display: grid; grid-template-columns: minmax(200px,1fr) 230px 160px; gap: 16px; margin: 26px 0; }
+.library-toolbar .field { margin: 0; }
+.library-toolbar label > span, .exercise-dialog label > span { display: block; font-size: 14px; font-weight: 600; margin-bottom: 8px; }
+.library-toolbar input, .library-toolbar select { background: #fff; }
+.library-heading { display: flex; align-items: center; justify-content: space-between; gap: 18px; margin-bottom: 18px; }
+.library-heading h2 { font-size: 28px; }
+.library-heading p { font-size: 14px; margin: 6px 0 0; }
+.movement-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; }
+.movement-tab { border-color: transparent; background: transparent; min-height: 44px; padding: 0 14px; }
+.movement-tab[aria-pressed="true"] { background: #e5e5e5; color: #111; }
+.exercise-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px; }
+.exercise-grid > .empty { grid-column: 1 / -1; }
+.exercise-card { background: #fff; border: var(--border); border-radius: 16px; overflow: hidden; transition: border-color .18s, box-shadow .18s; min-width: 0; }
+.exercise-card:hover { border-color: #999; box-shadow: 0 6px 24px #00000008; }
+.exercise-open { display: block; text-align: left; width: 100%; height: 100%; border: 0; padding: 0; font: inherit; color: inherit; background: transparent; cursor: pointer; }
+.exercise-cover { aspect-ratio: 3 / 2; position: relative; background: #ececec; overflow: hidden; }
+.exercise-cover img { width: 100%; height: 100%; display: block; object-fit: contain; filter: grayscale(1); }
+.exercise-media-label { position: absolute; top: 12px; left: 12px; border-radius: 6px; background: rgba(255,255,255,.94); padding: 5px 8px; font-size: 12px; font-weight: 600; }
+.exercise-open-arrow { position: absolute; bottom: 12px; right: 12px; width: 32px; height: 32px; border-radius: 50%; background: #fff; display: grid; place-items: center; }
+.exercise-card-body { padding: 20px; }
+.exercise-meta { color: #666; font-size: 13px; }
+.exercise-meta > span { margin: 0 4px; }
+.exercise-card h3 { font-size: 18px; line-height: 1.35; font-weight: 600; margin: 9px 0 20px; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.exercise-detail-link { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; }
+.library-credit { color: #666; font-size: 12px; line-height: 1.6; margin-top: 30px; }
+.library-credit a { color: inherit; }
+.library-feedback { border: 1px solid #bbb; padding: 16px 20px; border-radius: 10px; background: #fff; margin-bottom: 24px; font-size: 14px; }
+.library-feedback[role="alert"] { border-left: 4px solid #111; }
+.exercise-dialog { width: min(760px,calc(100% - 32px)); max-height: calc(100dvh - 48px); padding: 32px; border: 1px solid #ddd; border-radius: 22px; color: #111; background: #fff; box-shadow: 0 24px 100px #0003; overscroll-behavior: contain; }
+.exercise-dialog::backdrop { background: #0009; backdrop-filter: blur(5px); }
+body:has(.exercise-dialog[open]) { overflow: hidden; }
+.dialog-top { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin-bottom: 10px; }
+.dialog-top .eyebrow { font-size: 12px; }
+.dialog-close { border: 1px solid #e5e5e5; background: #f5f5f5; border-radius: 50%; width: 48px; height: 48px; flex-shrink: 0; cursor: pointer; font-size: 26px; color: #111; }
+.exercise-dialog h2 { font-size: 30px; line-height: 1.2; margin-bottom: 24px; overflow-wrap: anywhere; }
+.exercise-dialog input, .exercise-dialog select, .exercise-dialog textarea, .library-toolbar > * { min-width: 0; }
+.exercise-demo { aspect-ratio: 3 / 2; background: #f0f0f0; overflow: hidden; border-radius: 12px; }
+.exercise-demo img { display: block; width: 100%; height: 100%; object-fit: contain; filter: grayscale(1); }
+.demo-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.demo-controls .btn { min-height: 48px; padding: 0 16px; font-size: 14px; }
+.demo-controls [data-foto][aria-pressed="true"] { background: #e5e5e5; }
+.demo-caption { font-size: 12px; color: #666; margin: 12px 0 24px; }
+.how-to { margin-top: 30px; }
+.how-to .eyebrow { font-size: 12px; margin-bottom: 8px; }
+.how-to h3 { font-size: 22px; }
+.how-to ol { padding-left: 24px; margin-top: 20px; }
+.how-to li { padding-left: 8px; margin-bottom: 16px; font-size: 16px; line-height: 1.7; }
+.how-to li::marker { font-weight: 700; }
+.exercise-guidance { background: #f5f5f5; border-left: 3px solid #111; padding: 16px; font-size: 14px; border-radius: 8px; }
+.dialog-actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 12px; padding-top: 24px; margin-top: 24px; border-top: var(--border); }
+.dialog-actions .btn { font-size: 14px; }
+.exercise-dialog .alert { margin-top: 20px; }
+.exercise-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.exercise-dialog .field small { display: block; font-size: 12px; color: #666; margin-top: 8px; }
+.exercise-video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; margin-top: 16px; }
+.media-fallback { height: 100%; min-height: 160px; display: grid; place-items: center; padding: 24px; font-size: 14px; color: #666; text-align: center; }
+.exercise-dialog button:focus-visible, .exercise-open:focus-visible, .muscle-tab:focus-visible, .movement-tab:focus-visible { outline: 3px solid #555; outline-offset: -3px; }
+.is-archived .exercise-card-body { background: #f7f7f7; }
+@media (max-width: 1000px) { .exercise-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .library-toolbar { grid-template-columns: minmax(160px,1fr) 190px 140px; } }
+@media (max-width: 700px) {
+  .exercise-grid { grid-template-columns: 1fr; gap: 20px; }
+  .library-toolbar { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .library-toolbar .search-field { grid-column: 1 / -1; }
+  .library-toolbar select { padding: 10px 8px; }
+  .muscle-tabs { gap: 6px; padding-bottom: 20px; }
+  .muscle-tab { flex: 1 0 auto; padding: 0 12px; font-size: 14px; }
+  .library-heading { align-items: flex-start; flex-direction: column; }
+  .exercise-dialog { padding: 22px 18px; border-radius: 16px; max-height: calc(100dvh - 24px); }
+  .exercise-dialog h2 { font-size: 25px; }
+  .exercise-form-grid { grid-template-columns: 1fr; gap: 0; }
+  .dialog-actions .btn { flex: 1 1 auto; }
+  .demo-controls .btn { flex: 1 1 auto; }
+}

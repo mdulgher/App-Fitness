@@ -1,55 +1,148 @@
 // Tela de login
 //
-// O desenho já é o definitivo. Na fase local a senha não é verificada — só o
-// email é conferido contra os dados de teste. Os botões de acesso rápido
-// existem para não ter que digitar email a cada teste e saem na Fase 8.
+// A mesma tela serve aos dois modos. Com o banco conectado ela pede senha de
+// verdade e oferece criar conta; no modo local a senha é ignorada e aparecem
+// atalhos para não digitar email a cada teste.
 
-import { APP_NAME } from "../config.js";
+import { APP_NAME, DATA_SOURCE } from "../config.js";
 import { db } from "../db.js";
-import { entrar, entrarComoId } from "../auth.js";
+import { entrar, criarConta, entrarComoId } from "../auth.js";
 import { esc, iniciais } from "../utils.js";
 
-export async function render(alvo) {
-  const perfis = await db.listarPerfis();
+const LOCAL = DATA_SOURCE === "local";
 
+export async function render(alvo) {
   alvo.innerHTML = `
     <div class="auth">
+      <section class="auth-story" aria-label="Leo Personal Trainning">
+        <div class="story-logo"><span class="logo-crop" aria-hidden="true"></span><span>LEO<br><small>PERSONAL TRAINNING</small></span></div>
+        <div class="story-content"><div class="eyebrow">Método. Consistência. Evolução.</div>
+          <h1>Seu próximo<br>nível começa<br><span>aqui.</span></h1>
+          <p>Treino com direção.<br>Evolução que você acompanha.</p>
+        </div>
+        <div class="story-footer"><span>ACOMPANHAMENTO PERSONALIZADO</span><span>01 — ∞</span></div>
+      </section>
+      <div class="auth-form-side">
       <div class="auth-box">
-        <div class="auth-brand">${esc(APP_NAME)}</div>
+        <div class="eyebrow">${esc(APP_NAME)}</div>
+        <h2 class="auth-brand" id="auth-title">Bom ter você aqui.</h2>
         <p class="muted small" style="margin-bottom:var(--sp-6)">
-          Treino, frequência e acompanhamento.
+          Entre com seu email e senha para acessar sua área.
         </p>
 
-        <form id="form-login" novalidate>
+        <form id="form" novalidate>
+          <div class="field hidden" id="campo-nome">
+            <label for="nome">Nome completo</label>
+            <input type="text" id="nome" autocomplete="name" />
+          </div>
+
           <div class="field">
             <label for="email">Email</label>
-            <input type="email" id="email" name="email" autocomplete="username"
+            <input type="email" id="email" autocomplete="username"
                    placeholder="seu@email.com" required />
           </div>
 
           <div class="field">
             <label for="senha">Senha</label>
-            <input type="password" id="senha" name="senha"
-                   autocomplete="current-password" placeholder="••••••••" />
-            <div class="field-hint">Nesta versão de teste a senha não é verificada.</div>
+            <input type="password" id="senha" autocomplete="current-password"
+                   placeholder="••••••••" />
+            ${LOCAL ? `<div class="field-hint">Nesta versão de teste a senha não é verificada.</div>` : ""}
           </div>
 
-          <div id="erro" class="alert hidden" style="margin-bottom:var(--sp-4)">
-            <strong class="small" id="erro-texto"></strong>
+          <div id="erro" role="alert" class="alert hidden" style="margin-bottom:var(--sp-4)">
+            <div class="small" id="erro-texto"></div>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block btn-lg">Entrar</button>
+          <button type="submit" class="btn btn-primary btn-block btn-lg" id="enviar">Entrar</button>
         </form>
 
-        <hr class="hr" />
+        ${LOCAL ? "" : `
+          <button class="btn btn-block" style="margin-top:var(--sp-3)" id="alternar">Criar conta</button>
+        `}
 
-        <div class="eyebrow" style="margin-bottom:var(--sp-3)">Acesso rápido para teste</div>
-        <div class="stack" id="atalhos"></div>
+        ${LOCAL ? `
+          <hr class="hr" />
+          <div class="eyebrow" style="margin-bottom:var(--sp-3)">Acesso rápido para teste</div>
+          <div id="atalhos"></div>
+        ` : ""}
+
+        <p class="muted small" style="margin-top:var(--sp-6)">
+          Seu treino. Seu ritmo. Sua evolução.
+        </p>
+      </div>
       </div>
     </div>
   `;
 
+  const form = alvo.querySelector("#form");
+  const erro = alvo.querySelector("#erro");
+  const erroTexto = alvo.querySelector("#erro-texto");
+  const enviar = alvo.querySelector("#enviar");
+  const campoNome = alvo.querySelector("#campo-nome");
+  let modoCadastro = false;
+
+  function mostrarErro(msg) {
+    erroTexto.textContent = msg;
+    erro.classList.remove("hidden");
+  }
+
+  alvo.querySelector("#alternar")?.addEventListener("click", () => {
+    modoCadastro = !modoCadastro;
+    alvo.querySelector("#auth-title").textContent = modoCadastro ? "Vamos começar." : "Bom ter você aqui.";
+    campoNome.classList.toggle("hidden", !modoCadastro);
+    enviar.textContent = modoCadastro ? "Criar conta" : "Entrar";
+    alvo.querySelector("#alternar").textContent = modoCadastro ? "Já tenho conta" : "Criar conta";
+    alvo.querySelector("#senha").autocomplete = modoCadastro ? "new-password" : "current-password";
+    erro.classList.add("hidden");
+  });
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    erro.classList.add("hidden");
+
+    const email = form.email.value.trim();
+    const senha = form.senha.value;
+    const nome = alvo.querySelector("#nome")?.value.trim();
+
+    if (!email) return mostrarErro("Informe o email.");
+    if (!LOCAL && !senha) return mostrarErro("Informe a senha.");
+    if (modoCadastro && !nome) return mostrarErro("Informe seu nome completo.");
+
+    enviar.disabled = true;
+    enviar.textContent = modoCadastro ? "Criando..." : "Entrando...";
+
+    try {
+      if (modoCadastro) {
+        const { precisaConfirmar } = await criarConta(email, senha, nome);
+        if (precisaConfirmar) {
+          form.innerHTML = `
+            <div class="alert">
+              <div class="eyebrow">Conta criada</div>
+              <p style="margin:var(--sp-2) 0 0">
+                Enviamos um link de confirmação para <strong>${esc(email)}</strong>.
+                Confirme o email e volte aqui para entrar.
+              </p>
+            </div>`;
+          return;
+        }
+      } else {
+        await entrar(email, senha);
+      }
+      window.dispatchEvent(new CustomEvent("lpt:sessao"));
+    } catch (err) {
+      mostrarErro(err.message);
+      enviar.disabled = false;
+      enviar.textContent = modoCadastro ? "Criar conta" : "Entrar";
+    }
+  });
+
+  if (LOCAL) await desenharAtalhos(alvo);
+}
+
+async function desenharAtalhos(alvo) {
   const atalhos = alvo.querySelector("#atalhos");
+  const perfis = await db.listarPerfis();
+
   atalhos.innerHTML = perfis
     .map(
       (p) => `
@@ -69,27 +162,5 @@ export async function render(alvo) {
     if (!botao) return;
     await entrarComoId(botao.dataset.id);
     window.dispatchEvent(new CustomEvent("lpt:sessao"));
-  });
-
-  const form = alvo.querySelector("#form-login");
-  const erro = alvo.querySelector("#erro");
-  const erroTexto = alvo.querySelector("#erro-texto");
-
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    erro.classList.add("hidden");
-    const email = form.email.value.trim();
-    if (!email) {
-      erroTexto.textContent = "Informe o email.";
-      erro.classList.remove("hidden");
-      return;
-    }
-    try {
-      await entrar(email);
-      window.dispatchEvent(new CustomEvent("lpt:sessao"));
-    } catch (err) {
-      erroTexto.textContent = err.message;
-      erro.classList.remove("hidden");
-    }
   });
 }

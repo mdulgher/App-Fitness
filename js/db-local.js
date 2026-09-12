@@ -5,6 +5,8 @@
 // Fase 8 sem reescrever nenhuma tela.
 
 import { criarDadosIniciais } from "./seed.js";
+import { validarExercicio } from "./exercise-validation.js";
+import { atualizarColecaoDemo } from "./catalogo-peito.js";
 import {
   hoje,
   somarDias,
@@ -24,12 +26,14 @@ function carregar() {
     const bruto = localStorage.getItem(CHAVE);
     if (bruto) {
       cache = JSON.parse(bruto);
+      if (atualizarColecaoDemo(cache)) salvar();
       return cache;
     }
   } catch {
     // localStorage indisponível ou corrompido: recomeça do zero.
   }
   cache = criarDadosIniciais();
+  atualizarColecaoDemo(cache);
   salvar();
   return cache;
 }
@@ -51,6 +55,47 @@ const clone = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
 export async function reiniciarDados() {
   cache = criarDadosIniciais();
   salvar();
+}
+
+/* ==================== sessão ====================
+   Mesma assinatura de db-supabase.js, mas sem senha de verdade: só confere se
+   o email existe nos dados de teste. Nada aqui protege nada — a verificação
+   real só existe com o banco. */
+
+const CHAVE_SESSAO = "lpt.session.v1";
+
+export async function entrarComSenha(email) {
+  const perfil = tabela("profiles").find(
+    (p) => p.email?.toLowerCase().trim() === email.toLowerCase().trim()
+  );
+  if (!perfil) throw new Error("Email não encontrado.");
+  return entrarComoId(perfil.id);
+}
+
+export async function entrarComoId(id) {
+  try {
+    localStorage.setItem(CHAVE_SESSAO, id);
+  } catch {}
+  return { id };
+}
+
+export async function criarConta() {
+  throw new Error("Criar conta só funciona com o banco conectado.");
+}
+
+export async function sairDaConta() {
+  try {
+    localStorage.removeItem(CHAVE_SESSAO);
+  } catch {}
+}
+
+export async function usuarioDaSessao() {
+  try {
+    const id = localStorage.getItem(CHAVE_SESSAO);
+    return id ? { id } : null;
+  } catch {
+    return null;
+  }
 }
 
 /* ==================== perfis ==================== */
@@ -176,6 +221,7 @@ export async function buscarExercicio(id) {
 }
 
 export async function criarExercicio(dados) {
+  dados = validarExercicio(dados);
   const novo = {
     id: uid(),
     name: dados.name,
@@ -193,8 +239,9 @@ export async function criarExercicio(dados) {
 }
 
 export async function atualizarExercicio(id, patch) {
+  patch = validarExercicio(patch, true);
   const ex = tabela("exercises").find((e) => e.id === id);
-  if (!ex) return null;
+  if (!ex) throw new Error("Exercício não encontrado.");
   Object.assign(ex, patch);
   salvar();
   return clone(ex);
