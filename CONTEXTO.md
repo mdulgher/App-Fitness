@@ -20,13 +20,48 @@ App web para **um** personal trainer (Leo) gerenciar seus alunos: fichas de
 treino com vídeo/foto/how-to por exercício, registro de carga pelo aluno durante
 o treino, acompanhamento de frequência, anotações do professor e controle
 financeiro manual. Dois perfis: **professor** (vê e edita tudo) e **aluno** (vê
-só o que é seu). Feito em HTML/CSS/JS puro, sem build, sem framework. O
-back-end (Supabase) só entra na Fase 8 — até lá tudo roda numa camada de dados
-local.
+só o que é seu). Feito em HTML/CSS/JS puro, sem build, sem framework, com o
+Supabase por trás (Auth + Postgres + RLS) e publicado no GitHub Pages.
 
 ---
 
 ## 2. Estado atual
+
+### Onde tudo vive — o cartão de referência
+
+| | Onde | Detalhe |
+|---|---|---|
+| **App publicado** | https://mdulgher.github.io/App-Fitness/ | GitHub Pages, branch `main`, pasta raiz. Atualiza sozinho a cada push. |
+| **Código** | https://github.com/mdulgher/App-Fitness | **Repositório público.** Branch única: `main`. |
+| **Banco** | Supabase, projeto `App Fitness Leo` | ref `azifpaxbeozfooydkzxh`, região `sa-east-1`. Conta do próprio dono. |
+| **Senhas** | `CREDENCIAIS.local.md` | Fora do git (`.gitignore`). Nunca escreva senha em arquivo versionado. |
+| **Lovable** | projeto `c2aa8a9f-2818-4c41-bd83-3dad893dc3e2` | **Abandonado.** Ver seção 11 antes de tocar. |
+
+**Estado em 12/09/2026:** o app está no ar, ligado ao banco de verdade, com 12
+alunos fictícios semeados para demonstração ao Leo (o dono). O que funciona
+ponta a ponta: login, cadastro de alunos pelo professor, editor de ficha com
+agenda semanal, lista pessoal do aluno, financeiro com cobrança por WhatsApp +
+Pix, perfil editável pelos dois papéis e a biblioteca de 53 exercícios.
+
+**O que ainda não existe:** o treino do dia do aluno com registro de carga, a
+tela de evolução, a de frequência e a de recados — as quatro apontam para
+`views/em-construcao.js`. É aí que está o maior valor não entregue, porque é o
+que o aluno usa todo dia. Detalhes na seção 9.
+
+### Publicação no GitHub Pages — 12/09/2026
+
+- Fonte: branch `main`, pasta `/` (raiz). Sem workflow de build: o app é
+  estático e os arquivos são servidos como estão.
+- `.nojekyll` na raiz **é obrigatório**. Sem ele o Jekyll processa o site e
+  ignora arquivos e pastas que começam com `_`.
+- Funciona embaixo do subcaminho `/App-Fitness/` porque **todos os caminhos são
+  relativos** e a navegação é por `#`. Se algum dia alguém escrever `/js/...` ou
+  `/assets/...` com barra inicial, o site quebra só em produção — nunca no
+  `localhost`. Não faça isso.
+- A `anonKey` no `js/config.js` é publicável por natureza (`sb_publishable_…`):
+  quem protege os dados é o RLS, não o segredo da chave.
+- Verificado no ar: login do professor, painel com os 12 alunos, ficha e
+  financeiro.
 
 ### Abas no perfil do aluno e datas em dd/mm/aaaa — 12/09/2026
 
@@ -115,52 +150,30 @@ As telas anteriormente marcadas como fases futuras **continuam pendentes**.
 Redesign não implementa registro de séries, editor de ficha ou financeiro.
 Referências pesquisadas, sugestões e prioridades em `REDESIGN.md`.
 
-### Estado funcional anterior (mantido como histórico)
+### Mapa das fases — o que está pronto e o que falta
 
-> **O app em JS puro está LIGADO AO SUPABASE DE VERDADE** (`DATA_SOURCE =
-> "supabase"` em `js/config.js`). Os dados não vivem mais no navegador: são
-> reais, compartilhados e persistentes. O app em si continua rodando de
-> `localhost` — não está hospedado em lugar nenhum.
->
-> A troca de `local` para `supabase` custou **uma linha** e nenhuma tela foi
-> alterada. É a prova da regra da seção 5.1; mantenha-a.
->
-> Já verificado no navegador, contra o banco real: cadastro cria o perfil
-> **sempre como aluno**; login por senha funciona e o papel vem do banco;
-> tentar mudar o próprio `role` pela API é recusado (`permission denied for
-> table profiles`); a view de pagamentos respeita RLS. Falta testar com **dois
-> alunos reais** o isolamento entre eles (itens 1 a 4 e 7 do checklist).
->
-> **Conta do professor:** `leo@leopersonal.com` (senha em `CREDENCIAIS.local.md`)
-> **Biblioteca:** 20 exercícios já cadastrados, com how-to escrito.
->
-> **Pendência conhecida:** o Supabase está exigindo confirmação de email, o que
-> trava todo aluno novo. Desligar em Authentication → Providers → Email →
-> "Confirm email" — resolvido: a Edge Function cria a conta já confirmada.
+As fases estão descritas em [`PLANO.md`](PLANO.md) seção 13. Situação real:
 
-**Fase 0 (Base local) — concluída e testada no navegador.**
+| Fase | O que é | Situação |
+|---|---|---|
+| 0 | Base local, login, painéis, camada de dados | **pronta** |
+| 1 | Cadastro e edição de aluno | **pronta** (Edge Function `criar-aluno`) |
+| 2 | Biblioteca de exercícios | **pronta** — 53 exercícios com how-to |
+| 3 | Editor de ficha | **pronta** — com agenda semanal |
+| 4 | Treino do dia, carga, evolução, frequência, recados | **falta** (financeiro do aluno já existe) |
+| 5 | Aba de progressão do professor | **falta** |
+| 6 | Financeiro do professor | **pronta** — com cobrança por WhatsApp + Pix |
+| 7 | Acabamento e PWA | parcial — redesign feito, PWA não |
+| 8 | Supabase | **pronta** — em produção |
+| 9 | Hospedagem | **pronta** — GitHub Pages |
 
-Funcionando:
+A troca de `local` para `supabase` custou **uma linha** em `js/config.js` e
+nenhuma tela foi alterada. É a prova da regra da seção 5.1; mantenha-a viva —
+`db-local.js` ainda existe e precisa continuar espelhando as assinaturas.
 
-- Tela de login, com atalhos de acesso rápido para teste.
-- Separação por papel: professor e aluno caem em áreas diferentes.
-- Painel do professor com alertas por exceção (aluno sumido, mensalidade vencida, aluno sem ficha, ficha vencendo).
-- Lista de alunos com busca.
-- Perfil do aluno (leitura): dados, restrições médicas em destaque, ficha A/B/C com bi-set, anotações, financeiro.
-- Painel do aluno: frequência da semana, sugestão do próximo treino na rotação, lista de treinos, recados fixados.
-- Camada de dados local completa (inclusive progressão de carga, que ainda não tem tela).
-- Dados de teste realistas, com 6 semanas de histórico de treino e carga.
-
-Ainda **não** existe (e o roteador mostra um aviso honesto de "entra na Fase N"):
-
-- Cadastro/edição de aluno (Fase 1)
-- Biblioteca de exercícios (Fase 2)
-- Editor de ficha (Fase 3)
-- Treino do dia com registro de carga, evolução, frequência, anotações e financeiro do aluno (Fase 4)
-- Aba de progressão do professor (Fase 5)
-- Financeiro do professor (Fase 6)
-- Acabamento e PWA (Fase 7)
-- Supabase (Fase 8) e hospedagem (Fase 9)
+Fora das fases, já feito: lista pessoal do aluno, "Meu cadastro" para os dois
+papéis, máscara de Real e de data, e o prompt das ilustrações
+([`PROMPT-ILUSTRACOES.md`](PROMPT-ILUSTRACOES.md)).
 
 ---
 
@@ -176,13 +189,30 @@ npx serve . -l 5173
 Depois abrir `http://localhost:5173`. Para testar no celular (mesmo Wi-Fi), usar
 o IP da máquina na rede, ex.: `http://192.168.15.45:5173`.
 
-### Publicação
+### Publicação e git
 
-Não há site publicado desta versão em JS puro. O GitHub Pages chegou a ser ligado
-e foi **desligado a pedido do dono do projeto**; o repositório
-(https://github.com/mdulgher/App-Fitness) segue existindo apenas como cópia.
+- **No ar:** https://mdulgher.github.io/App-Fitness/
+- **Repositório:** https://github.com/mdulgher/App-Fitness — público, branch
+  única `main`. Não há `gh-pages`, workflow de CI nem ambiente de staging.
+- **Publicar é dar push.** O Pages serve `main` na raiz; em 1–2 minutos o site
+  reflete o commit. Não existe passo de build.
+- **Consequência:** todo push vai direto para produção, e o Leo pode estar com
+  a tela aberta. Teste antes no `localhost`.
 
-O projeto migrou para a **Lovable**, reescrito em React — ver seção 11.
+**Armadilha do push neste Windows:** o Gerenciador de Credenciais guarda um
+token vencido e o `git push` normal falha com 403 ("Permission ... denied to
+mdulgher") mesmo com o `gh` autenticado e com permissão de admin no repositório.
+Passar só `-c credential.helper='!gh auth git-credential'` **não resolve**: isso
+acrescenta o helper ao fim da lista, e o do Windows responde primeiro. É preciso
+zerar a lista antes:
+
+```bash
+git -c credential.helper= -c credential.helper='!gh auth git-credential' push origin main
+```
+
+Correção definitiva, a ser feita pelo dono (nunca altere a config do git dele
+sem pedir — é instrução explícita): `gh auth setup-git`, ou apagar a entrada
+`github.com` no Gerenciador de Credenciais do Windows.
 
 ### Supabase (banco de verdade, já criado)
 
@@ -204,6 +234,31 @@ Tabelas acrescentadas em 12/09/2026:
   do recebedor e o modelo da mensagem de cobrança. Todo usuário logado lê (é com
   essa chave que o aluno paga); só o professor escreve.
 - `workout_days.weekdays` — `smallint[]` de 1 (segunda) a 7 (domingo).
+
+**Edge Function `criar-aluno`** (Deno, `verify_jwt: true`) — é ela que permite
+ao professor criar a conta do aluno. Por que existe: criar usuário para outra
+pessoa exige a chave `service_role`, que ignora todo o RLS e por isso **nunca
+pode estar no navegador**. A função:
+
+1. confere, pela sessão de quem chamou, que `profiles.role = 'trainer'`;
+2. cria o usuário com `admin.auth.admin.createUser({ email_confirm: true })` —
+   já confirmado, senão a confirmação por email travaria todo aluno novo;
+3. atualiza o perfil e insere a linha em `students`;
+4. **apaga a conta se esse insert falhar**, para não sobrar conta órfã;
+5. devolve `{ id, email, senha, full_name }` — a senha temporária aparece uma
+   única vez para o professor repassar, e não fica guardada em lugar nenhum.
+
+**Avisos do linter do Supabase que permanecem, de propósito:**
+
+- `is_trainer()` é `SECURITY DEFINER` executável por `authenticated`. É
+  obrigatório: todas as políticas de RLS a chamam. Foi feita assim para evitar
+  recursão — uma política em `profiles` que consultasse `profiles` se
+  autorreferencia.
+- "Leaked password protection disabled" — sugestão de ligar a checagem contra o
+  HaveIBeenPwned em Authentication → Policies. Vale ligar; ainda não foi feito.
+
+**Como aplicar mudanças de schema:** por migration (`apply_migration`), nunca
+por SQL solto, para o histórico ficar no projeto.
 
 ---
 
@@ -534,41 +589,47 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 ---
 
-## 9. Próximo passo
+## 9. Onde paramos e o que fazer a seguir
 
-**Atualizado em 12/09/2026.** As Fases 1 e 3 estão feitas: cadastro e edição de
-aluno, editor de ficha com agenda semanal, lista pessoal do aluno e cobrança por
-WhatsApp/Pix. O que falta, em ordem de valor:
+**Atualizado em 12/09/2026, fim da sessão.** O app foi publicado para o Leo (o
+dono) avaliar, com 12 alunos fictícios para as telas não aparecerem vazias.
 
-1. **Treino do dia do aluno** (`#/aluno/treino/:diaId`, hoje em construção) com
-   registro de carga e a última carga ao lado do campo — ver armadilha 6.
-2. **Frequência** e **Minha evolução** do aluno: a camada de dados já entrega
-   `resumoDaSemana` e `progressaoDoExercicio`; falta só a tela.
-3. **Recados** (`#/aluno/anotacoes`) e a escrita de anotações pelo professor.
-4. Ilustrações vetoriais para os outros exercícios (só o supino tem).
+### O estado exato
 
-Após o redesign de 12/09/2026: revisar a prévia visual e seguir as prioridades em
-`REDESIGN.md`. O maior ganho de produto está em completar o treino do dia com
-registro rápido e última carga, junto ao editor de fichas. Validar também qual
-versão será mantida (esta pasta ou React/Lovable) antes da próxima fase funcional.
-O plano anterior abaixo permanece como referência; não houve implementação das
-fases funcionais nesta rodada.
+- Tudo commitado e enviado para o `main`; nada solto na árvore de trabalho.
+- Site no ar e verificado contra o banco real.
+- Senha do professor **rotacionada** em 12/09/2026, porque a anterior vazou no
+  commit público `ed1c875`. A nova está em `CREDENCIAIS.local.md`. A antiga
+  segue no histórico do git e não serve mais para nada.
+- Chave Pix **propositalmente vazia**: falta o Leo colar a dele em
+  `#/professor/perfil`. Nome, cidade e modelo da mensagem já preenchidos.
 
-**Fase 1 — Professor: alunos.** Cadastro e edição de aluno, e o perfil deixando
-de ser só leitura.
+### O que fazer a seguir, em ordem de valor
 
-Pronto quando: o professor cria um aluno pela tela, edita os dados dele
-(inclusive meta semanal, mensalidade, dia de vencimento e restrições médicas) e
-o aluno novo aparece corretamente no painel com o estado vazio ("sem ficha",
-"sem treinos").
+1. **Treino do dia do aluno** (`#/aluno/treino/:diaId`, hoje em construção).
+   É o maior buraco: o aluno abre o app todo dia e cai numa tela vazia. Precisa
+   do registro de carga com a última carga ao lado do campo — ver armadilha 6,
+   que explica por que isso não é enfeite. A camada de dados já tem tudo
+   (`abrirSessao`, `registrarSerie`, `ultimaVezNoExercicio`).
+2. **Frequência** e **Minha evolução**: `resumoDaSemana` e
+   `progressaoDoExercicio` já entregam os dados; falta desenhar.
+3. **Recados** (`#/aluno/anotacoes`) e a escrita de anotações pelo professor —
+   `criarAnotacao` existe, mas nenhuma tela chama.
+4. **Ilustrações dos exercícios**: o prompt pronto está em
+   [`PROMPT-ILUSTRACOES.md`](PROMPT-ILUSTRACOES.md), para uma IA de imagens
+   gerar 106 arquivos. Ao integrar, **separe o crédito**:
+   `js/catalogo-ilustracoes.js` carimba "Ilustrações: RepDB" em qualquer arquivo
+   que case com o padrão do nome, e ilustração gerada por IA não é deles.
+   `js/exercise-validation.js` também só aceita `.png` — liberar `.svg`.
 
-Precisa criar: formulário de aluno (novo e edição), e usar `criarAluno` /
-`atualizarAluno`, que já existem em `db-local.js`.
+### Decisões em aberto (perguntar ao dono, não decidir sozinho)
 
-Alternativa igualmente válida: pular para as **Fases 2 e 3** (biblioteca de
-exercícios e editor de ficha), que é onde o professor passa mais tempo e o que
-dá mais valor visível mais rápido. A Fase 1 pode ser feita depois, já que os
-dados de teste cobrem o cadastro.
+- A lista de alunos (`#/professor/alunos`) mostra mensalidade e situação de
+  pagamento de todo mundo. O perfil do aluno já foi separado em abas por causa
+  disso (armadilha 18), mas a lista não. Esconder os valores lá? Foi levantado
+  e ficou sem resposta.
+- Ligar a proteção contra senhas vazadas no Supabase.
+- Limpar ou manter os 12 alunos fictícios depois da avaliação do Leo.
 
 O roteiro completo das fases está em [`PLANO.md`](PLANO.md) seção 13.
 
@@ -603,12 +664,24 @@ derivado (8.2), a sessão de treino como contêiner das cargas (8.4) e o
 
 ---
 
-## 11. Migração para React na Lovable (em andamento)
+## 11. Lovable — tentativa abandonada (histórico)
 
-O dono do projeto decidiu abandonar a versão em JS puro e reconstruir o app em
-React na Lovable. A versão em JS puro continua nesta pasta como referência
-funcional e, principalmente, **como especificação**: foi de onde saíram o modelo
-de dados, as regras e as armadilhas que alimentaram a migração.
+> **Leia isto antes de mexer na Lovable.** A migração para React foi decidida,
+> começada e **revertida na prática**: o dono voltou a trabalhar nesta versão em
+> JS puro para não consumir os créditos da Lovable, e foi ela que evoluiu desde
+> então — cadastro de alunos, editor de ficha, financeiro, Pix, perfis. **O
+> projeto na Lovable ficou para trás e nunca foi conectado ao Supabase do dono.**
+>
+> Ou seja: o app React lá **não tem** nada do que foi construído depois, e
+> aponta para o banco gerenciado da Lovable, não para o banco de verdade.
+> Retomar aquele projeto hoje significaria reescrever tudo de novo. Se alguém
+> quiser voltar para React, o caminho honesto é começar do zero usando esta
+> pasta como especificação — não tentar continuar de onde aquele parou.
+>
+> A fonte da verdade é esta pasta, publicada em
+> https://mdulgher.github.io/App-Fitness/.
+
+O texto abaixo é o registro de como estava quando foi abandonada.
 
 - **Projeto Lovable:** https://lovable.dev/projects/c2aa8a9f-2818-4c41-bd83-3dad893dc3e2
 - **Preview:** https://id-preview--c2aa8a9f-2818-4c41-bd83-3dad893dc3e2.lovable.app
@@ -640,8 +713,14 @@ intencional: `is_trainer()` é executável por usuário logado, porque as polít
 de RLS a chamam no contexto de quem consulta. Ela só revela se você mesmo é o
 professor, nada sobre terceiros.
 
-### Pendências
+### Pendências que ficaram congeladas
 
-1. **Conectar o Supabase do dono à Lovable** — precisa ser feito no painel da Lovable (https://lovable.dev/dashboard?connectors); o MCP não adiciona conectores. Enquanto isso não acontece, o agente está construindo contra o banco gerenciado da Lovable.
-2. **Criar os usuários de teste** por cadastro real no app e promover o do Leo a `trainer` via SQL. Não há como semear usuários direto na tabela: `profiles.id` referencia `auth.users`, e inserir ali na mão é frágil.
-3. **Rodar o checklist de privacidade** (seção anterior) com dois alunos reais logados.
+1. **Conectar o Supabase do dono à Lovable** — nunca foi feito. Precisa ser
+   feito no painel da Lovable (https://lovable.dev/dashboard?connectors); o MCP
+   não adiciona conectores.
+2. Criar os usuários de teste lá e promover o do Leo a `trainer`.
+3. Rodar o checklist de privacidade.
+
+Os itens 2 e 3 **já foram feitos nesta versão em JS puro**, contra o banco de
+verdade: 12 usuários criados pelo fluxo do app e o checklist de privacidade
+executado com duas contas de aluno reais, passando em todos os pontos.
