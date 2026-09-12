@@ -9,6 +9,7 @@ import {
   plural,
   formatarData,
   textoTempoRelativo,
+  rotuloDiasSemana,
 } from "../utils.js";
 
 export async function render(alvo) {
@@ -86,7 +87,7 @@ function blocoSugerido(dia) {
             <h2>${esc(dia.label)}</h2>
             <div class="muted small">
               ${plural(dia.exercicios.length, "exercício", "exercícios")}
-              ${dia.weekday_suggestion ? ` · ${esc(dia.weekday_suggestion)}` : ""}
+              ${dia.weekdays?.length ? ` · ${esc(rotuloDiasSemana(dia.weekdays))}` : ""}
             </div>
           </div>
           <span class="btn">Ver treino <span aria-hidden="true">↗</span></span>
@@ -122,7 +123,7 @@ function blocoFicha(ficha) {
                 <div class="list-item-title">${esc(dia.label)}</div>
                 <div class="muted small">
                   ${plural(dia.exercicios.length, "exercício", "exercícios")}
-                  ${dia.weekday_suggestion ? ` · ${esc(dia.weekday_suggestion)}` : ""}
+                  ${dia.weekdays?.length ? ` · ${esc(rotuloDiasSemana(dia.weekdays))}` : ""}
                 </div>
               </div>
               <span class="muted">&rarr;</span>

@@ -1,13 +1,31 @@
-// Financeiro do professor: visão do mês, geração de cobranças e baixa.
+// Financeiro do professor: visão do mês, lançamento das cobranças, baixa e
+// envio da cobrança pelo WhatsApp com Pix copia e cola.
+//
+// Duas ações que parecem uma só, e é importante não confundir:
+//   · LANÇAR a cobrança  → cria a linha do mês no sistema (o que o professor vê)
+//   · COBRAR no WhatsApp → manda a mensagem para o aluno (o que o aluno vê)
+// Lançar não avisa ninguém; por isso cada linha tem seu próprio botão de cobrar,
+// e dá para cobrar de novo quantas vezes precisar sem duplicar nada.
 
 import { db, statusPagamento, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
+import { PROFESSOR } from "../config.js";
+import { pixCopiaECola, linkDoWhatsapp } from "../pix.js";
 import {
   esc, moeda, formatarData, nomeDoMes, mesDeReferencia, somarDias, plural, hoje, diasEntre,
 } from "../utils.js";
 
+const MODELO_PADRAO =
+  "Oi {nome}! Tudo certo?\n\n" +
+  "Sua mensalidade de {mes} é de {valor}, com vencimento em {vencimento}.\n\n" +
+  "Pix: {chave}\n\n" +
+  "Se preferir, o copia e cola:\n{copiaecola}\n\n" +
+  "Qualquer dúvida é só me chamar. Bons treinos! — {professor}";
+
 export async function render(alvo) {
   let mes = mesDeReferencia();
   let pagamentos = [];
+  let alunos = [];
+  let config = null;
   let filtro = "todos";
 
   alvo.innerHTML = `
@@ -32,18 +50,24 @@ export async function render(alvo) {
             .map(([v, r]) => `<button class="movement-tab" data-filtro="${v}" aria-pressed="${v === "todos"}">${r}</button>`)
             .join("")}
         </div>
-        <button class="btn btn-primary" id="gerar">Gerar cobranças do mês</button>
+        <div class="row" style="gap:var(--sp-2)">
+          <button class="btn" id="config">Dados de cobrança</button>
+          <button class="btn btn-primary" id="gerar">Lançar cobranças do mês</button>
+        </div>
       </div>
 
       <div id="feedback" role="status" class="library-feedback hidden"></div>
       <div class="list" id="lista"><div class="empty">Carregando…</div></div>
-    </div>`;
+    </div>
+    <dialog class="exercise-dialog" id="dialogo"><div id="dialogo-conteudo"></div></dialog>`;
 
   const lista = alvo.querySelector("#lista");
   const feedback = alvo.querySelector("#feedback");
+  const dialogo = alvo.querySelector("#dialogo");
+  const conteudo = alvo.querySelector("#dialogo-conteudo");
 
   const avisar = (msg) => {
-    feedback.textContent = msg;
+    feedback.innerHTML = msg;
     feedback.classList.remove("hidden");
   };
 
@@ -51,7 +75,11 @@ export async function render(alvo) {
     alvo.querySelector("#titulo-mes").textContent =
       `${nomeDoMes(mes)[0].toUpperCase()}${nomeDoMes(mes).slice(1)} de ${mes.slice(0, 4)}`;
     try {
-      pagamentos = await db.listarPagamentosDoMes(mes);
+      [pagamentos, alunos, config] = await Promise.all([
+        db.listarPagamentosDoMes(mes),
+        db.listarAlunos(),
+        db.buscarConfiguracaoDeCobranca(),
+      ]);
       desenhar();
     } catch (err) {
       lista.innerHTML = `<div class="empty"><p>Não foi possível carregar o financeiro.</p><p class="small">${esc(err.message)}</p></div>`;
@@ -76,10 +104,13 @@ export async function render(alvo) {
       ? visiveis.map(linha).join("")
       : `<div class="empty">${comStatus.length
           ? "Nenhuma cobrança nesta situação."
-          : "Nenhuma cobrança lançada neste mês. Use “Gerar cobranças do mês”."}</div>`;
+          : "Nenhuma cobrança lançada neste mês. Use “Lançar cobranças do mês”."}</div>`;
 
     lista.querySelectorAll("[data-baixa]").forEach((b) =>
       b.addEventListener("click", () => alternarBaixa(b.dataset.baixa, b.dataset.acao))
+    );
+    lista.querySelectorAll("[data-cobrar]").forEach((b) =>
+      b.addEventListener("click", () => cobrar(comStatus.find((p) => p.id === b.dataset.cobrar)))
     );
   }
 
@@ -89,26 +120,218 @@ export async function render(alvo) {
       else await db.reabrirPagamento(id);
       await carregar();
       avisar(acao === "pagar" ? "Pagamento registrado." : "Pagamento reaberto.");
-    } catch (err) { avisar(err.message); }
+    } catch (err) { avisar(esc(err.message)); }
   }
+
+  /* ---------- lançar as cobranças do mês ---------- */
 
   alvo.querySelector("#gerar").addEventListener("click", async (ev) => {
     ev.target.disabled = true;
-    ev.target.textContent = "Gerando…";
+    ev.target.textContent = "Lançando…";
     try {
       const criados = await db.gerarCobrancasDoMes(mes);
       await carregar();
-      // Rodar de novo não duplica: a restrição de unicidade no banco garante uma
-      // cobrança por aluno e mês.
-      avisar(criados.length
-        ? `${plural(criados.length, "cobrança gerada", "cobranças geradas")}.`
-        : "Todos os alunos ativos já têm cobrança neste mês.");
-    } catch (err) { avisar(err.message); }
+
+      // Sem mensalidade cadastrada o aluno é pulado em silêncio pelo banco.
+      // Dizer quem ficou de fora evita o professor achar que cobrou todo mundo.
+      const semValor = alunos.filter((a) => a.monthly_fee == null);
+      const jaTinham = alunos.length - criados.length - semValor.length;
+
+      const partes = [];
+      if (criados.length) partes.push(`<strong>${plural(criados.length, "cobrança lançada", "cobranças lançadas")}</strong>`);
+      if (jaTinham > 0) partes.push(`${plural(jaTinham, "aluno já tinha", "alunos já tinham")} cobrança neste mês`);
+      if (semValor.length) partes.push(`${plural(semValor.length, "aluno ficou de fora", "alunos ficaram de fora")} por não ter mensalidade cadastrada (${semValor.map((a) => esc(a.full_name)).join(", ")})`);
+
+      avisar(
+        `${partes.join(" · ") || "Nada a lançar."}<br>` +
+        `<span class="muted small">Lançar só registra a cobrança aqui. Para avisar o aluno, use “Cobrar no WhatsApp” na linha dele.</span>`
+      );
+    } catch (err) { avisar(esc(err.message)); }
     finally {
       ev.target.disabled = false;
-      ev.target.textContent = "Gerar cobranças do mês";
+      ev.target.textContent = "Lançar cobranças do mês";
     }
   });
+
+  /* ---------- cobrar pelo WhatsApp ---------- */
+
+  function montarMensagem(pagamento) {
+    const modelo = config?.charge_message?.trim() || MODELO_PADRAO;
+    const chave = config?.pix_key?.trim() ?? "";
+
+    let copiaECola = "";
+    try {
+      copiaECola = chave
+        ? pixCopiaECola({
+            chave,
+            nome: config?.pix_name || PROFESSOR.nome,
+            cidade: config?.pix_city || "Sao Paulo",
+            valor: pagamento.amount,
+            identificador: `LPT${String(pagamento.reference_month).slice(0, 7).replace("-", "")}`,
+          })
+        : "";
+    } catch {
+      copiaECola = "";
+    }
+
+    return modelo
+      .replaceAll("{nome}", pagamento.aluno.split(/\s+/)[0])
+      .replaceAll("{mes}", nomeDoMes(pagamento.reference_month))
+      .replaceAll("{valor}", moeda(pagamento.amount))
+      .replaceAll("{vencimento}", formatarData(pagamento.due_date))
+      .replaceAll("{chave}", chave || "(chave Pix não configurada)")
+      .replaceAll("{copiaecola}", copiaECola || "(configure a chave Pix em “Dados de cobrança”)")
+      .replaceAll("{professor}", PROFESSOR.nome.split(/\s+/)[0]);
+  }
+
+  function cobrar(pagamento) {
+    if (!pagamento) return;
+    const mensagem = montarMensagem(pagamento);
+    const link = linkDoWhatsapp(pagamento.telefone, mensagem);
+
+    conteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Cobrança</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <h2>${esc(pagamento.aluno)}</h2>
+      <p class="muted small">
+        ${pagamento.telefone
+          ? `Abre o WhatsApp em ${esc(pagamento.telefone)} com a mensagem pronta. Você confere e aperta enviar.`
+          : `Este aluno não tem telefone no cadastro. O WhatsApp vai abrir com o texto pronto para você escolher o contato.`}
+      </p>
+
+      <label class="field"><span>Mensagem</span>
+        <textarea id="texto" rows="10">${esc(mensagem)}</textarea></label>
+
+      ${config?.pix_key
+        ? ""
+        : `<div class="alert" role="alert" style="margin-bottom:var(--sp-4)">
+             <strong>Sem chave Pix.</strong> Configure em “Dados de cobrança” para a mensagem já sair com o copia e cola.
+           </div>`}
+
+      <div class="dialog-actions">
+        <button type="button" class="btn" id="copiar">Copiar texto</button>
+        <a class="btn btn-primary" id="abrir" href="${esc(link)}" target="_blank" rel="noopener noreferrer">
+          Abrir no WhatsApp <span aria-hidden="true">↗</span>
+        </a>
+      </div>`;
+
+    dialogo.showModal();
+    conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+
+    const texto = conteudo.querySelector("#texto");
+    const abrir = conteudo.querySelector("#abrir");
+
+    // O professor pode ajustar o texto antes de enviar; o link acompanha.
+    texto.addEventListener("input", () => {
+      abrir.href = linkDoWhatsapp(pagamento.telefone, texto.value);
+    });
+
+    const copiar = conteudo.querySelector("#copiar");
+    copiar.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(texto.value);
+        copiar.textContent = "Copiado";
+      } catch {
+        texto.select();
+        copiar.textContent = "Copie com Ctrl+C";
+      }
+    });
+  }
+
+  /* ---------- dados de cobrança ---------- */
+
+  alvo.querySelector("#config").addEventListener("click", () => {
+    conteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Cobrança</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <h2>Dados de cobrança</h2>
+      <p class="muted small">
+        A chave Pix vira o “copia e cola” das mensagens. Ela fica visível para os alunos —
+        é com ela que eles pagam.
+      </p>
+
+      <form id="form-config">
+        <div class="exercise-form-grid">
+          <div class="field"><label for="c-tipo">Tipo de chave</label>
+            <select id="c-tipo" name="pix_key_type">
+              ${[["cpf", "CPF"], ["cnpj", "CNPJ"], ["email", "Email"], ["telefone", "Telefone"], ["aleatoria", "Aleatória"]]
+                .map(([v, r]) => `<option value="${v}"${config?.pix_key_type === v ? " selected" : ""}>${r}</option>`).join("")}
+            </select></div>
+          <div class="field"><label for="c-chave">Chave Pix</label>
+            <input id="c-chave" name="pix_key" value="${esc(config?.pix_key ?? "")}" placeholder="seu@email.com" /></div>
+        </div>
+
+        <div class="exercise-form-grid">
+          <div class="field"><label for="c-nome">Nome do recebedor</label>
+            <input id="c-nome" name="pix_name" maxlength="25"
+                   value="${esc(config?.pix_name ?? PROFESSOR.nome)}" /></div>
+          <div class="field"><label for="c-cidade">Cidade</label>
+            <input id="c-cidade" name="pix_city" maxlength="15" value="${esc(config?.pix_city ?? "")}" placeholder="Sao Paulo" /></div>
+        </div>
+
+        <div class="field"><label for="c-msg">Modelo da mensagem</label>
+          <textarea id="c-msg" name="charge_message" rows="9">${esc(config?.charge_message ?? MODELO_PADRAO)}</textarea>
+          <small>Trocas automáticas: {nome} {mes} {valor} {vencimento} {chave} {copiaecola} {professor}</small></div>
+
+        <div data-erro class="alert hidden" role="alert"></div>
+        <div class="dialog-actions">
+          <button type="button" class="btn" data-fechar>Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="salvar-config">Salvar</button>
+        </div>
+      </form>`;
+
+    dialogo.showModal();
+    conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+
+    const form = conteudo.querySelector("#form-config");
+    const erro = conteudo.querySelector("[data-erro]");
+    const salvar = conteudo.querySelector("#salvar-config");
+
+    form.addEventListener("submit", async (ev) => {
+      ev.preventDefault();
+      erro.classList.add("hidden");
+      const d = Object.fromEntries(new FormData(form));
+      const patch = {
+        pix_key: d.pix_key.trim() || null,
+        pix_key_type: d.pix_key_type,
+        pix_name: d.pix_name.trim() || null,
+        pix_city: d.pix_city.trim() || null,
+        charge_message: d.charge_message.trim() || null,
+      };
+
+      // Validar aqui evita descobrir o erro só quando o banco do aluno recusar
+      // o código — quando já é tarde e o professor não sabe o que deu errado.
+      if (patch.pix_key) {
+        try {
+          pixCopiaECola({ chave: patch.pix_key, nome: patch.pix_name, cidade: patch.pix_city, valor: 1 });
+        } catch (err) {
+          erro.textContent = err.message;
+          erro.classList.remove("hidden");
+          return;
+        }
+      }
+
+      salvar.disabled = true;
+      salvar.textContent = "Salvando…";
+      try {
+        await db.salvarConfiguracaoDeCobranca(patch);
+        dialogo.close();
+        await carregar();
+        avisar("Dados de cobrança salvos.");
+      } catch (err) {
+        erro.textContent = err.message;
+        erro.classList.remove("hidden");
+        salvar.disabled = false;
+        salvar.textContent = "Salvar";
+      }
+    });
+  });
+
+  /* ---------- navegação ---------- */
 
   alvo.querySelector("#filtros").addEventListener("click", (ev) => {
     const b = ev.target.closest("[data-filtro]");
@@ -157,8 +380,11 @@ function linha(p) {
         </span>
         <span class="muted small numeric">${moeda(p.amount)} · ${quando}</span>
       </span>
-      <button class="btn btn-sm" data-baixa="${esc(p.id)}" data-acao="${pago ? "reabrir" : "pagar"}">
-        ${pago ? "Reabrir" : "Marcar pago"}
-      </button>
+      <span class="row" style="gap:var(--sp-2)">
+        ${pago ? "" : `<button class="btn btn-sm" data-cobrar="${esc(p.id)}">Cobrar no WhatsApp</button>`}
+        <button class="btn btn-sm" data-baixa="${esc(p.id)}" data-acao="${pago ? "reabrir" : "pagar"}">
+          ${pago ? "Reabrir" : "Marcar pago"}
+        </button>
+      </span>
     </div>`;
 }

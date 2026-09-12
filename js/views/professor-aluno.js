@@ -13,6 +13,7 @@ import {
   textoTempoRelativo,
   plural,
   nomeDoMes,
+  rotuloDiasSemana,
 } from "../utils.js";
 
 export async function render(alvo, { params }) {
@@ -38,16 +39,23 @@ export async function render(alvo, { params }) {
     <div class="wrap">
       <a class="muted small" href="#/professor/alunos">&larr; Alunos</a>
 
-      <div class="page-head row" style="margin-top:var(--sp-4)">
-        <span class="avatar" style="width:56px;height:56px;flex-basis:56px;font-size:17px">
-          ${esc(iniciais(aluno.full_name))}
-        </span>
-        <div>
-          <h1>${esc(aluno.full_name)}</h1>
-          <div class="muted small">
-            ${esc(aluno.goal ?? "Sem objetivo")} ·
-            meta de ${plural(aluno.weekly_target, "treino", "treinos")}/semana
+      <div class="page-head row-between" style="margin-top:var(--sp-4);flex-wrap:wrap;gap:var(--sp-3)">
+        <div class="row">
+          <span class="avatar" style="width:56px;height:56px;flex-basis:56px;font-size:17px">
+            ${esc(iniciais(aluno.full_name))}
+          </span>
+          <div>
+            <h1>${esc(aluno.full_name)}</h1>
+            <div class="muted small">
+              ${esc(aluno.goal ?? "Sem objetivo")} ·
+              meta de ${plural(aluno.weekly_target, "treino", "treinos")}/semana
+              ${aluno.active ? "" : " · <strong>inativo</strong>"}
+            </div>
           </div>
+        </div>
+        <div class="row" style="gap:var(--sp-2)">
+          <button class="btn" id="editar">Editar cadastro</button>
+          <a class="btn btn-primary" href="#/professor/aluno/${esc(aluno.id)}/ficha">Montar ficha <span aria-hidden="true">↗</span></a>
         </div>
       </div>
 
@@ -68,7 +76,114 @@ export async function render(alvo, { params }) {
       <hr class="hr" />
       ${blocoFinanceiro(pagamentos)}
     </div>
+    <dialog class="exercise-dialog" id="dialogo"><div id="dialogo-conteudo"></div></dialog>
   `;
+
+  alvo.querySelector("#editar").addEventListener("click", () => formularioDeEdicao(alvo, aluno));
+}
+
+// A mensalidade mora aqui, e não na tela de financeiro, porque é um dado do
+// cadastro do aluno: o financeiro só lê o valor na hora de gerar a cobrança.
+// Mudar o preço não mexe em cobranças já lançadas — essas se editam uma a uma,
+// senão um reajuste reescreveria o histórico dos meses passados.
+function formularioDeEdicao(alvo, aluno) {
+  const dialogo = alvo.querySelector("#dialogo");
+  const conteudo = alvo.querySelector("#dialogo-conteudo");
+
+  conteudo.innerHTML = `
+    <div class="dialog-top">
+      <span class="eyebrow">Cadastro</span>
+      <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+    </div>
+    <h2>${esc(aluno.full_name)}</h2>
+    <p class="muted small">O email de acesso não muda por aqui: ele é o login da conta.</p>
+
+    <form id="form-edicao">
+      <div class="field"><label for="e-nome">Nome completo</label>
+        <input id="e-nome" name="full_name" required maxlength="120" value="${esc(aluno.full_name)}" /></div>
+
+      <div class="exercise-form-grid">
+        <div class="field"><label for="e-telefone">Telefone (WhatsApp)</label>
+          <input id="e-telefone" name="phone" value="${esc(aluno.phone ?? "")}" placeholder="(11) 90000-0000" /></div>
+        <div class="field"><label for="e-meta">Treinos por semana</label>
+          <input id="e-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14"
+                 value="${esc(aluno.weekly_target ?? 3)}" /></div>
+      </div>
+
+      <div class="field"><label for="e-objetivo">Objetivo</label>
+        <select id="e-objetivo" name="goal">
+          ${["Hipertrofia", "Emagrecimento", "Condicionamento", "Reabilitação", "Saúde geral"]
+            .map((o) => `<option${o === aluno.goal ? " selected" : ""}>${o}</option>`).join("")}
+        </select></div>
+
+      <div class="field"><label for="e-restricoes">Restrições e lesões</label>
+        <textarea id="e-restricoes" name="health_restrictions" rows="3">${esc(aluno.health_restrictions ?? "")}</textarea></div>
+
+      <div class="exercise-form-grid">
+        <div class="field"><label for="e-mensalidade">Mensalidade (R$)</label>
+          <input id="e-mensalidade" name="monthly_fee" type="number" inputmode="decimal" min="0" step="0.01"
+                 value="${aluno.monthly_fee ?? ""}" placeholder="280,00" /></div>
+        <div class="field"><label for="e-vencimento">Dia do vencimento</label>
+          <input id="e-vencimento" name="due_day" type="number" inputmode="numeric" min="1" max="28"
+                 value="${esc(aluno.due_day ?? 5)}" /></div>
+      </div>
+
+      <label class="field field-check">
+        <input type="checkbox" name="active" ${aluno.active ? "checked" : ""} />
+        <span>Aluno ativo (entra na geração de cobranças do mês)</span>
+      </label>
+
+      <div data-erro class="alert hidden" role="alert"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-fechar>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="salvar">Salvar</button>
+      </div>
+    </form>`;
+
+  dialogo.showModal();
+  conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+
+  const form = conteudo.querySelector("#form-edicao");
+  const erro = conteudo.querySelector("[data-erro]");
+  const salvar = conteudo.querySelector("#salvar");
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    erro.classList.add("hidden");
+    const d = Object.fromEntries(new FormData(form));
+
+    const patch = {
+      full_name: d.full_name.trim(),
+      phone: d.phone.trim() || null,
+      goal: d.goal,
+      weekly_target: Number(d.weekly_target) || 3,
+      health_restrictions: d.health_restrictions.trim() || null,
+      // Campo vazio vira null, não 0: "sem mensalidade" e "mensalidade de zero"
+      // são coisas diferentes na hora de gerar cobrança.
+      monthly_fee: d.monthly_fee === "" ? null : Number(d.monthly_fee),
+      due_day: Number(d.due_day) || 5,
+      active: form.elements.active.checked,
+    };
+
+    if (patch.monthly_fee != null && (Number.isNaN(patch.monthly_fee) || patch.monthly_fee < 0)) {
+      erro.textContent = "Mensalidade inválida.";
+      erro.classList.remove("hidden");
+      return;
+    }
+
+    salvar.disabled = true;
+    salvar.textContent = "Salvando…";
+    try {
+      await db.atualizarAluno(aluno.id, patch);
+      dialogo.close();
+      await render(alvo, { params: [aluno.id] });
+    } catch (err) {
+      erro.textContent = err.message;
+      erro.classList.remove("hidden");
+      salvar.disabled = false;
+      salvar.textContent = "Salvar";
+    }
+  });
 }
 
 function blocoRestricoes(aluno) {
@@ -99,7 +214,7 @@ function blocoFicha(ficha) {
         <h2>Ficha</h2>
       </div>
       <div class="empty">
-        Nenhuma ficha ativa. O editor de fichas entra na Fase 3.
+        Nenhuma ficha ativa. Use “Montar ficha” para prescrever os exercícios e os dias da semana.
       </div>`;
   }
 
@@ -126,7 +241,7 @@ function blocoDia(dia) {
     <div class="card">
       <div class="row-between" style="margin-bottom:var(--sp-3)">
         <h3>${esc(dia.label)}</h3>
-        <span class="muted small">${esc(dia.weekday_suggestion ?? "")}</span>
+        <span class="muted small">${esc(rotuloDiasSemana(dia.weekdays))}</span>
       </div>
       <div class="list">
         ${dia.exercicios.map(linhaExercicio).join("")}

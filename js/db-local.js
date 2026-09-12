@@ -46,8 +46,16 @@ function salvar() {
   }
 }
 
+// Tabelas criadas depois do seed original não existem nos dados já salvos no
+// navegador. Criar sob demanda evita que quem testou ontem precise apagar tudo
+// para ver a tela de hoje.
 function tabela(nome) {
-  return carregar()[nome];
+  const dados = carregar();
+  if (!dados[nome]) {
+    dados[nome] = [];
+    salvar();
+  }
+  return dados[nome];
 }
 
 const clone = (v) => (v == null ? v : JSON.parse(JSON.stringify(v)));
@@ -307,6 +315,117 @@ export async function listarTemplates() {
   return clone(tabela("workout_plans").filter((p) => p.is_template));
 }
 
+/* ---------- edição da ficha ---------- */
+
+export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null }) {
+  const nova = {
+    id: uid(),
+    student_id: alunoId,
+    is_template: false,
+    title: titulo,
+    description: descricao,
+    start_date: inicio,
+    end_date: fim,
+    active: false,
+    created_at: hoje(),
+    updated_at: hoje(),
+  };
+  tabela("workout_plans").push(nova);
+  salvar();
+  return clone(nova);
+}
+
+export async function atualizarFicha(id, patch) {
+  const f = tabela("workout_plans").find((p) => p.id === id);
+  if (!f) throw new Error("Ficha não encontrada.");
+  Object.assign(f, patch, { updated_at: hoje() });
+  salvar();
+  return clone(f);
+}
+
+// Uma ficha ativa por aluno: `fichaAtiva()` devolve a primeira que encontrar e
+// duas ativas dariam ao aluno um treino diferente a cada recarga.
+export async function ativarFicha(id) {
+  const alvo = tabela("workout_plans").find((p) => p.id === id);
+  if (!alvo) throw new Error("Ficha não encontrada.");
+  for (const f of tabela("workout_plans")) {
+    if (f.student_id === alvo.student_id) f.active = f.id === id;
+  }
+  salvar();
+  return clone(alvo);
+}
+
+export async function removerFicha(id) {
+  const dados = carregar();
+  const dias = tabela("workout_days").filter((d) => d.workout_plan_id === id).map((d) => d.id);
+  dados.workout_day_exercises = tabela("workout_day_exercises").filter((x) => !dias.includes(x.workout_day_id));
+  dados.workout_days = tabela("workout_days").filter((d) => d.workout_plan_id !== id);
+  dados.workout_plans = tabela("workout_plans").filter((p) => p.id !== id);
+  salvar();
+}
+
+export async function criarDia({ fichaId, rotulo, ordem = 0, diasSemana = [] }) {
+  const novo = {
+    id: uid(),
+    workout_plan_id: fichaId,
+    label: rotulo,
+    order_index: ordem,
+    weekdays: diasSemana,
+    weekday_suggestion: null,
+  };
+  tabela("workout_days").push(novo);
+  salvar();
+  return clone(novo);
+}
+
+export async function atualizarDia(id, patch) {
+  const d = tabela("workout_days").find((x) => x.id === id);
+  if (!d) throw new Error("Divisão não encontrada.");
+  Object.assign(d, patch);
+  salvar();
+  return clone(d);
+}
+
+export async function removerDia(id) {
+  const dados = carregar();
+  dados.workout_day_exercises = tabela("workout_day_exercises").filter((x) => x.workout_day_id !== id);
+  dados.workout_days = tabela("workout_days").filter((d) => d.id !== id);
+  salvar();
+}
+
+export async function adicionarExercicioNoDia({ diaId, exercicioId, ...resto }) {
+  const irmaos = tabela("workout_day_exercises").filter((x) => x.workout_day_id === diaId);
+  const novo = {
+    id: uid(),
+    workout_day_id: diaId,
+    exercise_id: exercicioId,
+    order_index: resto.ordem ?? irmaos.reduce((max, i) => Math.max(max, i.order_index + 1), 0),
+    group_label: resto.grupo ?? null,
+    sets: resto.series ?? 3,
+    reps: resto.reps ?? "10-12",
+    rest_seconds: resto.descanso ?? 60,
+    load_notes: resto.carga ?? null,
+    trainer_notes: resto.observacao ?? null,
+  };
+  tabela("workout_day_exercises").push(novo);
+  salvar();
+  return clone(novo);
+}
+
+export async function atualizarItemDoDia(id, patch) {
+  const item = tabela("workout_day_exercises").find((x) => x.id === id);
+  if (!item) throw new Error("Exercício não encontrado na ficha.");
+  Object.assign(item, patch);
+  salvar();
+  return clone(item);
+}
+
+export async function removerItemDoDia(id) {
+  const dados = carregar();
+  dados.workout_day_exercises = tabela("workout_day_exercises").filter((x) => x.id !== id);
+  salvar();
+}
+
 export async function buscarDiaDeTreino(diaId) {
   const dia = tabela("workout_days").find((d) => d.id === diaId);
   if (!dia) return null;
@@ -542,6 +661,50 @@ export async function exerciciosComHistorico(alunoId) {
     .sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
+/* ==================== lista pessoal do aluno ==================== */
+
+export async function listarListaPessoal(alunoId) {
+  return tabela("student_exercises")
+    .filter((i) => i.student_id === alunoId)
+    .sort((a, b) => a.order_index - b.order_index)
+    .map((item) => ({
+      ...clone(item),
+      exercicio: clone(tabela("exercises").find((e) => e.id === item.exercise_id) ?? null),
+    }));
+}
+
+export async function adicionarNaListaPessoal({ alunoId, exercicioId, notas = null }) {
+  const minhas = tabela("student_exercises").filter((i) => i.student_id === alunoId);
+  if (minhas.some((i) => i.exercise_id === exercicioId)) {
+    throw new Error("Esse exercício já está na sua lista.");
+  }
+  const novo = {
+    id: uid(),
+    student_id: alunoId,
+    exercise_id: exercicioId,
+    notes: notas,
+    order_index: minhas.reduce((max, i) => Math.max(max, i.order_index + 1), 0),
+    created_at: hoje(),
+  };
+  tabela("student_exercises").push(novo);
+  salvar();
+  return clone(novo);
+}
+
+export async function atualizarItemDaListaPessoal(id, patch) {
+  const item = tabela("student_exercises").find((i) => i.id === id);
+  if (!item) throw new Error("Item não encontrado.");
+  Object.assign(item, patch);
+  salvar();
+  return clone(item);
+}
+
+export async function removerDaListaPessoal(id) {
+  const dados = carregar();
+  dados.student_exercises = tabela("student_exercises").filter((i) => i.id !== id);
+  salvar();
+}
+
 /* ==================== anotações ==================== */
 
 export async function listarAnotacoes(alunoId) {
@@ -598,9 +761,40 @@ export async function listarPagamentosDoMes(mes = mesDeReferencia()) {
     .filter((p) => p.reference_month === mes)
     .map((p) => {
       const perfil = tabela("profiles").find((x) => x.id === p.student_id);
-      return { ...clone(p), aluno: perfil?.full_name ?? "(sem nome)" };
+      return {
+        ...clone(p),
+        aluno: perfil?.full_name ?? "(sem nome)",
+        telefone: perfil?.phone ?? null,
+      };
     })
     .sort((a, b) => a.aluno.localeCompare(b.aluno, "pt-BR"));
+}
+
+/* ---------- dados de cobrança (chave Pix e texto da mensagem) ---------- */
+
+const COBRANCA_PADRAO = {
+  id: true,
+  pix_key: null,
+  pix_key_type: null,
+  pix_name: null,
+  pix_city: null,
+  charge_message: null,
+};
+
+export async function buscarConfiguracaoDeCobranca() {
+  const linhas = tabela("trainer_settings");
+  if (!linhas.length) {
+    linhas.push({ ...COBRANCA_PADRAO });
+    salvar();
+  }
+  return clone(linhas[0]);
+}
+
+export async function salvarConfiguracaoDeCobranca(patch) {
+  await buscarConfiguracaoDeCobranca();
+  Object.assign(tabela("trainer_settings")[0], patch);
+  salvar();
+  return clone(tabela("trainer_settings")[0]);
 }
 
 export async function darBaixa(pagamentoId, { data = hoje(), metodo = null } = {}) {

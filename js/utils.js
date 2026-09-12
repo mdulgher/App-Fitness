@@ -79,6 +79,23 @@ export function textoTempoRelativo(iso) {
   return `há ${Math.floor(d / 30)} meses`;
 }
 
+/* ---------- dias da semana ---------- */
+
+// 1 = segunda … 7 = domingo, como no banco. A semana começa na segunda para
+// casar com `inicioDaSemana()` e com a forma como se conta treino por semana.
+export const DIAS_SEMANA = [
+  [1, "Seg", "segunda"], [2, "Ter", "terça"], [3, "Qua", "quarta"],
+  [4, "Qui", "quinta"], [5, "Sex", "sexta"], [6, "Sáb", "sábado"], [7, "Dom", "domingo"],
+];
+
+export function rotuloDiasSemana(dias) {
+  if (!dias?.length) return "sem dia definido";
+  return [...dias]
+    .sort((a, b) => a - b)
+    .map((d) => DIAS_SEMANA.find(([n]) => n === Number(d))?.[1] ?? "?")
+    .join(" · ");
+}
+
 /* ---------- dinheiro ---------- */
 
 export function moeda(valor) {

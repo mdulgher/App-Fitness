@@ -16,6 +16,7 @@ const NAV_PROFESSOR = [
 
 const NAV_ALUNO = [
   ["#/aluno", "Meu treino"],
+  ["#/aluno/lista", "Minha lista"],
   ["#/aluno/evolucao", "Evolução"],
   ["#/aluno/frequencia", "Frequência"],
   ["#/aluno/anotacoes", "Recados"],
@@ -43,7 +44,9 @@ function desenharCabecalho(caminhoAtual) {
   nav.innerHTML = itens
     .map(([href, rotulo], indice) => {
       const ativo = href.replace("#", "") === caminhoAtual || (href === "#/professor/alunos" && caminhoAtual.startsWith("/professor/aluno/")) || (href === "#/aluno" && caminhoAtual.startsWith("/aluno/treino/"));
-      const simbolos = ehProfessor() ? ["painel", "alunos", "treino", "financeiro"] : ["treino", "evolucao", "frequencia", "recados", "financeiro"];
+      const simbolos = ehProfessor()
+        ? ["painel", "alunos", "treino", "financeiro"]
+        : ["treino", "lista", "evolucao", "frequencia", "recados", "financeiro"];
       return `<a class="navlink" href="${href}"${ativo ? ' aria-current="page"' : ""}>${icone(simbolos[indice])}<span>${esc(rotulo)}</span></a>`;
     })
     .join("");

@@ -392,6 +392,55 @@ textarea {
   resize: vertical;
 }
 
+/* Campo estreito para editar séries/reps dentro de uma linha de lista, sem
+   transformar a ficha inteira num formulário de página cheia. */
+.field-inline {
+  margin-bottom: 0;
+  width: 96px;
+}
+
+.field-inline > span {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--gray-500);
+  margin-bottom: 2px;
+}
+
+.field-inline input {
+  min-height: 40px;
+  font-size: 15px;
+  padding: var(--sp-1) var(--sp-2);
+}
+
+.field-check {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+}
+
+.field-check input {
+  width: 22px;
+  min-height: 22px;
+  flex: 0 0 22px;
+}
+
+/* O código Pix é uma linha única e longuíssima: precisa quebrar, senão estoura
+   a largura da tela do celular. */
+.pix-code {
+  display: block;
+  font-size: 11px;
+  line-height: 1.5;
+  word-break: break-all;
+  background: var(--gray-100, #f2f2f2);
+  border: var(--border);
+  border-radius: var(--radius);
+  padding: var(--sp-3);
+  max-height: 120px;
+  overflow: auto;
+}
+
 input:focus,
 select:focus,
 textarea:focus,

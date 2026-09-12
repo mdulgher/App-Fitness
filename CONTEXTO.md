@@ -28,6 +28,35 @@ local.
 
 ## 2. Estado atual
 
+### Ficha, lista do aluno e cobrança — 12/09/2026
+
+Entregue e testado no navegador contra o banco real:
+
+- **Editor de ficha** (`#/professor/aluno/:id/ficha`): o professor cria a ficha,
+  monta as divisões (Treino A, B, C…), marca os dias da semana de cada uma e
+  escolhe os exercícios **dentro da biblioteca** — não há campo de texto livre,
+  de propósito. Séries, repetições, descanso e observação são editados na
+  própria linha. "Ativar para o aluno" publica a ficha e desativa a anterior.
+- **Frequência derivada**: a ficha mostra "N treinos por semana" contando os
+  dias marcados, e compara com a meta do aluno. Não existe campo de frequência.
+- **Minha lista** (`#/aluno/lista`): lista pessoal do aluno, separada da ficha.
+  Ele adiciona da biblioteca e escreve a própria anotação. O professor lê, mas
+  o banco não deixa ele escrever.
+- **Editar cadastro do aluno**, inclusive a mensalidade e o dia do vencimento.
+- **Cobrança por WhatsApp com Pix**: `js/pix.js` gera o "copia e cola" (BR Code
+  EMV com CRC16, validado contra o vetor padrão `123456789 → 29B1`) e cada linha
+  do financeiro abre o `wa.me` com a mensagem pronta. A chave, o nome, a cidade
+  e o modelo da mensagem ficam em "Dados de cobrança" (tabela
+  `trainer_settings`), editáveis pelo professor dentro do app.
+- O botão de cobranças virou **"Lançar cobranças do mês"** e agora explica o que
+  fez, inclusive quem ficou de fora por não ter mensalidade cadastrada. Antes
+  ele dizia só "todos já têm cobrança" e parecia quebrado.
+
+Privacidade reverificada com duas contas de aluno reais: um aluno não enxerga a
+mensalidade, a ficha, as divisões, os exercícios prescritos nem a lista pessoal
+de outro; não consegue escrever na ficha, mudar a chave Pix nem alterar a
+própria mensalidade.
+
 ### Atualização visual — 12/09/2026
 
 Redesign aplicado à versão **HTML/CSS/JS desta pasta**, mantendo preto, branco,
@@ -127,9 +156,20 @@ O projeto migrou para a **Lovable**, reescrito em React — ver seção 11.
 - **URL:** `https://azifpaxbeozfooydkzxh.supabase.co`
 - É a conta **do próprio dono do projeto**, não o banco gerenciado da Lovable. Escolha deliberada: ele é dono dos dados, leva tudo junto se sair da Lovable, e o schema pode ser auditado direto por fora.
 
-O schema completo e as regras de acesso **já estão aplicados** (11 tabelas, todas
+O schema completo e as regras de acesso **já estão aplicados** (13 tabelas, todas
 com RLS ligado, mais a view `payments_view` e as funções `is_trainer()`,
 `handle_new_user()` e `hoje_br()`). Detalhes na seção 11.
+
+Tabelas acrescentadas em 12/09/2026:
+
+- `student_exercises` — a lista pessoal do aluno. Leitura: o dono e o professor.
+  Escrita: **só o dono** (se o professor pudesse escrever, deixaria de ser "a
+  lista dele").
+- `trainer_settings` — linha única (chave primária booleana com `check`, para o
+  app nunca precisar adivinhar qual linha vale) com a chave Pix, o nome/cidade
+  do recebedor e o modelo da mensagem de cobrança. Todo usuário logado lê (é com
+  essa chave que o aluno paga); só o professor escreve.
+- `workout_days.weekdays` — `smallint[]` de 1 (segunda) a 7 (domingo).
 
 ---
 
@@ -203,12 +243,13 @@ Declaradas em `js/router.js`, cada uma com o papel exigido:
 
 ```
 #/login
-#/professor              #/aluno
-#/professor/alunos       #/aluno/treino/:diaId
-#/professor/aluno/:id    #/aluno/evolucao
-#/professor/exercicios   #/aluno/frequencia
-#/professor/financeiro   #/aluno/anotacoes
-                         #/aluno/financeiro
+#/professor                    #/aluno
+#/professor/alunos             #/aluno/lista
+#/professor/aluno/:id          #/aluno/treino/:diaId
+#/professor/aluno/:id/ficha    #/aluno/evolucao
+#/professor/exercicios         #/aluno/frequencia
+#/professor/financeiro         #/aluno/anotacoes
+                               #/aluno/financeiro
 ```
 
 O roteador cuida do controle de acesso num lugar só: sem sessão vai para o
@@ -254,6 +295,32 @@ fichaAtiva(alunoId)      buscarFicha(id)       listarFichas(alunoId)
 listarTemplates()        buscarDiaDeTreino(diaId)
 ```
 
+**Edição da ficha** — só o professor (garantido por RLS, não pela interface).
+`ativarFicha` desativa as outras do mesmo aluno: duas ativas quebrariam
+`fichaAtiva()`, que usa `maybeSingle()`.
+```
+criarFicha({ alunoId, titulo, descricao, inicio, fim })
+atualizarFicha(id, patch)      ativarFicha(id)      removerFicha(id)
+criarDia({ fichaId, rotulo, ordem, diasSemana })
+atualizarDia(id, patch)        removerDia(id)
+adicionarExercicioNoDia({ diaId, exercicioId, series, reps, descanso, carga, observacao, grupo })
+atualizarItemDoDia(id, patch)  removerItemDoDia(id)
+```
+
+`workout_days.weekdays` é um array de 1 (segunda) a 7 (domingo). A frequência
+semanal **não é um campo**: é a contagem dos dias distintos ocupados pelas
+divisões. Guardar o número à parte faria ele divergir do calendário na primeira
+vez que alguém mudasse um dia.
+
+**Lista pessoal do aluno** — separada da ficha. O aluno escreve, o professor só
+lê. Os exercícios vêm da mesma biblioteca, então continuam tendo vídeo, execução
+e histórico de carga.
+```
+listarListaPessoal(alunoId)
+adicionarNaListaPessoal({ alunoId, exercicioId, notas })
+atualizarItemDaListaPessoal(id, patch)     removerDaListaPessoal(id)
+```
+
 **Sessões de treino (frequência)**
 ```
 listarSessoes(alunoId, { de, ate })
@@ -288,7 +355,19 @@ listarPagamentos(alunoId)                listarPagamentosDoMes(mes)
 darBaixa(pagamentoId, { data, metodo })  reabrirPagamento(pagamentoId)
 criarPagamento({ alunoId, mes, valor, vencimento, notas })
 gerarCobrancasDoMes(mes)                 -- idempotente
+buscarConfiguracaoDeCobranca()           salvarConfiguracaoDeCobranca(patch)
 ```
+
+`gerarCobrancasDoMes` **lança** a cobrança no sistema; não avisa ninguém. Quem
+avisa é o botão "Cobrar no WhatsApp" de cada linha, que monta a mensagem com o
+Pix copia e cola (`js/pix.js`) e abre o `wa.me`. São coisas separadas de
+propósito: lançar é contabilidade, cobrar é comunicação.
+
+`listarPagamentosDoMes` traz também `aluno` e `telefone`, que a cobrança usa.
+
+O preço fica em `students.monthly_fee`, editado no cadastro do aluno. Mudar o
+preço **não** reescreve cobranças já lançadas — cada mês guarda o valor que
+valia na época.
 
 **Utilitário de teste**
 ```
@@ -306,11 +385,8 @@ ROTULO_STATUS   CLASSE_STATUS
 As fases seguintes vão precisar destas, que **ainda não existem** em nenhuma
 implementação. Ao criar, seguir o mesmo padrão:
 
-- `criarFicha`, `atualizarFicha`, `ativarFicha` (arquivando a anterior), `duplicarFicha`, `salvarComoTemplate`
-- `criarDiaDeTreino`, `atualizarDiaDeTreino`, `removerDiaDeTreino`, `reordenarDias`
-- `adicionarExercicioAoDia`, `atualizarExercicioDoDia`, `removerExercicioDoDia`, `reordenarExercicios`
-- `gerarConvite(alunoId)` e `usarConvite(email, codigo, senha)` — Fase 8
-- `desativarAluno(id)`
+- `duplicarFicha`, `salvarComoTemplate`
+- `reordenarDias`, `reordenarExercicios` (hoje a ordem é a de inserção)
 
 ---
 
@@ -367,11 +443,28 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 12. **Foto de exercício vem do vídeo.** `capaDoVideo()` deriva a imagem da capa do YouTube. O professor cola um link só e ganha a foto — não construa upload de foto de exercício antes de considerar isso.
 
-13. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
+13. **"Lançar cobrança" não é "cobrar".** Lançar cria a linha do mês no banco; quem avisa o aluno é o botão de WhatsApp. Já houve confusão com isso: o professor via um aluno devedor e o botão respondia "todos já têm cobrança neste mês" — estava certo, mas parecia quebrado. Se mudar esse fluxo, mantenha a distinção explícita na tela.
+
+14. **A frequência semanal não é um campo.** É a contagem dos dias marcados nas divisões da ficha. Guardar o número separado faria ele divergir do calendário na primeira edição.
+
+15. **O nome e a cidade do Pix precisam ser ASCII sem acento e dentro do limite.** "João" ou uma cidade com mais de 15 caracteres fazem o banco do aluno recusar o código inteiro. `js/pix.js` normaliza — não contorne isso montando o payload à mão.
+
+16. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
 
 ---
 
 ## 9. Próximo passo
+
+**Atualizado em 12/09/2026.** As Fases 1 e 3 estão feitas: cadastro e edição de
+aluno, editor de ficha com agenda semanal, lista pessoal do aluno e cobrança por
+WhatsApp/Pix. O que falta, em ordem de valor:
+
+1. **Treino do dia do aluno** (`#/aluno/treino/:diaId`, hoje em construção) com
+   registro de carga e a última carga ao lado do campo — ver armadilha 6.
+2. **Frequência** e **Minha evolução** do aluno: a camada de dados já entrega
+   `resumoDaSemana` e `progressaoDoExercicio`; falta só a tela.
+3. **Recados** (`#/aluno/anotacoes`) e a escrita de anotações pelo professor.
+4. Ilustrações vetoriais para os outros exercícios (só o supino tem).
 
 Após o redesign de 12/09/2026: revisar a prévia visual e seguir as prioridades em
 `REDESIGN.md`. O maior ganho de produto está em completar o treino do dia com

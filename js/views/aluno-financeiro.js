@@ -7,11 +7,16 @@
 import { db, statusPagamento, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import { PROFESSOR } from "../config.js";
+import { pixCopiaECola } from "../pix.js";
 import { esc, moeda, formatarData, nomeDoMes, diasEntre, hoje, plural } from "../utils.js";
 
 export async function render(alvo) {
   const id = usuarioAtual().id;
-  const [aluno, pagamentos] = await Promise.all([db.buscarAluno(id), db.listarPagamentos(id)]);
+  const [aluno, pagamentos, config] = await Promise.all([
+    db.buscarAluno(id),
+    db.listarPagamentos(id),
+    db.buscarConfiguracaoDeCobranca(),
+  ]);
 
   const comStatus = pagamentos.map((p) => ({ ...p, status: p.status ?? statusPagamento(p) }));
   const emAberto = comStatus.filter((p) => p.status !== "paid");
@@ -26,6 +31,7 @@ export async function render(alvo) {
       </div>
 
       ${destaque({ vencidos, proxima, aluno })}
+      ${blocoPix(config, vencidos[0] ?? proxima)}
 
       <h2 style="margin:var(--sp-5) 0 var(--sp-3)">Histórico</h2>
       ${comStatus.length
@@ -36,6 +42,46 @@ export async function render(alvo) {
         Dúvidas sobre pagamento? Fale com ${esc(PROFESSOR.nome.split(" ")[0])} pelo
         <a href="${esc(PROFESSOR.instagramUrl)}" target="_blank" rel="noopener noreferrer">Instagram</a>.
       </p>
+    </div>`;
+
+  const copiar = alvo.querySelector("#copiar-pix");
+  copiar?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(copiar.dataset.codigo);
+      copiar.textContent = "Código copiado";
+    } catch {
+      copiar.textContent = "Copie o código acima";
+    }
+  });
+}
+
+// O copia e cola já sai com o valor da cobrança em aberto: menos um número
+// para o aluno digitar errado.
+function blocoPix(config, cobranca) {
+  if (!config?.pix_key || !cobranca) return "";
+
+  let codigo;
+  try {
+    codigo = pixCopiaECola({
+      chave: config.pix_key,
+      nome: config.pix_name || PROFESSOR.nome,
+      cidade: config.pix_city || "Sao Paulo",
+      valor: cobranca.amount,
+      identificador: `LPT${String(cobranca.reference_month).slice(0, 7).replace("-", "")}`,
+    });
+  } catch {
+    return "";
+  }
+
+  return `
+    <div class="card" style="margin-top:var(--sp-4)">
+      <div class="eyebrow">Pagar por Pix</div>
+      <p class="muted small" style="margin:var(--sp-2) 0">
+        Chave: <strong>${esc(config.pix_key)}</strong> · ${esc(config.pix_name || PROFESSOR.nome)}
+      </p>
+      <code class="pix-code">${esc(codigo)}</code>
+      <button class="btn btn-block" id="copiar-pix" style="margin-top:var(--sp-3)"
+              data-codigo="${esc(codigo)}">Copiar código Pix</button>
     </div>`;
 }
 

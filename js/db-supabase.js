@@ -271,6 +271,77 @@ export async function listarTemplates() {
   return ok(await sb.from("workout_plans").select("*").eq("is_template", true).order("title"));
 }
 
+/* ---------- edição da ficha (só o professor; garantido por RLS) ---------- */
+
+export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null }) {
+  return ok(
+    await sb.from("workout_plans").insert({
+      student_id: alunoId, title: titulo, description: descricao,
+      start_date: inicio, end_date: fim, active: false,
+    }).select().single()
+  );
+}
+
+export async function atualizarFicha(id, patch) {
+  return ok(await sb.from("workout_plans").update(patch).eq("id", id).select().single());
+}
+
+// Ativar uma ficha desativa as outras do mesmo aluno: `fichaAtiva()` usa
+// `maybeSingle()` e duas ativas quebrariam a tela do aluno com erro de
+// "múltiplas linhas" em vez de simplesmente mostrar a mais nova.
+export async function ativarFicha(id) {
+  const ficha = ok(await sb.from("workout_plans").select("student_id").eq("id", id).maybeSingle());
+  if (!ficha) throw new Error("Ficha não encontrada.");
+  ok(await sb.from("workout_plans").update({ active: false }).eq("student_id", ficha.student_id));
+  return ok(await sb.from("workout_plans").update({ active: true }).eq("id", id).select().single());
+}
+
+export async function removerFicha(id) {
+  ok(await sb.from("workout_plans").delete().eq("id", id));
+}
+
+export async function criarDia({ fichaId, rotulo, ordem = 0, diasSemana = [] }) {
+  return ok(
+    await sb.from("workout_days").insert({
+      workout_plan_id: fichaId, label: rotulo, order_index: ordem, weekdays: diasSemana,
+    }).select().single()
+  );
+}
+
+export async function atualizarDia(id, patch) {
+  return ok(await sb.from("workout_days").update(patch).eq("id", id).select().single());
+}
+
+export async function removerDia(id) {
+  ok(await sb.from("workout_days").delete().eq("id", id));
+}
+
+export async function adicionarExercicioNoDia({ diaId, exercicioId, ...resto }) {
+  const existentes = ok(await sb.from("workout_day_exercises").select("order_index").eq("workout_day_id", diaId));
+  const ordem = existentes.reduce((max, e) => Math.max(max, e.order_index + 1), 0);
+  return ok(
+    await sb.from("workout_day_exercises").insert({
+      workout_day_id: diaId,
+      exercise_id: exercicioId,
+      order_index: resto.ordem ?? ordem,
+      sets: resto.series ?? 3,
+      reps: resto.reps ?? "10-12",
+      rest_seconds: resto.descanso ?? 60,
+      load_notes: resto.carga ?? null,
+      trainer_notes: resto.observacao ?? null,
+      group_label: resto.grupo ?? null,
+    }).select().single()
+  );
+}
+
+export async function atualizarItemDoDia(id, patch) {
+  return ok(await sb.from("workout_day_exercises").update(patch).eq("id", id).select().single());
+}
+
+export async function removerItemDoDia(id) {
+  ok(await sb.from("workout_day_exercises").delete().eq("id", id));
+}
+
 export async function buscarDiaDeTreino(diaId) {
   const dia = ok(await sb.from("workout_days").select("workout_plan_id").eq("id", diaId).maybeSingle());
   if (!dia) return null;
@@ -433,6 +504,37 @@ export async function exerciciosComHistorico(alunoId) {
   return [...vistos.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
 }
 
+/* ==================== lista pessoal do aluno ====================
+   Separada da ficha: o professor prescreve, o aluno guarda o que quiser
+   treinar por conta. Quem escreve aqui é só o dono da lista — o professor
+   enxerga, mas não mexe. */
+
+export async function listarListaPessoal(alunoId) {
+  const linhas = ok(
+    await sb.from("student_exercises").select("*, exercises(*)")
+      .eq("student_id", alunoId).order("order_index")
+  );
+  return linhas.map(({ exercises, ...item }) => ({ ...item, exercicio: exercises ?? null }));
+}
+
+export async function adicionarNaListaPessoal({ alunoId, exercicioId, notas = null }) {
+  const atuais = ok(await sb.from("student_exercises").select("order_index").eq("student_id", alunoId));
+  const ordem = atuais.reduce((max, i) => Math.max(max, i.order_index + 1), 0);
+  return ok(
+    await sb.from("student_exercises")
+      .insert({ student_id: alunoId, exercise_id: exercicioId, notes: notas, order_index: ordem })
+      .select().single()
+  );
+}
+
+export async function atualizarItemDaListaPessoal(id, patch) {
+  return ok(await sb.from("student_exercises").update(patch).eq("id", id).select().single());
+}
+
+export async function removerDaListaPessoal(id) {
+  ok(await sb.from("student_exercises").delete().eq("id", id));
+}
+
 /* ==================== anotações ==================== */
 
 export async function listarAnotacoes(alunoId) {
@@ -473,11 +575,31 @@ export async function listarPagamentos(alunoId) {
 
 export async function listarPagamentosDoMes(mes = mesDeReferencia()) {
   const linhas = ok(
-    await sb.from("payments_view").select("*, students!inner(profiles!inner(full_name))").eq("reference_month", mes)
+    await sb.from("payments_view")
+      .select("*, students!inner(profiles!inner(full_name,phone))")
+      .eq("reference_month", mes)
   );
   return linhas
-    .map(({ students, ...p }) => ({ ...p, aluno: students?.profiles?.full_name ?? "(sem nome)" }))
+    .map(({ students, ...p }) => ({
+      ...p,
+      aluno: students?.profiles?.full_name ?? "(sem nome)",
+      telefone: students?.profiles?.phone ?? null,
+    }))
     .sort((a, b) => a.aluno.localeCompare(b.aluno, "pt-BR"));
+}
+
+/* ---------- dados de cobrança (chave Pix e texto da mensagem) ---------- */
+
+export async function buscarConfiguracaoDeCobranca() {
+  return ok(await sb.from("trainer_settings").select("*").eq("id", true).maybeSingle());
+}
+
+export async function salvarConfiguracaoDeCobranca(patch) {
+  return ok(
+    await sb.from("trainer_settings")
+      .update({ ...patch, updated_at: new Date().toISOString() })
+      .eq("id", true).select().single()
+  );
 }
 
 export async function darBaixa(pagamentoId, { data = hoje(), metodo = null } = {}) {

@@ -6,6 +6,7 @@ const paths = {
   financeiro: '<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 9h18m-6 6h3"/>',
   evolucao: '<path d="M4 4v16h16M8 14l4-5 4 2 4-7"/>',
   frequencia: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-14 5 3 2 6-4"/>',
+  lista: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
   recados: '<path d="M21 11a8 8 0 0 1-8 8H6l-3 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4zM7 8h10M7 12h7"/>',
 };
 export function icone(nome) {
