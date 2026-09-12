@@ -66,6 +66,22 @@ npx serve . -l 5173
 Depois abrir `http://localhost:5173`. Para testar no celular (mesmo Wi-Fi), usar
 o IP da máquina na rede, ex.: `http://192.168.15.45:5173`.
 
+### Versão publicada
+
+- **Site:** https://mdulgher.github.io/App-Fitness/
+- **Repositório:** https://github.com/mdulgher/App-Fitness (público)
+
+Hospedado no GitHub Pages a partir da branch `main`, raiz do projeto. **Todo push
+para `main` republica o site automaticamente** — não há passo de build nem
+deploy manual. Por isso todos os caminhos do projeto precisam continuar
+**relativos** (`css/style.css`, e não `/css/style.css`): o site vive num
+subdiretório (`/App-Fitness/`) e caminhos absolutos quebrariam.
+
+**Atenção:** a versão publicada é demonstração, não produto. Não há senha de
+verdade e os dados vivem no `localStorage` de cada navegador — se o Leo começar
+a cadastrar alunos reais ali, ninguém mais enxerga esses dados e eles somem se
+ele limpar o navegador. Só vira utilizável de verdade na Fase 8, com o Supabase.
+
 ---
 
 ## 4. Usuários de teste

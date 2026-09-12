@@ -633,7 +633,13 @@ As fases 0 a 7 rodam **inteiras na camada local**, sem Supabase (seção 9.1).
 | **6 — Financeiro do professor** | Visão geral, gerar cobranças, dar baixa | Um mês fechado com todos os alunos |
 | **7 — Acabamento** | Dashboard por exceção, instalar na tela inicial, fila offline, logo e ícone, ajustes visuais | O app inteiro navegável e apresentável |
 | **8 — Supabase** | Tabelas, regras de acesso (RLS), login e convite de verdade, migração dos dados de teste, troca de uma linha em `config.js` | **Checklist da seção 11 passa inteiro** |
-| **9 — Hospedagem** | Subir no Lovable ou Git | Acessível por link, chaves fora do código-fonte |
+| **9 — Hospedagem** | ~~Subir no Lovable~~ → **GitHub Pages, já no ar** desde a Fase 0 | Acessível por link, chaves fora do código-fonte |
+
+Sobre a hospedagem: a Lovable foi descartada porque não é um hospedeiro de site
+estático e sim uma construtora de apps em React — publicar lá significaria o
+agente dela reescrever o projeto inteiro em outra stack. O site está no GitHub
+Pages (`https://mdulgher.github.io/App-Fitness/`), republicando a cada push na
+`main`. Continua valendo que chaves privadas nunca entram no repositório.
 
 Duas coisas sobre essa ordem, e nenhuma é acidental:
 
