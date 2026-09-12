@@ -131,7 +131,7 @@ Referências pesquisadas, sugestões e prioridades em `REDESIGN.md`.
 > table profiles`); a view de pagamentos respeita RLS. Falta testar com **dois
 > alunos reais** o isolamento entre eles (itens 1 a 4 e 7 do checklist).
 >
-> **Conta do professor:** `leo@leopersonal.com` / `LeoTreino2026!`
+> **Conta do professor:** `leo@leopersonal.com` (senha em `CREDENCIAIS.local.md`)
 > **Biblioteca:** 20 exercícios já cadastrados, com how-to escrito.
 >
 > **Pendência conhecida:** o Supabase está exigindo confirmação de email, o que
@@ -212,21 +212,27 @@ Tabelas acrescentadas em 12/09/2026:
 Contas **reais no Supabase** (`DATA_SOURCE = "supabase"`). Todas com senha de
 verdade; o aluno pode trocar a dele em "Meu cadastro".
 
-| Papel | Email | Senha | Cenário |
-|---|---|---|---|
-| **Professor** | `leo@leopersonal.com` | `LeoTreino2026!` | Vê os 12 alunos |
-| Aluna | `carla.mendes@email.com` | `s5WGvgbBwtW2` | Mensalidade vencida, ficha ABC ativa (Seg·Qui / Ter·Sex) |
-| Aluno | `joao.batista@email.com` | `b4t3g7TYJWPj` | Pago, restrição médica (hérnia L5-S1), lista pessoal com 1 exercício |
-| Aluna | `ana.souza@teste.com` | `AnaTreino2026` | Em dia, treinando bem (3/4 na semana) |
-| Aluno | `bruno.carvalho@teste.com` | `x52sGABpVu9H` | Vencido, treinando pouco (1 na semana) |
-| Aluna | `camila.ribeiro@teste.com` | `ACveFtfMcqwp` | Pago, **única que bate a meta** (5/5) |
-| Aluno | `diego.fernandes@teste.com` | `8eLd8HsXphvC` | Vencido, **sem treinar há ~3 semanas**, tendinite no ombro |
-| Aluna | `eduarda.lima@teste.com` | `QA69BZZ2s9xb` | A vencer (dia 20), **nunca treinou**, pós-operatório de joelho |
-| Aluno | `felipe.andrade@teste.com` | `9qMnErUJz7dB` | Pago, frequência média |
-| Aluna | `gabriela.nunes@teste.com` | `XmDbqGUMRudM` | Vencido, treinou hoje |
-| Aluno | `henrique.tavares@teste.com` | `MjMV4pwjCu9V` | Pago, alta frequência |
-| Aluna | `isabela.moreira@teste.com` | `wwaTZvfSN7tG` | A vencer (dia 25), parou há ~10 dias |
-| Aluno | `rafael.pimentel@teste.com` | `C4BNAxu7Yhzx` | **Sem mensalidade cadastrada** — fica de fora da geração de cobranças |
+> **As senhas NÃO ficam neste arquivo.** Este repositório é público e o app
+> aponta para o banco de verdade: a senha do professor aqui é acesso a todos os
+> dados de todos os alunos. Elas vivem em `CREDENCIAIS.local.md`, que está no
+> `.gitignore` e nunca sobe. Se esse arquivo não existir na sua máquina, peça as
+> senhas ao dono do projeto — não as escreva de volta aqui.
+
+| Papel | Email | Cenário |
+|---|---|---|
+| **Professor** | `leo@leopersonal.com` | Vê os 12 alunos |
+| Aluna | `carla.mendes@email.com` | Mensalidade vencida, ficha ABC ativa (Seg·Qui / Ter·Sex) |
+| Aluno | `joao.batista@email.com` | Pago, restrição médica (hérnia L5-S1), lista pessoal com 1 exercício |
+| Aluna | `ana.souza@teste.com` | Em dia, treinando bem (3/4 na semana) |
+| Aluno | `bruno.carvalho@teste.com` | Vencido, treinando pouco (1 na semana) |
+| Aluna | `camila.ribeiro@teste.com` | Pago, **única que bate a meta** (5/5) |
+| Aluno | `diego.fernandes@teste.com` | Vencido, **sem treinar há ~3 semanas**, tendinite no ombro |
+| Aluna | `eduarda.lima@teste.com` | A vencer (dia 20), **nunca treinou**, pós-operatório de joelho |
+| Aluno | `felipe.andrade@teste.com` | Pago, frequência média |
+| Aluna | `gabriela.nunes@teste.com` | Vencido, treinou hoje |
+| Aluno | `henrique.tavares@teste.com` | Pago, alta frequência |
+| Aluna | `isabela.moreira@teste.com` | A vencer (dia 25), parou há ~10 dias |
+| Aluno | `rafael.pimentel@teste.com` | **Sem mensalidade cadastrada** — fica de fora da geração de cobranças |
 
 Os `@teste.com` são fictícios, criados pelo próprio fluxo do app (Edge Function
 `criar-aluno`). Para limpar tudo de uma vez:

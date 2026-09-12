@@ -29,3 +29,6 @@ assets/illustrations/*.webp
 # arquivo próprio, ele entra aqui. A chave `anon` é pública por design e pode
 # ser versionada; a `service_role` NUNCA entra no repositório.
 js/config.local.js
+
+# Credenciais: o repositorio e publico e o app aponta para o banco de verdade.
+CREDENCIAIS.local.md
