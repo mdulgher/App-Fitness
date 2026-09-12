@@ -180,3 +180,7 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
   .topbar-conta .rotulo-curto { display: inline; }
   .topbar-conta .btn { padding: 0 12px; }
 }
+
+/* Abas de verdade (role="tab") usam aria-selected; o estilo de .movement-tab
+   só olhava aria-pressed, e a aba ativa ficava sem marcação nenhuma. */
+.movement-tab[aria-selected="true"] { background: #e5e5e5; color: #111; }

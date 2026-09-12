@@ -28,6 +28,23 @@ local.
 
 ## 2. Estado atual
 
+### Abas no perfil do aluno e datas em dd/mm/aaaa — 12/09/2026
+
+- **O perfil do aluno tem duas abas: Treino e Financeiro**, e abre sempre em
+  Treino. O motivo é físico: o professor usa essa tela ao lado do aluno,
+  mostrando a ficha, e dinheiro não pode aparecer junto. A aba não é lembrada
+  entre visitas de propósito — sair do financeiro não pode depender de o
+  professor lembrar de trocar antes de virar a tela.
+- O cartão "Mensalidade" saiu do topo e virou a aba financeira, que ganhou
+  "Em aberto" e "Pago no total". No lugar dele, "Ficha: ativa até tal data".
+- **Campos de data são texto com máscara dd/mm/aaaa**, não `<input type="date">`.
+  Aquele controle mostra a data no formato do sistema operacional: num Windows
+  em inglês, 12 de setembro aparecia como `09/12/2026` e se lê "9 de dezembro".
+- Ficha nova já vem com **3 meses** de duração, e o formulário recusa fim antes
+  do início e datas que não existem (31/02).
+- A letra da nova divisão vem dos rótulos existentes, não da contagem: dois
+  cliques seguidos criavam dois "Treino B". Mesma correção no `order_index`.
+
 ### Meu cadastro e dados de teste — 12/09/2026
 
 - **`#/professor/perfil` e `#/aluno/perfil`** — a mesma view (`views/perfil.js`)
@@ -503,7 +520,11 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 16. **Dinheiro na tela é `R$ 0.000,00`, no banco é número.** Use `ligarMascaraDeMoeda()` no campo e `moedaParaNumero()` ao ler o formulário. Não volte a `<input type="number">`: ele mostra "280.5", aceita ponto como decimal e no celular abre o teclado errado.
 
-17. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
+17. **Nunca use `<input type="date">`.** Ele exibe no formato do sistema operacional, não no da página: num Windows em inglês, `2026-09-12` aparece como `09/12/2026` e o professor lê "9 de dezembro". Use campo de texto com `ligarMascaraDeData()` + `dataBRParaIso()`.
+
+18. **Financeiro do aluno fica na aba dele.** A tela do aluno é usada ao lado do aluno. Não volte a espalhar valor de mensalidade pela aba de treino.
+
+19. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
 
 ---
 

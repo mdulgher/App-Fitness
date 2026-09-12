@@ -48,6 +48,53 @@ export function formatarData(iso) {
   return `${d}/${m}/${a}`;
 }
 
+// Soma meses preservando o fim do mês: 31/01 + 1 mês vira 28/02, não 03/03.
+// Sem isso, uma ficha começada dia 31 terminaria num dia que não existe.
+export function somarMeses(iso, meses) {
+  const [a, m, d] = iso.split("-").map(Number);
+  const alvo = new Date(Date.UTC(a, m - 1 + meses, 1));
+  const ultimoDia = new Date(Date.UTC(alvo.getUTCFullYear(), alvo.getUTCMonth() + 1, 0)).getUTCDate();
+  alvo.setUTCDate(Math.min(d, ultimoDia));
+  return alvo.toISOString().slice(0, 10);
+}
+
+/* ---------- campo de data em dd/mm/aaaa ----------
+   `<input type="date">` mostra a data no formato do sistema operacional, não no
+   da página: num Windows em inglês ele exibe 09/12/2026 para 12 de setembro, e
+   o professor lê "9 de dezembro". Como não há como forçar o formato desse
+   controle, aqui o campo é texto com máscara — sempre dd/mm/aaaa, em qualquer
+   máquina. */
+
+export function isoParaDataBR(iso) {
+  if (!iso) return "";
+  const [a, m, d] = iso.split("-");
+  return `${d}/${m}/${a}`;
+}
+
+export function dataBRParaIso(texto) {
+  const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(String(texto ?? "").trim());
+  if (!m) return null;
+  const [, d, mes, a] = m;
+  const data = new Date(Date.UTC(Number(a), Number(mes) - 1, Number(d)));
+  // Confere o retorno: "31/02/2026" viraria 03/03 em vez de ser recusado.
+  if (
+    data.getUTCFullYear() !== Number(a) ||
+    data.getUTCMonth() !== Number(mes) - 1 ||
+    data.getUTCDate() !== Number(d)
+  ) return null;
+  return `${a}-${mes}-${d}`;
+}
+
+export function ligarMascaraDeData(input) {
+  if (!input) return;
+  input.addEventListener("input", () => {
+    const dig = input.value.replace(/\D/g, "").slice(0, 8);
+    const partes = [dig.slice(0, 2), dig.slice(2, 4), dig.slice(4, 8)].filter(Boolean);
+    input.value = partes.join("/");
+    input.setSelectionRange(input.value.length, input.value.length);
+  });
+}
+
 export function formatarDataCurta(iso) {
   if (!iso) return "—";
   const [, m, d] = iso.split("-");

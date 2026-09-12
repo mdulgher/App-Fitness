@@ -10,7 +10,8 @@
 
 import { db } from "../db.js";
 import {
-  esc, plural, formatarData, hoje, somarDias, DIAS_SEMANA, rotuloDiasSemana,
+  esc, plural, formatarData, hoje, somarMeses, DIAS_SEMANA, rotuloDiasSemana,
+  isoParaDataBR, dataBRParaIso, ligarMascaraDeData,
 } from "../utils.js";
 
 export async function render(alvo, { params }) {
@@ -126,8 +127,15 @@ export async function render(alvo, { params }) {
     ligarEventos();
   }
 
+  // A letra vem do que já existe, não da contagem: dois cliques seguidos em
+  // "nova divisão" (antes de a lista recarregar) criavam dois "Treino B".
   function proximaLetra() {
-    return String.fromCharCode(65 + (ficha?.dias.length ?? 0));
+    const usadas = new Set((ficha?.dias ?? []).map((d) => d.label.trim().toUpperCase()));
+    for (let i = 0; i < 26; i++) {
+      const letra = String.fromCharCode(65 + i);
+      if (!usadas.has(`TREINO ${letra}`)) return letra;
+    }
+    return String(usadas.size + 1);
   }
 
   function meta(treinos, alvoSemanal) {
@@ -203,7 +211,11 @@ export async function render(alvo, { params }) {
     corpo.querySelector("[data-editar-ficha]")?.addEventListener("click", () => formularioDaFicha(ficha));
     corpo.querySelector("[data-novo-dia]")?.addEventListener("click", async () => {
       const rotulo = `Treino ${proximaLetra()}`;
-      if (await proteger(() => db.criarDia({ fichaId: ficha.id, rotulo, ordem: ficha.dias.length }))) {
+      // A ordem vem do maior índice existente, não da contagem: divisões
+      // criadas em sequência rápida acabavam com o mesmo order_index e a ficha
+      // aparecia fora de ordem para o aluno.
+      const ordem = ficha.dias.reduce((max, d) => Math.max(max, d.order_index + 1), 0);
+      if (await proteger(() => db.criarDia({ fichaId: ficha.id, rotulo, ordem }))) {
         await carregar(ficha.id);
       }
     });
@@ -268,7 +280,8 @@ export async function render(alvo, { params }) {
   const fechar = () => dialogo.close();
 
   function formularioDaFicha(existente) {
-    const padraoFim = somarDias(hoje(), 56); // 8 semanas: ciclo comum de treino
+    // Três meses: é o ciclo que o Leo usa para renovar ficha.
+    const padraoFim = somarMeses(hoje(), 3);
     dialogoConteudo.innerHTML = `
       <div class="dialog-top">
         <span class="eyebrow">${existente ? "Editar ficha" : "Nova ficha"}</span>
@@ -283,9 +296,12 @@ export async function render(alvo, { params }) {
           <textarea id="ff-desc" name="description" rows="2" maxlength="300">${esc(existente?.description ?? "")}</textarea></div>
         <div class="exercise-form-grid">
           <div class="field"><label for="ff-inicio">Início</label>
-            <input id="ff-inicio" name="start_date" type="date" value="${esc(existente?.start_date ?? hoje())}" /></div>
+            <input id="ff-inicio" name="start_date" type="text" inputmode="numeric" maxlength="10"
+                   placeholder="dd/mm/aaaa" value="${esc(isoParaDataBR(existente?.start_date ?? hoje()))}" /></div>
           <div class="field"><label for="ff-fim">Fim</label>
-            <input id="ff-fim" name="end_date" type="date" value="${esc(existente?.end_date ?? padraoFim)}" /></div>
+            <input id="ff-fim" name="end_date" type="text" inputmode="numeric" maxlength="10"
+                   placeholder="dd/mm/aaaa" value="${esc(isoParaDataBR(existente?.end_date ?? padraoFim))}" />
+            <div class="field-hint">Padrão: 3 meses. Deixe em branco para ficha sem prazo.</div></div>
         </div>
         <div data-erro class="alert hidden" role="alert"></div>
         <div class="dialog-actions">
@@ -297,6 +313,8 @@ export async function render(alvo, { params }) {
 
     dialogo.showModal();
     dialogoConteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", fechar));
+    ligarMascaraDeData(dialogoConteudo.querySelector("#ff-inicio"));
+    ligarMascaraDeData(dialogoConteudo.querySelector("#ff-fim"));
 
     const form = dialogoConteudo.querySelector("#form-ficha");
     const erro = dialogoConteudo.querySelector("[data-erro]");
@@ -314,11 +332,25 @@ export async function render(alvo, { params }) {
       ev.preventDefault();
       erro.classList.add("hidden");
       const dados = Object.fromEntries(new FormData(form));
+      const mostrarErro = (msg) => {
+        erro.textContent = msg;
+        erro.classList.remove("hidden");
+      };
+
+      const inicio = dados.start_date.trim() ? dataBRParaIso(dados.start_date) : hoje();
+      const fim = dados.end_date.trim() ? dataBRParaIso(dados.end_date) : null;
+
+      if (!inicio) return mostrarErro("Data de início inválida. Use dd/mm/aaaa.");
+      if (dados.end_date.trim() && !fim) return mostrarErro("Data de fim inválida. Use dd/mm/aaaa.");
+      // Uma ficha que termina antes de começar nunca aparece como ativa para o
+      // aluno, e o professor não descobre por quê.
+      if (fim && fim < inicio) return mostrarErro("O fim não pode ser antes do início.");
+
       const patch = {
         title: dados.title.trim(),
         description: dados.description.trim() || null,
-        start_date: dados.start_date || hoje(),
-        end_date: dados.end_date || null,
+        start_date: inicio,
+        end_date: fim,
       };
       try {
         if (existente) {

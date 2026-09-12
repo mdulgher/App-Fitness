@@ -1,8 +1,10 @@
 // Perfil do aluno, visto pelo professor
 //
-// Fase 0: leitura. A edição, o editor de ficha e a aba de progressão entram
-// nas fases 1, 3 e 5. O objetivo aqui é provar que a camada de dados entrega
-// tudo que as telas vão precisar.
+// Treino e financeiro ficam em abas separadas, e a de treino é a que abre.
+// O motivo é físico, não estético: o professor mexe nessa tela ao lado do
+// aluno, mostrando a ficha, e dinheiro não pode aparecer junto — nem o dele,
+// nem o que o vizinho de cadastro paga. Quem quiser ver o financeiro precisa
+// trocar de aba de propósito.
 
 import { db, statusPagamento, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import {
@@ -62,27 +64,58 @@ export async function render(alvo, { params }) {
         </div>
       </div>
 
-      ${blocoRestricoes(aluno)}
-
-      <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
-        ${cartao("Semana", `${semana.feitos}/${semana.meta}`, "treinos concluídos")}
-        ${cartao("Último treino", aluno.resumo.ultimoTreino ? textoTempoRelativo(aluno.resumo.ultimoTreino) : "—", `${concluidas.length} no total`)}
-        ${cartao("Mensalidade", moeda(aluno.monthly_fee), `vence dia ${aluno.due_day}`)}
+      <div class="movement-tabs" id="abas" role="tablist" style="margin-bottom:var(--sp-4)">
+        <button class="movement-tab" role="tab" data-aba="treino" aria-selected="true">Treino</button>
+        <button class="movement-tab" role="tab" data-aba="financeiro" aria-selected="false">Financeiro</button>
       </div>
 
-      <hr class="hr" />
-      ${blocoFicha(ficha)}
+      <section id="painel-treino" role="tabpanel">
+        ${blocoRestricoes(aluno)}
 
-      <hr class="hr" />
-      ${blocoAnotacoes(anotacoes)}
+        <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
+          ${cartao("Semana", `${semana.feitos}/${semana.meta}`, "treinos concluídos")}
+          ${cartao("Último treino", aluno.resumo.ultimoTreino ? textoTempoRelativo(aluno.resumo.ultimoTreino) : "—", `${concluidas.length} no total`)}
+          ${cartao("Ficha", ficha ? "Ativa" : "Sem ficha",
+            ficha ? `até ${ficha.end_date ? formatarData(ficha.end_date) : "sem prazo"}` : "aguardando treino")}
+        </div>
 
-      <hr class="hr" />
-      ${blocoFinanceiro(pagamentos)}
+        ${blocoFicha(ficha)}
+
+        <hr class="hr" />
+        ${blocoAnotacoes(anotacoes)}
+      </section>
+
+      <section id="painel-financeiro" role="tabpanel" class="hidden">
+        <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
+          ${cartao("Mensalidade", moeda(aluno.monthly_fee), aluno.due_day ? `vence dia ${aluno.due_day}` : "sem vencimento")}
+          ${cartao("Em aberto", moeda(emAberto(pagamentos)), plural(pagamentos.filter((p) => !p.paid_date).length, "cobrança", "cobranças"))}
+          ${cartao("Pago no total", moeda(pagamentos.filter((p) => p.paid_date).reduce((t, p) => t + Number(p.amount ?? 0), 0)), "desde o início")}
+        </div>
+        ${blocoFinanceiro(pagamentos)}
+      </section>
     </div>
     <dialog class="exercise-dialog" id="dialogo"><div id="dialogo-conteudo"></div></dialog>
   `;
 
   alvo.querySelector("#editar").addEventListener("click", () => formularioDeEdicao(alvo, aluno));
+
+  // A aba volta para "Treino" a cada abertura da tela, de propósito: sair do
+  // financeiro não pode depender de o professor lembrar de trocar antes de
+  // virar o notebook para o aluno.
+  alvo.querySelector("#abas").addEventListener("click", (ev) => {
+    const botao = ev.target.closest("[data-aba]");
+    if (!botao) return;
+    const aba = botao.dataset.aba;
+    alvo.querySelectorAll("[data-aba]").forEach((b) =>
+      b.setAttribute("aria-selected", String(b.dataset.aba === aba))
+    );
+    alvo.querySelector("#painel-treino").classList.toggle("hidden", aba !== "treino");
+    alvo.querySelector("#painel-financeiro").classList.toggle("hidden", aba !== "financeiro");
+  });
+}
+
+function emAberto(pagamentos) {
+  return pagamentos.filter((p) => !p.paid_date).reduce((t, p) => t + Number(p.amount ?? 0), 0);
 }
 
 // A mensalidade mora aqui, e não na tela de financeiro, porque é um dado do
@@ -297,7 +330,7 @@ function blocoAnotacoes(anotacoes) {
 function blocoFinanceiro(pagamentos) {
   return `
     <div class="row-between" style="margin-bottom:var(--sp-3)">
-      <h2>Financeiro</h2>
+      <h2>Histórico de cobranças</h2>
       <span class="muted small">visível só para você e para o aluno</span>
     </div>
     ${
