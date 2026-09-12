@@ -69,9 +69,12 @@ export async function render(alvo) {
       const opcoes = [...new Set(dados.map(e => e.equipment).filter(Boolean))].sort((a,b) => a.localeCompare(b,'pt-BR'));
       equipamento.innerHTML = '<option value="">Todos os equipamentos</option>' + opcoes.map(e => `<option value="${esc(e)}">${esc(e)}</option>`).join('');
       equipamento.value = opcoes.includes(anterior) ? anterior : '';
+      // Só oferece a coleção quando faltam exercícios na biblioteca. Antes ela
+      // também era oferecida quando um exercício estava sem foto — o que, depois
+      // que o professor remove uma imagem de propósito, vira um convite a
+      // desfazer a escolha dele.
       const faltantes = CATALOGO_PEITO.filter(c => !dados.some(e => normalizarNome(e.name) === normalizarNome(c.name) || e.photo_url === c.photo_url));
-      const semFotos = CATALOGO_PEITO.some(c => dados.some(e => !e.archived && !e.photo_url && normalizarNome(e.name) === normalizarNome(c.name)));
-      importar.classList.toggle('hidden', !faltantes.length && !semFotos);
+      importar.classList.toggle('hidden', !faltantes.length);
       desenhar();
     } catch (err) {
       if (!alvo.contains(grade)) return;
