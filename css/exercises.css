@@ -58,6 +58,9 @@ body:has(.exercise-dialog[open]) { overflow: hidden; }
 .dialog-actions .btn { font-size: 14px; }
 .exercise-dialog .alert { margin-top: 20px; }
 .exercise-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.input-com-acao { display: flex; align-items: stretch; gap: 8px; }
+.input-com-acao input { flex: 1 1 auto; min-width: 0; }
+.input-com-acao .btn { flex: 0 0 auto; min-height: 0; }
 .exercise-dialog .field small { display: block; font-size: 12px; color: #666; margin-top: 8px; }
 .exercise-video { width: 100%; aspect-ratio: 16 / 9; border: 0; border-radius: 12px; margin-top: 16px; }
 .media-fallback { height: 100%; min-height: 160px; display: grid; place-items: center; padding: 24px; font-size: 14px; color: #666; text-align: center; }

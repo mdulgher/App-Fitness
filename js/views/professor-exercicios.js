@@ -202,14 +202,24 @@ export async function render(alvo) {
         <label class="field"><span>Nome do exercício</span><input name="name" required maxlength="120" value="${esc(e?.name)}" placeholder="Ex.: Supino reto com halteres" /></label>
         <div class="exercise-form-grid"><label class="field"><span>Grupo muscular</span><select name="muscle_group">${grupos.map(g => `<option${g === (e?.muscle_group || (grupo === 'Todos' ? 'Peito' : grupo)) ? ' selected' : ''}>${esc(g)}</option>`).join('')}</select></label><label class="field"><span>Equipamento</span><select name="equipment">${equipamentos.map(v => `<option${v === e?.equipment ? ' selected' : ''}>${esc(v)}</option>`).join('')}</select></label></div>
         <label class="field"><span>Como executar</span><textarea name="how_to" required maxlength="6000" rows="6" placeholder="Descreva uma etapa por linha.">${esc(e?.how_to)}</textarea><small>Escreva uma etapa por linha.</small></label>
-        <label class="field"><span>Imagem ou GIF</span><input name="photo_url" maxlength="2000" value="${esc(e?.photo_url)}" placeholder="https://…" /><small>Cole o endereço HTTPS da imagem. As fotos da coleção já vêm preenchidas.</small></label>
-        <label class="field"><span>Vídeo do YouTube ou Vimeo (opcional)</span><input name="video_url" maxlength="2000" value="${esc(e?.video_url)}" placeholder="https://www.youtube.com/watch?v=…" /><small>Vídeos do YouTube geram uma capa automaticamente quando não há imagem.</small></label>
+        <div class="field"><label for="campo-foto">Imagem ou GIF (opcional)</label><div class="input-com-acao"><input id="campo-foto" name="photo_url" maxlength="2000" value="${esc(e?.photo_url)}" placeholder="https://…" /><button type="button" class="btn btn-sm" data-limpar="photo_url">Remover</button></div><small>Cole o endereço HTTPS da imagem. As fotos da coleção já vêm preenchidas.</small></div>
+        <div class="field"><label for="campo-video">Vídeo do YouTube ou Vimeo (opcional)</label><div class="input-com-acao"><input id="campo-video" name="video_url" maxlength="2000" value="${esc(e?.video_url)}" placeholder="https://www.youtube.com/watch?v=…" /><button type="button" class="btn btn-sm" data-limpar="video_url">Remover</button></div><small>Vídeos do YouTube geram uma capa automaticamente quando não há imagem.</small></div>
         <div data-erro class="alert hidden" role="alert"></div>
         <div class="dialog-actions"><button type="button" class="btn" id="cancelar-form">Cancelar</button><button type="submit" class="btn btn-primary" id="salvar-exercicio">Salvar exercício</button></div>
       </form>`;
     const form = conteudo.querySelector('#form-exercicio');
     conteudo.querySelector('[data-fechar]').addEventListener('click', fecharDialog);
     conteudo.querySelector('#cancelar-form').addEventListener('click', () => e ? detalhe(e) : fecharDialog());
+
+    // Limpar o campo na mão já bastaria, mas o botão torna visível que dá para
+    // ficar sem mídia — antes a única pista era o erro ao tentar salvar.
+    for (const botao of conteudo.querySelectorAll('[data-limpar]')) {
+      const campo = form.elements[botao.dataset.limpar];
+      const sincronizar = () => { botao.disabled = !campo.value.trim(); };
+      botao.addEventListener('click', () => { campo.value = ''; sincronizar(); campo.focus(); });
+      campo.addEventListener('input', sincronizar);
+      sincronizar();
+    }
     form.addEventListener('submit', async ev => {
       ev.preventDefault();
       if (salvando) return;
@@ -217,7 +227,10 @@ export async function render(alvo) {
       let dados;
       try {
         dados = validarExercicio(Object.fromEntries(new FormData(form)));
-        if (!dados.photo_url && !dados.video_url) throw Error('Adicione uma imagem ou um vídeo para demonstrar o exercício.');
+        // Imagem e vídeo são opcionais. Exigir pelo menos um impedia remover a
+        // mídia depois de adicionada, e travava a edição dos exercícios que
+        // ainda não têm foto — nem para corrigir o nome. O card já mostra
+        // "Imagem ainda não adicionada" quando falta, que é aviso suficiente.
         const duplicado = exercicios.find(x => x.id !== e?.id && normalizarNome(x.name) === normalizarNome(dados.name));
         if (duplicado) throw Error(duplicado.archived ? 'Já existe um exercício arquivado com esse nome. Restaure-o na lista de arquivados.' : 'Já existe um exercício com esse nome. Abra-o para editar.');
       } catch (err) { erroDialog(err.message); return; }
