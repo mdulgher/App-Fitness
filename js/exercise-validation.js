@@ -2,7 +2,9 @@
 export function urlDeImagemSegura(valor) {
   if (!valor) return null;
   const text = String(valor).trim();
+  // Caminhos locais permitidos: as fotos da coleção e as ilustrações vetoriais.
   if (/^assets\/exercises\/[A-Za-z0-9_-]+\/[01]\.jpg$/.test(text)) return text;
+  if (/^assets\/illustrations\/bw\/[a-z0-9-]+-(start|peak)\.png$/.test(text)) return text;
   try { const u = new URL(text); return u.protocol === 'https:' && !u.username && !u.password ? u.href : null; } catch { return null; }
 }
 

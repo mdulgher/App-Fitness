@@ -1,7 +1,13 @@
 import { db } from '../db.js';
 import { esc, capaDoVideo, urlDeEmbed } from '../utils.js';
 import { CATALOGO_PEITO, normalizarNome, referenciaDaFoto } from '../catalogo-peito.js';
+import { referenciaDaIlustracao } from '../catalogo-ilustracoes.js';
 import { urlDeImagemSegura, videoSeguro, validarExercicio } from '../exercise-validation.js';
+
+// Duas fontes de mídia com licenças diferentes: ilustração vetorial (RepDB) e
+// foto (Free Exercise DB). Cada referência carrega o próprio crédito, para a
+// tela não atribuir a fonte errada.
+const referenciaDaMidia = (photo) => referenciaDaIlustracao(photo) ?? referenciaDaFoto(photo);
 
 const GRUPOS = ['Peito', 'Costas', 'Perna', 'Ombro', 'Braço', 'Core', 'Cardio'];
 const EQUIPAMENTOS = ['Barra', 'Halter', 'Máquina', 'Polia', 'Peso do corpo', 'Suspensão', 'Paralelas', 'Anilha', 'Elástico', 'Kettlebell', 'Outro'];
@@ -32,7 +38,7 @@ export async function render(alvo) {
       <div class="library-heading"><div><h2 id="grupo-titulo">Peito</h2><p class="muted" id="quantidade" role="status">Carregando exercícios…</p></div><button class="btn hidden" id="importar-peito">Adicionar coleção de peito</button></div>
       <div class="movement-tabs" id="categorias" role="group" aria-label="Tipo de movimento"></div>
       <div id="grade-exercicios" class="exercise-grid" aria-busy="true"><div class="empty">Carregando a biblioteca…</div></div>
-      <p class="library-credit">Coleção de peito: fotos de <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noopener noreferrer">Free Exercise DB</a> · domínio público (Unlicense). Instruções adaptadas em português.</p>
+      <p class="library-credit">Ilustrações de <a href="https://repdb.co" target="_blank" rel="noopener noreferrer">RepDB (repdb.co)</a>. Fotos de <a href="https://github.com/yuhonas/free-exercise-db" target="_blank" rel="noopener noreferrer">Free Exercise DB</a> · domínio público (Unlicense). Instruções adaptadas em português.</p>
     </div>
     <dialog class="exercise-dialog" id="exercicio-dialog" aria-labelledby="dialog-title"><div id="dialog-conteudo"></div></dialog>`;
 
@@ -82,7 +88,7 @@ export async function render(alvo) {
     if (!tipos.includes(categoria)) categoria = 'Todos';
     alvo.querySelector('#categorias').innerHTML = tipos.map(t => `<button class="movement-tab" data-categoria="${esc(t)}" aria-pressed="${t === categoria}">${esc(t)}</button>`).join('');
     const visiveis = porGrupo.filter(e => {
-      const ref = referenciaDaFoto(e.photo_url);
+      const ref = referenciaDaMidia(e.photo_url);
       return (status.value === 'todos' || Boolean(e.archived) === (status.value === 'arquivados'))
         && (!equipamento.value || e.equipment === equipamento.value)
         && (categoria === 'Todos' || ref?.categoria === categoria)
@@ -94,7 +100,7 @@ export async function render(alvo) {
   }
 
   function cartao(e) {
-    const ref = referenciaDaFoto(e.photo_url);
+    const ref = referenciaDaMidia(e.photo_url);
     const video = videoSeguro(e.video_url);
     const foto = urlDeImagemSegura(e.photo_url) || capaDoVideo(video);
     return `<article class="exercise-card${e.archived ? ' is-archived' : ''}">
@@ -125,7 +131,7 @@ export async function render(alvo) {
 
   function detalhe(e) {
     abrirDialog();
-    const ref = referenciaDaFoto(e.photo_url);
+    const ref = referenciaDaMidia(e.photo_url);
     const video = videoSeguro(e.video_url);
     const foto = urlDeImagemSegura(e.photo_url) || capaDoVideo(video);
     conteudo.innerHTML = `
@@ -137,7 +143,7 @@ export async function render(alvo) {
       ${video ? '<button class="btn btn-block" id="assistir-video">▶ Assistir ao vídeo</button><div id="player-video"></div>' : ''}
       <section class="how-to"><div class="eyebrow">Passo a passo</div><h3>Como executar</h3>${e.how_to ? `<ol>${e.how_to.split(/\n+/).filter(Boolean).map(p => `<li>${esc(p.replace(/^\d+[.)]\s*/, ''))}</li>`).join('')}</ol>` : '<p class="muted">Adicione as orientações de execução deste exercício.</p>'}</section>
       <p class="exercise-guidance">Carga, séries, repetições e amplitude são definidas pelo professor na ficha de cada aluno.</p>
-      ${ref ? `<p class="library-credit">Fotos: <a href="${esc(ref.fonte)}" target="_blank" rel="noopener noreferrer">Free Exercise DB · Unlicense</a></p>` : ''}
+      ${ref ? `<p class="library-credit"><a href="${esc(ref.fonte)}" target="_blank" rel="noopener noreferrer">${esc(ref.credito)}</a></p>` : ''}
       <div data-erro class="alert hidden" role="alert"></div>
       <div class="dialog-actions"><button class="btn" id="arquivar-exercicio">${e.archived ? 'Restaurar exercício' : 'Arquivar exercício'}</button><button class="btn btn-primary" id="editar-exercicio">Editar exercício</button></div>`;
     conteudo.querySelector('[data-fechar]').addEventListener('click', fecharDialog);

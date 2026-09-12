@@ -43,6 +43,7 @@ export const CATALOGO_PEITO = itens.map(([sourceId, name, equipment, categoria, 
   sourceId, name, equipment, categoria, how_to, muscle_group: 'Peito',
   photo_url: `assets/exercises/${sourceId}/0.jpg`,
   segundaFoto: `assets/exercises/${sourceId}/1.jpg`,
+  credito: 'Fotos: Free Exercise DB · Unlicense',
   fonte: `https://github.com/yuhonas/free-exercise-db/tree/main/exercises/${sourceId}`,
 }));
 

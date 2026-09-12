@@ -13,6 +13,18 @@ npm-debug.log*
 # Configuração local do Claude Code (permissões da máquina, não do projeto)
 .claude/settings.local.json
 
+# Entradas de build das ilustrações, não conteúdo do app.
+#
+# A licença do RepDB permite usar as imagens dentro do aplicativo, mas proíbe
+# republicar o conjunto de dados (termo 3). Como este repositório é público,
+# versionar o source.json — que é o dataset inteiro — seria exatamente isso.
+# Ficam no repositório apenas as imagens que o app realmente serve, em
+# assets/illustrations/bw/, mais a licença. Para regerar, rode:
+#   node scripts/download-illustration-sample.mjs
+#   node scripts/preparar-ilustracoes.mjs
+assets/illustrations/source.json
+assets/illustrations/*.webp
+
 # A partir da Fase 8: se as chaves do Supabase saírem de config.js para um
 # arquivo próprio, ele entra aqui. A chave `anon` é pública por design e pode
 # ser versionada; a `service_role` NUNCA entra no repositório.
