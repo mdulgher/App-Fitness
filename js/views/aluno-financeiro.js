@@ -1,0 +1,87 @@
+// Financeiro do aluno — somente leitura.
+//
+// O aluno não escreve nada aqui, e isso não depende desta tela: as regras do
+// banco só permitem que ele leia as próprias cobranças. Esconder o botão seria
+// aparência; a garantia está no RLS.
+
+import { db, statusPagamento, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
+import { usuarioAtual } from "../auth.js";
+import { PROFESSOR } from "../config.js";
+import { esc, moeda, formatarData, nomeDoMes, diasEntre, hoje, plural } from "../utils.js";
+
+export async function render(alvo) {
+  const id = usuarioAtual().id;
+  const [aluno, pagamentos] = await Promise.all([db.buscarAluno(id), db.listarPagamentos(id)]);
+
+  const comStatus = pagamentos.map((p) => ({ ...p, status: p.status ?? statusPagamento(p) }));
+  const emAberto = comStatus.filter((p) => p.status !== "paid");
+  const vencidos = emAberto.filter((p) => p.status === "overdue");
+  const proxima = emAberto.filter((p) => p.status === "pending").sort((a, b) => a.due_date.localeCompare(b.due_date))[0];
+
+  alvo.innerHTML = `
+    <div class="wrap">
+      <div class="page-head">
+        <div class="eyebrow">Financeiro</div>
+        <h1>Sua mensalidade</h1>
+      </div>
+
+      ${destaque({ vencidos, proxima, aluno })}
+
+      <h2 style="margin:var(--sp-5) 0 var(--sp-3)">Histórico</h2>
+      ${comStatus.length
+        ? `<div class="list">${comStatus.map(linha).join("")}</div>`
+        : `<div class="empty">Nenhuma cobrança lançada ainda.</div>`}
+
+      <p class="muted small" style="margin-top:var(--sp-5)">
+        Dúvidas sobre pagamento? Fale com ${esc(PROFESSOR.nome.split(" ")[0])} pelo
+        <a href="${esc(PROFESSOR.instagramUrl)}" target="_blank" rel="noopener noreferrer">Instagram</a>.
+      </p>
+    </div>`;
+}
+
+function destaque({ vencidos, proxima, aluno }) {
+  if (vencidos.length) {
+    const total = vencidos.reduce((t, p) => t + Number(p.amount ?? 0), 0);
+    const atraso = Math.max(...vencidos.map((p) => diasEntre(p.due_date, hoje())));
+    return `
+      <div class="alert">
+        <div class="eyebrow">Pagamento em atraso</div>
+        <div class="numeric" style="font-size:30px;font-weight:800;letter-spacing:-.03em;margin:var(--sp-2) 0">${moeda(total)}</div>
+        <p style="margin:0">${plural(vencidos.length, "mensalidade vencida", "mensalidades vencidas")} · ${plural(atraso, "dia", "dias")} de atraso.</p>
+      </div>`;
+  }
+
+  if (proxima) {
+    const faltam = diasEntre(hoje(), proxima.due_date);
+    return `
+      <div class="card card-invert">
+        <div class="eyebrow">Próximo vencimento</div>
+        <div class="numeric" style="font-size:30px;font-weight:800;letter-spacing:-.03em;margin:var(--sp-2) 0">${moeda(proxima.amount)}</div>
+        <p style="margin:0">${formatarData(proxima.due_date)} · ${faltam === 0 ? "vence hoje" : `em ${plural(faltam, "dia", "dias")}`}</p>
+      </div>`;
+  }
+
+  return `
+    <div class="card card-invert">
+      <div class="eyebrow">Situação</div>
+      <div style="font-size:26px;font-weight:800;letter-spacing:-.03em;margin:var(--sp-2) 0">Tudo em dia.</div>
+      <p style="margin:0">${aluno?.monthly_fee ? `Mensalidade de ${moeda(aluno.monthly_fee)}, vencimento dia ${aluno.due_day}.` : "Sem cobrança em aberto."}</p>
+    </div>`;
+}
+
+function linha(p) {
+  return `
+    <div class="list-item">
+      <span class="list-item-main">
+        <span class="row-between">
+          <span class="list-item-title">${esc(nomeDoMes(p.reference_month))} de ${esc(p.reference_month.slice(0, 4))}</span>
+          <span class="${CLASSE_STATUS[p.status]}">${ROTULO_STATUS[p.status]}</span>
+        </span>
+        <span class="muted small numeric">
+          ${moeda(p.amount)} · vence ${formatarData(p.due_date)}
+          ${p.paid_date ? ` · pago ${formatarData(p.paid_date)}` : ""}
+          ${p.payment_method ? ` · ${esc(p.payment_method)}` : ""}
+        </span>
+      </span>
+    </div>`;
+}

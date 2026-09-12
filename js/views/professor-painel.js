@@ -6,6 +6,7 @@
 import { db, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import { DIAS_SEM_TREINAR_ALERTA } from "../config.js";
 import { usuarioAtual } from "../auth.js";
+import { blocoProfessor } from "./professor-perfil.js";
 import {
   esc,
   iniciais,
@@ -58,6 +59,8 @@ export async function render(alvo) {
         </section>
         ${secaoAtencao(alertas)}
       </div>
+
+      ${blocoProfessor()}
     </div>
   `;
 }

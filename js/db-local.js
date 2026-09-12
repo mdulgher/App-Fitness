@@ -83,6 +83,14 @@ export async function criarConta() {
   throw new Error("Criar conta só funciona com o banco conectado.");
 }
 
+export async function alunoVinculado(id) {
+  return tabela("students").some((a) => a.id === id);
+}
+
+export async function desativarAluno(id, ativo = false) {
+  return atualizarAluno(id, { active: ativo });
+}
+
 export async function sairDaConta() {
   try {
     localStorage.removeItem(CHAVE_SESSAO);
@@ -189,7 +197,9 @@ export async function criarAluno({ full_name, email, phone, ...dados }) {
     created_at: hoje(),
   });
   salvar();
-  return buscarAluno(id);
+  // Mesmo formato de db-supabase.js, onde a senha temporária volta da Edge
+  // Function para o professor repassar ao aluno.
+  return { id, email, full_name, senha: null };
 }
 
 export async function atualizarAluno(id, patch) {

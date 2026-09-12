@@ -17,6 +17,19 @@ export const SUPABASE = {
   anonKey: "sb_publishable_XPz0zWG0jIm1n1yyQEkSgA_EWQtkfbp",
 };
 
+// Perfil público do professor. Aparece no painel dele e na área dos alunos.
+export const PROFESSOR = {
+  nome: "Leonardo Guilherme",
+  titulo: "Treinador fitness e lifestyle",
+  instagram: "treinador_leonardog",
+  instagramUrl: "https://instagram.com/treinador_leonardog",
+  especializacoes: [
+    "Treinamento avançado para hipertrofia",
+    "Atendimento personalizado online e presencial",
+    "LGTEAM",
+  ],
+};
+
 export const TIMEZONE = "America/Sao_Paulo";
 
 // Dias sem treinar a partir dos quais o aluno aparece em "precisa de atenção".

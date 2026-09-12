@@ -2,6 +2,7 @@
 
 import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
+import { blocoProfessor } from "./professor-perfil.js";
 import {
   esc,
   primeiroNome,
@@ -59,6 +60,7 @@ export async function render(alvo) {
       </div>
       ${blocoFicha(ficha)}
       ${blocoRecados(fixadas)}
+      ${blocoProfessor()}
     </div>
   `;
 }

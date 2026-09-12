@@ -155,3 +155,15 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
   .workout-number { margin-bottom: 16px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; animation: none !important; } }
+
+/* ---- perfil do professor (painel e area do aluno) ---- */
+.trainer-card { margin-top: 28px; border-radius: 16px; padding: 22px; }
+.trainer-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+.trainer-head h3 { font-size: 19px; margin: 2px 0; }
+.trainer-head .logo-crop { flex: 0 0 64px; width: 64px; height: 23px; }
+.trainer-tags { list-style: none; margin: 0 0 18px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.trainer-tags li { border: 1px solid var(--gray-200); border-radius: 999px; padding: 6px 13px; font-size: 12px; }
+.trainer-link { min-height: 48px; }
+
+/* ---- financeiro ---- */
+.library-feedback { border: 1px solid var(--gray-200); border-radius: 10px; padding: 12px 15px; font-size: 13px; margin-bottom: 16px; }

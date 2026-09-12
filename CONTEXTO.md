@@ -73,7 +73,7 @@ Referências pesquisadas, sugestões e prioridades em `REDESIGN.md`.
 >
 > **Pendência conhecida:** o Supabase está exigindo confirmação de email, o que
 > trava todo aluno novo. Desligar em Authentication → Providers → Email →
-> "Confirm email" (quem cria os alunos é o professor, por convite).
+> "Confirm email" — resolvido: a Edge Function cria a conta já confirmada.
 
 **Fase 0 (Base local) — concluída e testada no navegador.**
 
@@ -414,7 +414,7 @@ Todas já fechadas com o dono do projeto. O raciocínio completo está em
 | Registro de carga / progressão | **Dentro do MVP** |
 | Avaliação física (medidas, fotos de evolução) | **Fora de escopo** |
 | Login do aluno | Email + senha (sem link mágico) |
-| Primeiro acesso | Convite com código; o aluno define a própria senha |
+| Primeiro acesso | O professor cria a conta no app (Edge Function `criar-aluno`) e entrega email + senha temporária. O convite com código foi descartado. |
 | Frequência | Aluno marca, professor pode corrigir |
 | Fichas | Uma ativa por aluno, com histórico arquivado |
 | Financeiro | Manual, sem gateway; cobranças geradas com um clique por mês |

@@ -14,7 +14,7 @@ const rotas = [
   { padrao: /^\/professor\/alunos$/, papel: "trainer", view: () => import("./views/professor-alunos.js") },
   { padrao: /^\/professor\/aluno\/([^/]+)$/, papel: "trainer", view: () => import("./views/professor-aluno.js") },
   { padrao: /^\/professor\/exercicios$/, papel: "trainer", view: () => import("./views/professor-exercicios.js") },
-  { padrao: /^\/professor\/financeiro$/, papel: "trainer", view: () => import("./views/em-construcao.js"), fase: "6 — Financeiro do professor" },
+  { padrao: /^\/professor\/financeiro$/, papel: "trainer", view: () => import("./views/professor-financeiro.js") },
 
   // Aluno
   { padrao: /^\/aluno$/, papel: "student", view: () => import("./views/aluno-painel.js") },
@@ -22,7 +22,7 @@ const rotas = [
   { padrao: /^\/aluno\/evolucao$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Minha evolução" },
   { padrao: /^\/aluno\/frequencia$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Frequência" },
   { padrao: /^\/aluno\/anotacoes$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Anotações" },
-  { padrao: /^\/aluno\/financeiro$/, papel: "student", view: () => import("./views/em-construcao.js"), fase: "4 — Financeiro do aluno" },
+  { padrao: /^\/aluno\/financeiro$/, papel: "student", view: () => import("./views/aluno-financeiro.js") },
 ];
 
 function caminhoAtual() {

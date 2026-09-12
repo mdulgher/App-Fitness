@@ -57,7 +57,9 @@ export async function render(alvo) {
         </form>
 
         ${LOCAL ? "" : `
-          <button class="btn btn-block" style="margin-top:var(--sp-3)" id="alternar">Criar conta</button>
+          <p class="muted small" style="margin-top:var(--sp-4);text-align:center">
+            Ainda não tem acesso? Peça sua conta ao professor.
+          </p>
         `}
 
         ${LOCAL ? `

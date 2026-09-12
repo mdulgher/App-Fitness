@@ -30,14 +30,24 @@ export async function entrarComSenha(email, senha) {
   return data.user;
 }
 
-export async function criarConta(email, senha, nome) {
+export async function criarConta(email, senha, nome, codigoConvite = null) {
   const { data, error } = await sb.auth.signUp({
     email,
     password: senha,
-    options: { data: { full_name: nome } },
+    // O código viaja nos metadados: o gatilho do banco confere email + código
+    // contra um convite aberto e cria o registro do aluno com os dados que o
+    // professor preencheu.
+    options: { data: { full_name: nome, invite_code: codigoConvite || null } },
   });
   if (error) throw new Error(traduzErro(error.message));
   return data.user;
+}
+
+// Diz se a conta já está vinculada a um cadastro de aluno. Sem isso, quem
+// digita o código errado entraria num app vazio sem entender por quê.
+export async function alunoVinculado(id) {
+  const linha = ok(await sb.from("students").select("id").eq("id", id).maybeSingle());
+  return Boolean(linha);
 }
 
 export async function sairDaConta() {
@@ -147,27 +157,31 @@ export async function buscarAluno(id) {
   return { ...aluno, resumo: resumos.get(aluno.id) };
 }
 
-// O aluno precisa existir em auth.users antes: profiles.id referencia a conta.
-// Criar a conta de outra pessoa a partir do navegador exigiria a service_role,
-// que nunca entra no front-end — por isso o fluxo real é por convite (PLANO.md
-// seção 5). Aqui só se completa o cadastro de quem já tem conta.
-export async function criarAluno({ id, full_name, email, phone, ...dados }) {
-  if (!id) throw new Error("O aluno precisa criar a conta antes; use o convite.");
-  await sb.from("profiles").update({ full_name, email, phone }).eq("id", id);
-  return ok(
-    await sb.from("students").insert({
-      id,
-      birth_date: dados.birth_date ?? null,
-      goal: dados.goal ?? null,
-      height_cm: dados.height_cm ?? null,
-      start_weight_kg: dados.start_weight_kg ?? null,
-      health_restrictions: dados.health_restrictions ?? null,
-      weekly_target: dados.weekly_target ?? 3,
-      monthly_fee: dados.monthly_fee ?? null,
-      due_day: dados.due_day ?? 5,
-      active: true,
-    }).select().single()
-  );
+// O professor cria a conta do aluno de verdade. A chamada vai para a Edge
+// Function `criar-aluno`, porque criar usuário para outra pessoa exige a chave
+// service_role — que ignora todas as regras de acesso e por isso nunca pode
+// estar no navegador. Lá no servidor ela confere que quem pediu é o professor.
+//
+// Devolve a senha temporária para o professor repassar ao aluno.
+export async function criarAluno(dados) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error("Faça login novamente para cadastrar.");
+
+  const { data, error } = await sb.functions.invoke("criar-aluno", { body: dados });
+
+  if (error) {
+    // O corpo do erro traz a mensagem em português vinda da função; sem isso o
+    // professor veria só "Edge Function returned a non-2xx status code".
+    let detalhe = null;
+    try { detalhe = (await error.context?.json?.())?.error; } catch {}
+    throw new Error(detalhe || error.message);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
+export async function desativarAluno(id, ativo = false) {
+  return ok(await sb.from("students").update({ active: ativo }).eq("id", id).select().single());
 }
 
 export async function atualizarAluno(id, patch) {
