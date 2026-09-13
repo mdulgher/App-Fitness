@@ -672,10 +672,7 @@ export async function darBaixa(pagamentoId, { data = hoje(), metodo = null } = {
 }
 
 export async function reabrirPagamento(pagamentoId) {
-  return ok(
-    await sb.from("payments").update({ paid_date: null, payment_method: null })
-      .eq("id", pagamentoId).select().single()
-  );
+  return atualizarLinha("payments", pagamentoId, { paid_date: null, payment_method: null }, "cobrança");
 }
 
 export async function criarPagamento(dados) {
