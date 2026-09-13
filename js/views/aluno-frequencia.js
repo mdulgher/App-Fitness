@@ -37,6 +37,10 @@ export async function render(alvo) {
   let mesSelecionado = mes;
   let anoSelecionado = ano;
 
+  // Mês anterior (para o segundo calendário no desktop)
+  const mesAnterior    = mes === 1 ? 12 : mes - 1;
+  const anoMesAnterior = mes === 1 ? ano - 1 : ano;
+
   alvo.innerHTML = `
     <div class="wrap">
       <div class="page-head">
@@ -74,7 +78,7 @@ export async function render(alvo) {
         ${cartao("Média por semana", media(concluidas.length), "nos últimos 90 dias")}
       </div>
 
-      <!-- CALENDÁRIO DO MÊS CORRENTE -->
+      <!-- CALENDÁRIOS -->
       <div class="row-between" style="margin-bottom:var(--sp-3);align-items:center">
         <h2>Calendário</h2>
         <div class="row" style="gap:var(--sp-2)">
@@ -85,9 +89,20 @@ export async function render(alvo) {
           <button class="btn btn-sm" id="mes-proximo" aria-label="Próximo mês">&rarr;</button>
         </div>
       </div>
-      <div class="card" style="margin-bottom:var(--sp-5)">
-        <div class="calendario-mes" id="calendario-grid"></div>
-        <div class="muted small" style="margin-top:var(--sp-3);text-align:center">
+      <div class="card calendarios-duplos" style="margin-bottom:var(--sp-5)">
+        <div class="calendario-bloco">
+          <div class="eyebrow" style="text-align:center;margin-bottom:var(--sp-2)" id="mes-titulo-anterior">
+            ${MESES[mesAnterior - 1]} de ${anoMesAnterior}
+          </div>
+          <div class="calendario-mes" id="calendario-grid-anterior"></div>
+        </div>
+        <div class="calendario-bloco">
+          <div class="eyebrow" style="text-align:center;margin-bottom:var(--sp-2)" id="mes-titulo-atual">
+            ${MESES[mesSelecionado - 1]} de ${anoSelecionado}
+          </div>
+          <div class="calendario-mes" id="calendario-grid"></div>
+        </div>
+        <div class="muted small calendarios-legenda" style="text-align:center">
           preto = treino concluído (clique para desmarcar)
         </div>
       </div>
@@ -104,31 +119,37 @@ export async function render(alvo) {
 
   const recarregar = () => render(alvo);
 
-  // Renderiza o calendário inicial
-  const calendarioGrid = alvo.querySelector("#calendario-grid");
+  // Renderiza os dois calendários
+  const calendarioGrid         = alvo.querySelector("#calendario-grid");
+  const calendarioGridAnterior = alvo.querySelector("#calendario-grid-anterior");
+
+  renderMes(calendarioGridAnterior, anoMesAnterior, mesAnterior, diasTreinados, alunoId, recarregar);
   renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
 
-  // Navegação de mês
+  function atualizarMesAnteriorVisual() {
+    const ma = mesSelecionado === 1 ? 12 : mesSelecionado - 1;
+    const aa = mesSelecionado === 1 ? anoSelecionado - 1 : anoSelecionado;
+    alvo.querySelector("#mes-titulo-anterior").textContent = `${MESES[ma - 1]} de ${aa}`;
+    renderMes(calendarioGridAnterior, aa, ma, diasTreinados, alunoId, recarregar);
+  }
+
+  // Navegação de mês (controla o calendário principal; o anterior acompanha)
   alvo.querySelector("#mes-anterior").addEventListener("click", () => {
-    if (mesSelecionado === 1) {
-      mesSelecionado = 12;
-      anoSelecionado -= 1;
-    } else {
-      mesSelecionado -= 1;
-    }
+    if (mesSelecionado === 1) { mesSelecionado = 12; anoSelecionado -= 1; }
+    else { mesSelecionado -= 1; }
     renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
     alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    alvo.querySelector("#mes-titulo-atual").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    atualizarMesAnteriorVisual();
   });
 
   alvo.querySelector("#mes-proximo").addEventListener("click", () => {
-    if (mesSelecionado === 12) {
-      mesSelecionado = 1;
-      anoSelecionado += 1;
-    } else {
-      mesSelecionado += 1;
-    }
+    if (mesSelecionado === 12) { mesSelecionado = 1; anoSelecionado += 1; }
+    else { mesSelecionado += 1; }
     renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
     alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    alvo.querySelector("#mes-titulo-atual").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    atualizarMesAnteriorVisual();
   });
 }
 

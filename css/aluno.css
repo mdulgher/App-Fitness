@@ -65,6 +65,22 @@
 
 /* ---------- frequência ---------- */
 
+/* dois calendários lado a lado no desktop, empilhados no mobile */
+.calendarios-duplos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-4);
+  justify-content: center;
+  align-items: flex-start;
+}
+.calendario-bloco { flex: 0 0 auto; }
+.calendarios-legenda { width: 100%; margin-top: var(--sp-3); }
+
+/* no mobile: segundo bloco some, volta a ser só um */
+@media (max-width: 479px) {
+  .calendario-bloco:first-child { display: none; }
+}
+
 .calendario-mes {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
