@@ -19,7 +19,10 @@ import {
   ligarMascaraDeMoeda,
   moedaParaNumero,
   numeroParaMoeda,
+  hoje,
+  somarDias,
 } from "../utils.js";
+import { renderizarCalendario } from "../calendar-grid.js";
 
 export async function render(alvo, { params }) {
   const [id] = params;
@@ -79,6 +82,10 @@ export async function render(alvo, { params }) {
         </div>
 
         ${blocoCadastro(aluno)}
+
+        <hr class="hr" />
+
+        ${blocoFrequencia(sessoes)}
 
         <hr class="hr" />
         ${blocoAnotacoes(anotacoes)}
@@ -469,6 +476,30 @@ function linhaExercicio(item) {
         </span>
         ${item.trainer_notes ? `<span class="small" style="display:block;margin-top:2px">${esc(item.trainer_notes)}</span>` : ""}
       </span>
+    </div>`;
+}
+
+function blocoFrequencia(sessoes) {
+  const concluidas = sessoes.filter((s) => s.completed_at);
+  const diasTreinados = new Map(concluidas.map((s) => [s.date, s]));
+  const [ano, mes] = hoje().split("-").map(Number);
+
+  const nomeDoMesAtual = nomeDoMes(hoje());
+
+  return `
+    <div style="margin-bottom:var(--sp-5)">
+      <h2 style="margin-bottom:var(--sp-3)">Frequência — ${nomeDoMesAtual}</h2>
+      <div class="card">
+        <div class="calendario-mes" style="margin-bottom:var(--sp-3)">
+          ${renderizarCalendario(ano, mes, diasTreinados, null)}
+        </div>
+        <div class="muted small" style="text-align:center">
+          ${plural(concluidas.filter((s) => {
+            const [a, m] = s.date.split("-");
+            return Number(a) === ano && Number(m) === mes;
+          }).length, "treino concluído", "treinos concluídos")} neste mês
+        </div>
+      </div>
     </div>`;
 }
 

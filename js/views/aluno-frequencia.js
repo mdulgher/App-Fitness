@@ -11,13 +11,12 @@ import {
   esc, plural, hoje, somarDias, inicioDaSemana, formatarData, textoTempoRelativo,
 } from "../utils.js";
 import { registrarErro } from "../log.js";
+import { renderizarCalendario, nomeDoMes } from "../calendar-grid.js";
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
-
-const ROTULOS = ["S", "T", "Q", "Q", "S", "S", "D"];
 
 export async function render(alvo) {
   const alunoId = usuarioAtual().id;
@@ -134,70 +133,35 @@ export async function render(alvo) {
 }
 
 function renderMes(container, ano, mes, diasTreinados, alunoId, aoRecarregar) {
-  const diasNoMes = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
-  const deslocamento = (new Date(Date.UTC(ano, mes - 1, 1)).getUTCDay() + 6) % 7;
+  async function aoDesmarcar(sessaoId, data) {
+    const confirmou = confirm(
+      `Desmarcar treino concluído em ${formatarData(data)}? ` +
+      `Seu professor ainda verá o histórico.`
+    );
+    if (!confirmou) return;
 
-  const celulas = [];
+    const el = container.querySelector(`[data-sessao="${sessaoId}"]`);
+    el.style.opacity = "0.5";
+    el.style.pointerEvents = "none";
 
-  // Cabeçalho com rótulos de dias
-  ROTULOS.forEach((r) => celulas.push(`<span class="dia-rotulo">${r}</span>`));
-
-  // Dias vazios antes do mês
-  for (let i = 0; i < deslocamento; i++) {
-    celulas.push(`<span class="dia-celula vazia"></span>`);
+    try {
+      await db.desconcluirSessao(sessaoId);
+      await aoRecarregar();
+    } catch (err) {
+      registrarErro(err, {
+        contexto: { tela: "frequencia", acao: "desconcluirSessao", sessaoId, data },
+      });
+      alert("Erro ao desmarcar: " + err.message);
+      el.style.opacity = "1";
+      el.style.pointerEvents = "auto";
+    }
   }
 
-  // Dias do mês
-  for (let d = 1; d <= diasNoMes; d++) {
-    const iso = `${ano}-${String(mes).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const sessao = diasTreinados.get(iso);
-    const classes = ["dia-celula"];
-
-    if (sessao && sessao.completed_at) {
-      classes.push("treinou");
-    }
-    if (iso === hoje()) {
-      classes.push("hoje");
-    }
-
-    const dataStr = formatarData(iso);
-    const clicavel = sessao ? ` style="cursor:pointer" data-sessao="${sessao.id}" data-data="${iso}"` : "";
-    celulas.push(`
-      <span class="${classes.join(" ")}" title="${esc(dataStr)}"${clicavel}>
-        ${d}
-      </span>`);
-  }
-
-  container.innerHTML = celulas.join("");
+  container.innerHTML = renderizarCalendario(ano, mes, diasTreinados, aoDesmarcar);
 
   // Eventos de clique para desmarcar
   container.querySelectorAll("[data-sessao]").forEach((el) => {
-    el.addEventListener("click", async () => {
-      const sessaoId = el.dataset.sessao;
-      const data = el.dataset.data;
-
-      const confirmou = confirm(
-        `Desmarcar treino concluído em ${formatarData(data)}? ` +
-        `Seu professor ainda verá o histórico.`
-      );
-      if (!confirmou) return;
-
-      el.style.opacity = "0.5";
-      el.style.pointerEvents = "none";
-
-      try {
-        await db.desconcluirSessao(sessaoId);
-        // Recarrega a frequência inteira para atualizar todos os contadores
-        await aoRecarregar();
-      } catch (err) {
-        registrarErro(err, {
-          contexto: { tela: "frequencia", acao: "desconcluirSessao", sessaoId, data },
-        });
-        alert("Erro ao desmarcar: " + err.message);
-        el.style.opacity = "1";
-        el.style.pointerEvents = "auto";
-      }
-    });
+    el.addEventListener("click", () => aoDesmarcar(el.dataset.sessao, el.dataset.data));
   });
 }
 
