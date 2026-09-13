@@ -209,3 +209,58 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
 /* Abas de verdade (role="tab") usam aria-selected; o estilo de .movement-tab
    só olhava aria-pressed, e a aba ativa ficava sem marcação nenhuma. */
 .movement-tab[aria-selected="true"] { background: #e5e5e5; color: #111; }
+
+/* ---------- banner da divisão de treino (editor de ficha) ---------- */
+
+/* O card perde o padding e quem passa a tê-lo é o corpo: assim o banner preto
+   sangra até a borda sem margem negativa presa ao valor do padding do card,
+   que muda entre breakpoints (foi o erro do calendário). */
+.card-com-banner { padding: 0; overflow: hidden; }
+.dia-corpo { padding: 24px; }
+
+.dia-banner {
+  display: flex; align-items: stretch; gap: 16px;
+  padding: 0 24px; background: #000; color: #fff; overflow: hidden;
+}
+.dia-banner-texto {
+  flex: 1; min-width: 0;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+  padding: 18px 0;
+}
+.dia-banner-texto h3 { margin: 0; color: #fff; }
+.dia-banner-texto .small { color: #a3a3a3; }
+
+/* A arte encosta na base do banner, como se a figura estivesse de pé nele.
+   `flex-end` em vez de altura cheia: as artes têm proporções diferentes e
+   esticar deformaria o corpo. */
+.dia-banner-arte {
+  align-self: flex-end; flex: 0 0 auto;
+  height: 104px; width: auto; object-fit: contain; object-position: bottom;
+}
+.dia-banner-acoes { align-self: center; flex: 0 0 auto; }
+
+/* Grade de escolha da arte, sobre preto — é como ela vai aparecer de verdade. */
+.arte-grade {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  margin: var(--sp-4) 0; padding: 12px; border-radius: 12px; background: #000;
+}
+.arte-opcao {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px 4px; border: 2px solid transparent; border-radius: 10px;
+  background: none; color: #a3a3a3; font: inherit; font-size: 12px; cursor: pointer;
+}
+.arte-opcao img { height: 72px; width: auto; max-width: 100%; object-fit: contain; }
+.arte-opcao:hover, .arte-opcao:focus-visible { border-color: #404040; color: #fff; }
+.arte-opcao-ativa { border-color: #fff; color: #fff; }
+.arte-opcao[disabled] { opacity: .5; cursor: default; }
+
+@media (max-width: 700px) {
+  .dia-corpo { padding: 16px; }
+  .dia-banner { flex-wrap: wrap; padding: 0 16px; }
+  .dia-banner-texto { padding: 14px 0; }
+  /* No celular os três botões não cabem ao lado da arte: descem para uma linha
+     própria e a arte encolhe, em vez de espremer o alvo de toque. */
+  .dia-banner-arte { height: 72px; }
+  .dia-banner-acoes { align-self: center; width: 100%; padding-bottom: 14px; flex-wrap: wrap; }
+  .arte-grade { grid-template-columns: repeat(2, 1fr); }
+}

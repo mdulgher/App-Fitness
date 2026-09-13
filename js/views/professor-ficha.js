@@ -10,6 +10,7 @@
 
 import { db } from "../db.js";
 import { registrarErro } from "../log.js";
+import { BANNERS, caminhoDoBanner, rotuloDoBanner } from "../catalogo-banners.js";
 import {
   esc, plural, formatarData, hoje, somarMeses, DIAS_SEMANA, rotuloDiasSemana,
   isoParaDataBR, dataBRParaIso, ligarMascaraDeData,
@@ -148,32 +149,37 @@ export async function render(alvo, { params }) {
   }
 
   function cartaoDoDia(dia) {
+    const arte = caminhoDoBanner(dia.banner);
     return `
-      <div class="card" data-dia="${esc(dia.id)}">
-        <div class="row-between" style="margin-bottom:var(--sp-3);flex-wrap:wrap;gap:var(--sp-2)">
-          <div>
+      <div class="card card-com-banner" data-dia="${esc(dia.id)}">
+        <div class="dia-banner">
+          <div class="dia-banner-texto">
             <h3>${esc(dia.label)}</h3>
-            <div class="muted small">${esc(rotuloDiasSemana(dia.weekdays))} · ${plural(dia.exercicios.length, "exercício", "exercícios")}</div>
+            <div class="small">${esc(rotuloDiasSemana(dia.weekdays))} · ${plural(dia.exercicios.length, "exercício", "exercícios")}</div>
           </div>
-          <div class="row" style="gap:var(--sp-2)">
+          ${arte ? `<img class="dia-banner-arte" src="${esc(arte)}" alt="" aria-hidden="true" />` : ""}
+          <div class="row dia-banner-acoes" style="gap:var(--sp-2)">
+            <button class="btn btn-sm" data-arte="${esc(dia.id)}">Arte</button>
             <button class="btn btn-sm" data-renomear="${esc(dia.id)}">Renomear</button>
             <button class="btn btn-sm" data-remover-dia="${esc(dia.id)}">Excluir</button>
           </div>
         </div>
 
-        <div class="movement-tabs" role="group" aria-label="Dias da semana de ${esc(dia.label)}" style="margin-bottom:var(--sp-3)">
-          ${DIAS_SEMANA.map(([n, curto, longo]) => `
-            <button class="movement-tab" data-toggle-dia="${esc(dia.id)}" data-valor="${n}"
-                    aria-pressed="${(dia.weekdays ?? []).includes(n)}" title="${longo}">${curto}</button>`).join("")}
-        </div>
+        <div class="dia-corpo">
+          <div class="movement-tabs" role="group" aria-label="Dias da semana de ${esc(dia.label)}" style="margin-bottom:var(--sp-3)">
+            ${DIAS_SEMANA.map(([n, curto, longo]) => `
+              <button class="movement-tab" data-toggle-dia="${esc(dia.id)}" data-valor="${n}"
+                      aria-pressed="${(dia.weekdays ?? []).includes(n)}" title="${longo}">${curto}</button>`).join("")}
+          </div>
 
-        <div class="list">
-          ${dia.exercicios.map(linhaExercicio).join("") || `<div class="empty">Nenhum exercício nesta divisão.</div>`}
-        </div>
+          <div class="list">
+            ${dia.exercicios.map(linhaExercicio).join("") || `<div class="empty">Nenhum exercício nesta divisão.</div>`}
+          </div>
 
-        <button class="btn btn-block btn-sm" style="margin-top:var(--sp-3)" data-add="${esc(dia.id)}">
-          + Adicionar exercício
-        </button>
+          <button class="btn btn-block btn-sm" style="margin-top:var(--sp-3)" data-add="${esc(dia.id)}">
+            + Adicionar exercício
+          </button>
+        </div>
       </div>`;
   }
 
@@ -244,6 +250,12 @@ export async function render(alvo, { params }) {
     corpo.querySelectorAll("[data-renomear]").forEach((b) =>
       b.addEventListener("click", () =>
         formularioDeRenomear(ficha.dias.find((d) => d.id === b.dataset.renomear))
+      )
+    );
+
+    corpo.querySelectorAll("[data-arte]").forEach((b) =>
+      b.addEventListener("click", () =>
+        escolherArte(ficha.dias.find((d) => d.id === b.dataset.arte))
       )
     );
 
@@ -383,6 +395,55 @@ export async function render(alvo, { params }) {
   // página crie novas caixas de diálogo", e no app instalado na tela inicial
   // nem chega a aparecer. O clique não fazia nada e não havia erro nenhum para
   // investigar. Agora é o mesmo <dialog> do resto da tela.
+  // A arte é escolhida num grid sobre fundo preto, que é como ela vai aparecer.
+  // Mostrar as opções sobre o branco do diálogo enganaria: o contorno branco da
+  // figura some no claro e o professor escolheria no escuro do que vai ver.
+  function escolherArte(dia) {
+    if (!dia) return;
+    const opcao = ({ slug, rotulo }) => `
+      <button type="button" class="arte-opcao${dia.banner === slug ? " arte-opcao-ativa" : ""}"
+              data-escolher="${esc(slug)}" aria-pressed="${dia.banner === slug}">
+        <img src="${esc(caminhoDoBanner(slug))}" alt="" />
+        <span>${esc(rotulo)}</span>
+      </button>`;
+
+    dialogoConteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Divisão</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <h2>Arte de ${esc(dia.label)}</h2>
+      <p class="muted small">Aparece no cabeçalho da divisão.</p>
+      <div class="arte-grade">${BANNERS.map(opcao).join("")}</div>
+      <div data-erro class="alert hidden" role="alert"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-fechar>Cancelar</button>
+        <button type="button" class="btn" data-escolher="" ${dia.banner ? "" : "disabled"}>Sem arte</button>
+      </div>`;
+
+    dialogo.showModal();
+    dialogoConteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", fechar));
+
+    const erro = dialogoConteudo.querySelector("[data-erro]");
+    dialogoConteudo.querySelectorAll("[data-escolher]").forEach((b) =>
+      b.addEventListener("click", async () => {
+        const escolhido = b.dataset.escolher || null;
+        dialogoConteudo.querySelectorAll("button").forEach((x) => { x.disabled = true; });
+        try {
+          await db.atualizarDia(dia.id, { banner: escolhido });
+          fechar();
+          await carregar(ficha.id);
+          avisar(escolhido ? `Arte “${rotuloDoBanner(escolhido)}” aplicada.` : "Arte removida.");
+        } catch (err) {
+          registrarErro(err, { contexto: { tela: "ficha", acao: "escolherArte", diaId: dia.id } });
+          erro.textContent = err.message;
+          erro.classList.remove("hidden");
+          dialogoConteudo.querySelectorAll("button").forEach((x) => { x.disabled = false; });
+        }
+      })
+    );
+  }
+
   function formularioDeRenomear(dia) {
     if (!dia) return;
     dialogoConteudo.innerHTML = `
