@@ -125,6 +125,37 @@ const apagar = await fetch(`${SUPABASE.url}/storage/v1/object/avatars/${alunoA.i
 });
 assert.equal(apagar.ok, true, `O aluno não consegue apagar o próprio avatar: HTTP ${apagar.status}.`);
 
+// Aula presencial é aula paga: quem marca é o professor. Se o aluno conseguisse
+// inserir uma linha `in_person`, ele se daria aulas de graça — o saldo do pacote
+// cairia sem ninguém ter dado aula nenhuma.
+const aulaDeGraca = await requisitar("/rest/v1/attendance", {
+  token: alunoA.token,
+  method: "POST",
+  headers: { Prefer: "return=representation" },
+  body: JSON.stringify({
+    student_id: alunoA.id,
+    date: new Date().toISOString().slice(0, 10),
+    in_person: true,
+    completed_at: new Date().toISOString(),
+  }),
+});
+assert.ok([401, 403].includes(aulaDeGraca.status),
+  `CRÍTICO: um aluno conseguiu marcar a própria aula presencial (HTTP ${aulaDeGraca.status}).`);
+
+// E o pacote: o aluno lê o saldo dele, mas não se vende aulas.
+const pacoteDeGraca = await requisitar("/rest/v1/class_packages", {
+  token: alunoA.token,
+  method: "POST",
+  headers: { Prefer: "return=representation" },
+  body: JSON.stringify({ student_id: alunoA.id, classes_total: 10, price: 0 }),
+});
+assert.ok([401, 403].includes(pacoteDeGraca.status),
+  `CRÍTICO: um aluno conseguiu criar o próprio pacote de aulas (HTTP ${pacoteDeGraca.status}).`);
+
+const pacoteDoOutro = await requisitar(
+  `/rest/v1/class_packages?select=*&student_id=eq.${alunoB.id}&limit=1`, { token: alunoA.token });
+assert.deepEqual(pacoteDoOutro.corpo, [], "Um aluno viu o pacote de aulas de outro.");
+
 const senhasAtuaisNoHistorico = linhas.filter(({ senha }) => {
   const busca = spawnSync("git", ["log", "--all", "--format=%H", `-S${senha}`, "--", "."], {
     cwd: new URL("..", import.meta.url), encoding: "utf8",
@@ -132,5 +163,5 @@ const senhasAtuaisNoHistorico = linhas.filter(({ senha }) => {
   return busca.status === 0 && busca.stdout.trim();
 }).length;
 
-console.log("OK: acesso anônimo bloqueado, isolamento entre alunos, promoção de papel recusada e avatar isolado por pasta.");
+console.log("OK: acesso anônimo bloqueado, isolamento entre alunos, promoção de papel recusada, avatar isolado por pasta e aula presencial só do professor.");
 console.log(`INFO: ${senhasAtuaisNoHistorico} senha(s) atual(is) de contas de teste aparecem no histórico Git.`);

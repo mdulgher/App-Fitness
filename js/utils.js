@@ -414,3 +414,23 @@ export async function reduzirImagem(arquivo, lado = 512, qualidade = 0.85) {
 export function linkDoApp(hash = "") {
   return `${location.origin}${location.pathname}${hash}`;
 }
+
+/* ---------- pacote de aulas avulsas ---------- */
+
+// Saldo = comprado − consumido, sempre calculado, nunca guardado.
+//
+// Um contador em coluna divergiria na primeira correção: o professor lança uma
+// aula errada, apaga, e o contador fica um a menos para sempre sem ninguém
+// saber qual dos dois números é o verdadeiro. Mesma razão do status de
+// pagamento ser derivado (armadilha 2).
+export function resumoDoSaldo(pacotes = [], aulasUsadas = []) {
+  const compradas = pacotes.reduce((total, p) => total + Number(p.classes_total ?? 0), 0);
+  const usadas = aulasUsadas.length;
+  return {
+    compradas,
+    usadas,
+    saldo: compradas - usadas,
+    ultimaCompra: pacotes[0]?.purchased_on ?? null,
+    ultimaAula: aulasUsadas[0]?.date ?? null,
+  };
+}

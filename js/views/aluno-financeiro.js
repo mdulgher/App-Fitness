@@ -8,7 +8,7 @@ import { db, statusPagamento, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import { PROFESSOR } from "../config.js";
 import { pixCopiaECola } from "../pix.js";
-import { esc, moeda, formatarData, nomeDoMes, diasEntre, hoje, plural } from "../utils.js";
+import { esc, moeda, formatarData, nomeDoMes, diasEntre, hoje, plural, resumoDoSaldo } from "../utils.js";
 
 export async function render(alvo) {
   const id = usuarioAtual().id;
@@ -17,6 +17,11 @@ export async function render(alvo) {
     db.listarPagamentos(id),
     db.buscarConfiguracaoDeCobranca(),
   ]);
+
+  const porPacote = aluno?.billing_type === "package";
+  const saldo = porPacote
+    ? resumoDoSaldo(...await Promise.all([db.listarPacotes(id), db.listarAulasPresenciais(id)]))
+    : null;
 
   const comStatus = pagamentos.map((p) => ({ ...p, status: p.status ?? statusPagamento(p) }));
   const emAberto = comStatus.filter((p) => p.status !== "paid");
@@ -27,9 +32,10 @@ export async function render(alvo) {
     <div class="wrap">
       <div class="page-head">
         <div class="eyebrow">Financeiro</div>
-        <h1>Sua mensalidade</h1>
+        <h1>${porPacote ? "Suas aulas" : "Sua mensalidade"}</h1>
       </div>
 
+      ${porPacote ? blocoSaldo(saldo) : ""}
       ${destaque({ vencidos, proxima, aluno })}
       ${blocoPix(config, vencidos[0] ?? proxima)}
 
@@ -53,6 +59,24 @@ export async function render(alvo) {
       copiar.textContent = "Copie o código acima";
     }
   });
+}
+
+// O saldo de aulas, para quem paga por pacote. Só leitura: quem dá baixa numa
+// aula é o professor, e isso é regra do banco, não desta tela.
+function blocoSaldo(saldo) {
+  const acabou = saldo.saldo <= 0;
+  return `
+    <div class="card" style="margin-bottom:var(--sp-4)">
+      <div class="eyebrow">Saldo de aulas</div>
+      <div class="numeric" style="font-size:44px;font-weight:800;letter-spacing:-.04em;margin:var(--sp-2) 0">
+        ${saldo.saldo}
+      </div>
+      <p class="muted small" style="margin:0">
+        ${acabou
+          ? "Suas aulas acabaram. Fale com o professor para comprar mais."
+          : `${plural(saldo.saldo, "aula disponível", "aulas disponíveis")} · ${saldo.usadas} de ${saldo.compradas} já usadas.`}
+      </p>
+    </div>`;
 }
 
 // O copia e cola já sai com o valor da cobrança em aberto: menos um número

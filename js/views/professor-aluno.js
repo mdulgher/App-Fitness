@@ -21,8 +21,65 @@ import {
   numeroParaMoeda,
   hoje,
   somarDias,
+  resumoDoSaldo,
+  isoParaDataBR,
+  dataBRParaIso,
+  ligarMascaraDeData,
 } from "../utils.js";
 import { renderizarCalendario } from "../calendar-grid.js";
+import { registrarErro } from "../log.js";
+
+// Aulas avulsas: o saldo, a venda de pacote e o consumo.
+//
+// Quem marca a aula é só o professor, e isso não é escolha de tela — a política
+// do banco recusa uma linha de frequência `in_person` vinda do aluno. A aula é
+// presencial e paga: o aluno não pode dar baixa no que comprou.
+function blocoPacote(saldo, pacotes, aulas) {
+  const acabou = saldo.saldo <= 0;
+  return `
+    <div class="card" style="margin-bottom:var(--sp-4)">
+      <div class="row-between" style="flex-wrap:wrap;gap:var(--sp-2);margin-bottom:var(--sp-3)">
+        <div>
+          <div class="eyebrow">Aulas avulsas</div>
+          <p class="muted small" style="margin:var(--sp-2) 0 0">
+            ${acabou
+              ? "Sem saldo. Venda um pacote antes da próxima aula."
+              : `${plural(saldo.saldo, "aula disponível", "aulas disponíveis")}.`}
+          </p>
+        </div>
+        <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+          <button class="btn btn-sm" id="vender-pacote">Vender pacote</button>
+          <button class="btn btn-sm btn-primary" id="marcar-aula" ${acabou ? "disabled" : ""}>
+            Marcar aula de hoje
+          </button>
+        </div>
+      </div>
+
+      ${pacotes.length ? `
+        <div class="list">
+          ${pacotes.map((p) => `
+            <div class="list-item">
+              <span class="list-item-main">
+                <span class="list-item-title">${plural(p.classes_total, "aula", "aulas")} · ${esc(moeda(p.price))}</span>
+                <span class="muted small">comprado em ${esc(formatarData(p.purchased_on))}</span>
+              </span>
+              <button class="btn btn-sm" data-remover-pacote="${esc(p.id)}">Excluir</button>
+            </div>`).join("")}
+        </div>` : `<div class="empty">Nenhum pacote vendido ainda.</div>`}
+
+      ${aulas.length ? `
+        <details style="margin-top:var(--sp-3)">
+          <summary class="muted small">${plural(aulas.length, "aula dada", "aulas dadas")}</summary>
+          <div class="list">
+            ${aulas.map((a) => `
+              <div class="list-item">
+                <span class="list-item-main"><span class="list-item-title">${esc(formatarData(a.date))}</span></span>
+                <button class="btn btn-sm" data-remover-aula="${esc(a.id)}">Desfazer</button>
+              </div>`).join("")}
+          </div>
+        </details>` : ""}
+    </div>`;
+}
 
 export async function render(alvo, { params }) {
   const [id] = params;
@@ -33,14 +90,20 @@ export async function render(alvo, { params }) {
     return;
   }
 
-  const [ficha, fichas, semana, anotacoes, pagamentos, sessoes] = await Promise.all([
+  const porPacote = aluno.billing_type === "package";
+
+  const [ficha, fichas, semana, anotacoes, pagamentos, sessoes, pacotes, aulasAvulsas] = await Promise.all([
     db.fichaAtiva(id),
     db.listarFichas(id),
     db.resumoDaSemana(id),
     db.listarAnotacoes(id),
     db.listarPagamentos(id),
     db.listarSessoes(id),
+    porPacote ? db.listarPacotes(id) : [],
+    porPacote ? db.listarAulasPresenciais(id) : [],
   ]);
+
+  const saldo = resumoDoSaldo(pacotes, aulasAvulsas);
 
   const concluidas = sessoes.filter((s) => s.completed_at);
 
@@ -98,10 +161,13 @@ export async function render(alvo, { params }) {
 
       <section id="painel-financeiro" role="tabpanel" class="hidden">
         <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
-          ${cartao("Mensalidade", moeda(aluno.monthly_fee), aluno.due_day ? `vence dia ${aluno.due_day}` : "sem vencimento")}
+          ${porPacote
+            ? cartao("Saldo de aulas", String(saldo.saldo), `${saldo.usadas} de ${saldo.compradas} usadas`)
+            : cartao("Mensalidade", moeda(aluno.monthly_fee), aluno.due_day ? `vence dia ${aluno.due_day}` : "sem vencimento")}
           ${cartao("Em aberto", moeda(emAberto(pagamentos)), plural(pagamentos.filter((p) => !p.paid_date).length, "cobrança", "cobranças"))}
           ${cartao("Pago no total", moeda(pagamentos.filter((p) => p.paid_date).reduce((t, p) => t + Number(p.amount ?? 0), 0)), "desde o início")}
         </div>
+        ${porPacote ? blocoPacote(saldo, pacotes, aulasAvulsas) : ""}
         ${blocoFinanceiro(pagamentos)}
       </section>
     </div>
@@ -111,6 +177,47 @@ export async function render(alvo, { params }) {
   alvo.querySelector("#editar").addEventListener("click", () => formularioDeEdicao(alvo, aluno));
 
   const recarregar = () => render(alvo, { params: [aluno.id] });
+
+  // Marcar a aula é um toque só, sem diálogo: o professor faz isso com o aluno
+  // na frente, no fim da aula. O que exige confirmação é desfazer.
+  alvo.querySelector("#marcar-aula")?.addEventListener("click", async (ev) => {
+    ev.currentTarget.disabled = true;
+    try {
+      await db.marcarAulaPresencial(aluno.id);
+      await recarregar();
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "aluno", acao: "marcarAulaPresencial", alunoId: aluno.id } });
+      ev.currentTarget.disabled = false;
+      alvo.querySelector("#marcar-aula").textContent = err.message;
+    }
+  });
+
+  alvo.querySelector("#vender-pacote")?.addEventListener("click", () =>
+    formularioDePacote(alvo, aluno, recarregar)
+  );
+
+  // Dois toques no próprio botão, como no resto do app: `confirm()` pode ser
+  // bloqueado pelo navegador e some no app instalado.
+  alvo.querySelectorAll("[data-remover-pacote], [data-remover-aula]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const pacote = b.dataset.removerPacote;
+      if (b.dataset.confirmando !== "1") {
+        b.dataset.confirmando = "1";
+        b.textContent = pacote ? "Confirmar exclusão" : "Confirmar";
+        return;
+      }
+      b.disabled = true;
+      try {
+        if (pacote) await db.removerPacote(pacote);
+        else await db.removerAulaPresencial(b.dataset.removerAula);
+        await recarregar();
+      } catch (err) {
+        registrarErro(err, { contexto: { tela: "aluno", acao: pacote ? "removerPacote" : "removerAula" } });
+        b.disabled = false;
+        b.textContent = err.message;
+      }
+    })
+  );
 
   alvo.querySelector("[data-novo-recado]")?.addEventListener("click", () =>
     formularioDeRecado(alvo, aluno, null, recarregar)
@@ -145,6 +252,92 @@ function emAberto(pagamentos) {
 // cadastro do aluno: o financeiro só lê o valor na hora de gerar a cobrança.
 // Mudar o preço não mexe em cobranças já lançadas — essas se editam uma a uma,
 // senão um reajuste reescreveria o histórico dos meses passados.
+// Vender um pacote lança a cobrança junto. São o mesmo ato: não existe pacote
+// vendido que não seja devido, e a baixa na cobrança é o que diz que foi pago.
+function formularioDePacote(alvo, aluno, aoSalvar) {
+  const dialogo = alvo.querySelector("#dialogo");
+  const conteudo = alvo.querySelector("#dialogo-conteudo");
+
+  conteudo.innerHTML = `
+    <div class="dialog-top">
+      <span class="eyebrow">Aulas avulsas</span>
+      <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+    </div>
+    <h2>Vender pacote para ${esc(aluno.full_name.split(/\s+/)[0])}</h2>
+    <p class="muted small">Cria o saldo de aulas e lança a cobrança do valor no financeiro.</p>
+    <form id="form-pacote">
+      <div class="exercise-form-grid">
+        <div class="field"><label for="p-aulas">Quantas aulas</label>
+          <input id="p-aulas" name="aulas" type="number" inputmode="numeric" min="1" max="100" value="4" required /></div>
+        <div class="field"><label for="p-total">Valor total</label>
+          <input id="p-total" name="valor" type="text" inputmode="numeric" placeholder="R$ 0,00" /></div>
+      </div>
+      <div class="field"><label for="p-vencimento">Vencimento</label>
+        <input id="p-vencimento" name="vencimento" type="text" inputmode="numeric"
+               placeholder="dd/mm/aaaa" value="${esc(isoParaDataBR(hoje()))}" /></div>
+      <div data-erro class="alert hidden" role="alert"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-fechar>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="salvar-pacote">Vender</button>
+      </div>
+    </form>`;
+
+  dialogo.showModal();
+  conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+
+  const campoAulas = conteudo.querySelector("#p-aulas");
+  const campoTotal = conteudo.querySelector("#p-total");
+  ligarMascaraDeMoeda(campoTotal);
+  ligarMascaraDeData(conteudo.querySelector("#p-vencimento"));
+
+  // O total acompanha a quantidade enquanto o professor não digitar o dele:
+  // 4 aulas a R$ 80 é R$ 320, e refazer essa conta à mão só cria erro de digitação.
+  const sugerirTotal = () => {
+    if (campoTotal.dataset.editado === "1" || !(Number(aluno.class_fee) > 0)) return;
+    campoTotal.value = numeroParaMoeda(Number(campoAulas.value || 0) * Number(aluno.class_fee));
+  };
+  campoTotal.addEventListener("input", () => { campoTotal.dataset.editado = "1"; });
+  campoAulas.addEventListener("input", sugerirTotal);
+  sugerirTotal();
+
+  const form = conteudo.querySelector("#form-pacote");
+  const erro = conteudo.querySelector("[data-erro]");
+
+  form.addEventListener("submit", async (ev) => {
+    ev.preventDefault();
+    erro.classList.add("hidden");
+    const botao = conteudo.querySelector("#salvar-pacote");
+
+    const aulas = Number(campoAulas.value);
+    const valor = moedaParaNumero(campoTotal.value);
+    const vencimento = dataBRParaIso(conteudo.querySelector("#p-vencimento").value);
+
+    const falha = !(aulas > 0) ? "Informe quantas aulas o pacote tem."
+      : valor == null || valor < 0 ? "Informe o valor total do pacote."
+      : !vencimento ? "Data de vencimento inválida."
+      : null;
+    if (falha) {
+      erro.textContent = falha;
+      erro.classList.remove("hidden");
+      return;
+    }
+
+    botao.disabled = true;
+    botao.textContent = "Vendendo…";
+    try {
+      await db.venderPacote({ alunoId: aluno.id, aulas, valor, vencimento });
+      dialogo.close();
+      await aoSalvar();
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "aluno", acao: "venderPacote", alunoId: aluno.id } });
+      erro.textContent = err.message;
+      erro.classList.remove("hidden");
+      botao.disabled = false;
+      botao.textContent = "Vender";
+    }
+  });
+}
+
 function formularioDeEdicao(alvo, aluno) {
   const dialogo = alvo.querySelector("#dialogo");
   const conteudo = alvo.querySelector("#dialogo-conteudo");
@@ -173,7 +366,17 @@ function formularioDeEdicao(alvo, aluno) {
       <div class="field"><label for="e-restricoes">Restrições e lesões</label>
         <textarea id="e-restricoes" name="health_restrictions" rows="3">${esc(aluno.health_restrictions ?? "")}</textarea></div>
 
-      <div class="exercise-form-grid">
+      <div class="field"><label for="e-cobranca">Forma de cobrança</label>
+        <select id="e-cobranca" name="billing_type">
+          <option value="monthly"${aluno.billing_type !== "package" ? " selected" : ""}>Mensalidade</option>
+          <option value="package"${aluno.billing_type === "package" ? " selected" : ""}>Pacote de aulas avulsas</option>
+        </select>
+        <div class="field-hint">
+          No pacote, o aluno compra aulas antes e o saldo cai a cada aula presencial.
+          Ele não entra na geração de cobranças do mês.
+        </div></div>
+
+      <div class="exercise-form-grid" data-quando="monthly">
         <div class="field"><label for="e-mensalidade">Mensalidade</label>
           <input id="e-mensalidade" name="monthly_fee" type="text" inputmode="numeric"
                  value="${esc(numeroParaMoeda(aluno.monthly_fee))}" placeholder="R$ 0,00" /></div>
@@ -181,6 +384,11 @@ function formularioDeEdicao(alvo, aluno) {
           <input id="e-vencimento" name="due_day" type="number" inputmode="numeric" min="1" max="28"
                  value="${esc(aluno.due_day ?? 5)}" /></div>
       </div>
+
+      <div class="field" data-quando="package"><label for="e-valor-aula">Valor da aula</label>
+        <input id="e-valor-aula" name="class_fee" type="text" inputmode="numeric"
+               value="${esc(numeroParaMoeda(aluno.class_fee))}" placeholder="R$ 0,00" />
+        <div class="field-hint">Sugere o total ao vender um pacote. O preço final é digitado na venda.</div></div>
 
       <label class="field field-check">
         <input type="checkbox" name="active" ${aluno.active ? "checked" : ""} />
@@ -197,6 +405,19 @@ function formularioDeEdicao(alvo, aluno) {
   dialogo.showModal();
   conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
   ligarMascaraDeMoeda(conteudo.querySelector("#e-mensalidade"));
+  ligarMascaraDeMoeda(conteudo.querySelector("#e-valor-aula"));
+
+  // Mostra só os campos da forma de cobrança escolhida: deixar os dois visíveis
+  // convida a preencher mensalidade e valor de aula ao mesmo tempo, e aí não há
+  // resposta certa para "quanto esse aluno paga".
+  const seletorDeCobranca = conteudo.querySelector("#e-cobranca");
+  const alternarCamposDeCobranca = () => {
+    conteudo.querySelectorAll("[data-quando]").forEach((el) => {
+      el.classList.toggle("hidden", el.dataset.quando !== seletorDeCobranca.value);
+    });
+  };
+  seletorDeCobranca.addEventListener("change", alternarCamposDeCobranca);
+  alternarCamposDeCobranca();
 
   const form = conteudo.querySelector("#form-edicao");
   const erro = conteudo.querySelector("[data-erro]");
@@ -216,8 +437,16 @@ function formularioDeEdicao(alvo, aluno) {
       // são coisas diferentes na hora de gerar cobrança.
       monthly_fee: moedaParaNumero(d.monthly_fee),
       due_day: Number(d.due_day) || 5,
+      billing_type: d.billing_type,
+      class_fee: moedaParaNumero(d.class_fee),
       active: form.elements.active.checked,
     };
+
+    // Trocar de forma de cobrança limpa o valor da outra: manter o antigo
+    // deixaria uma mensalidade adormecida pronta para virar cobrança no dia em
+    // que alguém trocasse o aluno de volta sem olhar o número.
+    if (patch.billing_type === "package") patch.monthly_fee = null;
+    else patch.class_fee = null;
 
     if (patch.monthly_fee != null && (Number.isNaN(patch.monthly_fee) || patch.monthly_fee < 0)) {
       erro.textContent = "Mensalidade inválida.";

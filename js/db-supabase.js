@@ -11,7 +11,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { SUPABASE } from "./config.js";
 import { validarExercicio } from "./exercise-validation.js";
-import { hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia } from "./utils.js";
+import { hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo } from "./utils.js";
 
 export const sb = createClient(SUPABASE.url, SUPABASE.anonKey);
 
@@ -744,7 +744,11 @@ export async function criarPagamento(dados) {
 
 export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
   const [alunos, existentes] = await Promise.all([
-    ok(await sb.from("students").select("id,monthly_fee,due_day").eq("active", true).not("monthly_fee", "is", null)),
+    // Quem paga por pacote de aulas fica de fora: a cobrança dele nasce da
+    // venda do pacote, não do calendário. Gerar mensalidade para ele criaria
+    // uma dívida que não existe.
+    ok(await sb.from("students").select("id,monthly_fee,due_day")
+      .eq("active", true).eq("billing_type", "monthly").not("monthly_fee", "is", null)),
     ok(await sb.from("payments").select("student_id").eq("reference_month", mes)),
   ]);
 
@@ -762,4 +766,85 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
   // ignoreDuplicates: clicar duas vezes não gera cobrança repetida, garantido
   // pela restrição de unicidade do banco e não por sorte de temporização.
   return ok(await sb.from("payments").upsert(novos, { onConflict: "student_id,reference_month", ignoreDuplicates: true }).select());
+}
+
+/* ==================== pacote de aulas avulsas ====================
+   Pré-pago: o professor vende N aulas e o saldo cai a cada aula presencial
+   dada. O saldo é SEMPRE derivado (comprado − consumido), nunca uma coluna:
+   um contador guardado divergiria na primeira vez que alguém corrigisse uma
+   aula lançada errado, e não haveria como saber qual dos dois está certo.
+   É a mesma razão do status de pagamento (armadilha 2).                    */
+
+export async function listarPacotes(alunoId) {
+  return ok(
+    await sb.from("class_packages").select("*")
+      .eq("student_id", alunoId).order("purchased_on", { ascending: false })
+  );
+}
+
+// A venda cria o pacote e a cobrança correspondente, ligados: dar baixa na
+// cobrança é o que diz que o pacote foi pago, e não existe um segundo lugar
+// para registrar o mesmo dinheiro.
+export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = null }) {
+  const cobranca = await criarPagamento({
+    alunoId,
+    mes: mesDeReferencia(),
+    valor,
+    vencimento: vencimento ?? hoje(),
+    notas: notas ?? `Pacote de ${aulas} ${aulas === 1 ? "aula" : "aulas"}`,
+  });
+
+  try {
+    return ok(
+      await sb.from("class_packages").insert({
+        student_id: alunoId,
+        classes_total: aulas,
+        price: valor,
+        payment_id: cobranca.id,
+        notes: notas,
+      }).select().single()
+    );
+  } catch (err) {
+    // Sem o pacote, a cobrança é uma dívida sem contrapartida: o aluno pagaria
+    // por aulas que o sistema não daria a ele.
+    await sb.from("payments").delete().eq("id", cobranca.id);
+    throw err;
+  }
+}
+
+export async function removerPacote(id) {
+  const pacote = ok(await sb.from("class_packages").select("payment_id").eq("id", id).maybeSingle());
+  ok(await sb.from("class_packages").delete().eq("id", id));
+  if (pacote?.payment_id) ok(await sb.from("payments").delete().eq("id", pacote.payment_id));
+}
+
+// Aula presencial é uma linha de frequência com `workout_day_id` nulo e
+// `in_person`. Já nasce concluída: o professor só marca depois que aconteceu.
+export async function marcarAulaPresencial(alunoId, data = hoje()) {
+  return ok(
+    await sb.from("attendance").insert({
+      student_id: alunoId,
+      workout_day_id: null,
+      date: data,
+      in_person: true,
+      completed_at: new Date().toISOString(),
+      marked_by: "trainer",
+    }).select().single()
+  );
+}
+
+export async function listarAulasPresenciais(alunoId) {
+  return ok(
+    await sb.from("attendance").select("*")
+      .eq("student_id", alunoId).eq("in_person", true).order("date", { ascending: false })
+  );
+}
+
+export async function removerAulaPresencial(id) {
+  ok(await sb.from("attendance").delete().eq("id", id).eq("in_person", true));
+}
+
+export async function saldoDeAulas(alunoId) {
+  const [pacotes, aulas] = await Promise.all([listarPacotes(alunoId), listarAulasPresenciais(alunoId)]);
+  return resumoDoSaldo(pacotes, aulas);
 }

@@ -14,6 +14,7 @@ import {
   inicioDaSemana,
   mesDeReferencia,
   uid,
+  resumoDoSaldo,
 } from "./utils.js";
 
 const CHAVE = "lpt.db.v1";
@@ -878,6 +879,9 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
   );
   const criados = [];
   for (const aluno of tabela("students").filter((a) => a.active)) {
+    // Quem paga por pacote fica de fora: a cobrança dele nasce da venda do
+    // pacote, não do calendário.
+    if (aluno.billing_type === "package") continue;
     if (existentes.has(aluno.id) || !aluno.monthly_fee) continue;
     criados.push(
       await criarPagamento({
@@ -889,4 +893,86 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
     );
   }
   return criados;
+}
+
+/* ==================== pacote de aulas avulsas ====================
+   Mesmas assinaturas do Supabase. O saldo é derivado nos dois lados: comprado
+   menos consumido, nunca um contador guardado.                              */
+
+export async function listarPacotes(alunoId) {
+  return clone(
+    tabela("class_packages")
+      .filter((p) => p.student_id === alunoId)
+      .sort((a, b) => String(b.purchased_on).localeCompare(String(a.purchased_on)))
+  );
+}
+
+export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = null }) {
+  const cobranca = await criarPagamento({
+    alunoId,
+    mes: mesDeReferencia(),
+    valor,
+    vencimento: vencimento ?? hoje(),
+    notas: notas ?? `Pacote de ${aulas} ${aulas === 1 ? "aula" : "aulas"}`,
+  });
+
+  const novo = {
+    id: uid(),
+    student_id: alunoId,
+    classes_total: aulas,
+    price: valor,
+    purchased_on: hoje(),
+    payment_id: cobranca.id,
+    notes: notas,
+    created_at: hoje(),
+  };
+  tabela("class_packages").push(novo);
+  salvar();
+  return clone(novo);
+}
+
+export async function removerPacote(id) {
+  const dados = carregar();
+  const pacote = tabela("class_packages").find((p) => p.id === id);
+  dados.class_packages = tabela("class_packages").filter((p) => p.id !== id);
+  if (pacote?.payment_id) {
+    dados.payments = tabela("payments").filter((p) => p.id !== pacote.payment_id);
+  }
+  salvar();
+}
+
+// Já nasce concluída: o professor marca depois que a aula aconteceu.
+export async function marcarAulaPresencial(alunoId, data = hoje()) {
+  const novo = {
+    id: uid(),
+    student_id: alunoId,
+    workout_day_id: null,
+    date: data,
+    in_person: true,
+    completed_at: new Date().toISOString(),
+    marked_by: "trainer",
+    created_at: hoje(),
+  };
+  tabela("attendance").push(novo);
+  salvar();
+  return clone(novo);
+}
+
+export async function listarAulasPresenciais(alunoId) {
+  return clone(
+    tabela("attendance")
+      .filter((a) => a.student_id === alunoId && a.in_person)
+      .sort((a, b) => String(b.date).localeCompare(String(a.date)))
+  );
+}
+
+export async function removerAulaPresencial(id) {
+  const dados = carregar();
+  dados.attendance = tabela("attendance").filter((a) => !(a.id === id && a.in_person));
+  salvar();
+}
+
+export async function saldoDeAulas(alunoId) {
+  const [pacotes, aulas] = await Promise.all([listarPacotes(alunoId), listarAulasPresenciais(alunoId)]);
+  return resumoDoSaldo(pacotes, aulas);
 }

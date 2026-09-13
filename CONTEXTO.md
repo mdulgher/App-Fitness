@@ -409,6 +409,23 @@ antiga nunca era removida e sobrava órfã. Coberto por `scripts/test-security.m
   (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`,
   `reauthentication_token`): criadas nulas, o login devolve 500 "Database error
   querying schema". A API oficial as cria como string vazia.
+- `pacote_de_aulas_avulsas` — pagamento avulso por aula, **pré-pago**. O aluno
+  é de um tipo só (`students.billing_type`: `monthly` ou `package`); quem é de
+  pacote **não entra** na geração de cobranças do mês, porque a cobrança dele
+  nasce da venda. Vender pacote cria a linha em `class_packages` **e** a
+  cobrança em `payments`, ligadas: dar baixa na cobrança é o que diz que foi
+  pago, e não há dois lugares registrando o mesmo dinheiro.
+  **A aula presencial não tem tabela própria:** é uma linha de `attendance` com
+  `workout_day_id` nulo e `in_person`. Assim ela conta na frequência (é um
+  treino de verdade) e não existe um segundo lugar onde "o aluno treinou" possa
+  divergir do primeiro. O índice único já existente garante uma por dia e nunca
+  colide com o treino que o aluno marca sozinho, que sempre tem
+  `workout_day_id`. **O aluno não marca aula presencial** — a política de
+  INSERT/UPDATE exige `in_person = false` para ele; a aula é paga, e dar baixa
+  nela é do professor. Coberto por `scripts/test-security.mjs`.
+  **O saldo é derivado** (comprado − consumido), nunca uma coluna: um contador
+  divergiria na primeira correção e ninguém saberia qual número é o verdadeiro.
+  Mesma razão da armadilha 2.
 - `banner_da_divisao` — `workout_days.banner`, o slug da arte do cabeçalho.
 - `bucket_de_avatares` + `avatar_leitura_autenticada` — ver "Storage" acima.
 - `hardening_pre_producao` — tira o `update` da coluna `role` de `profiles`
@@ -648,6 +665,16 @@ enfileirarConclusao({ alunoId, diaId, data })
 seriesNaFila(alunoId, diaId, data)       conclusaoNaFila(alunoId, diaId, data)
 pareceFaltaDeRede(err)                   pendentes()
 sincronizar()                            ligarSincronizacaoAutomatica()
+```
+
+**Pacote de aulas avulsas** — pré-pago. `venderPacote` cria o pacote **e** a
+cobrança; `marcarAulaPresencial` é só do professor (garantido por RLS). O saldo
+vem de `resumoDoSaldo()` em `utils.js`, que é comprado − consumido.
+```
+listarPacotes(alunoId)                   venderPacote({ alunoId, aulas, valor, vencimento, notas })
+removerPacote(id)                        saldoDeAulas(alunoId)
+marcarAulaPresencial(alunoId, data)      listarAulasPresenciais(alunoId)
+removerAulaPresencial(id)
 ```
 
 **Financeiro**
