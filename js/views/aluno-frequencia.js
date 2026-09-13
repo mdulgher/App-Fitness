@@ -79,7 +79,7 @@ export async function render(alvo) {
         <h2>Calendário</h2>
         <div class="row" style="gap:var(--sp-2)">
           <button class="btn btn-sm" id="mes-anterior" aria-label="Mês anterior">&larr;</button>
-          <span class="muted small" style="min-width:200px;text-align:center" id="mes-titulo">
+          <span class="muted small" style="min-width:120px;text-align:center" id="mes-titulo">
             ${MESES[mesSelecionado - 1]} de ${anoSelecionado}
           </span>
           <button class="btn btn-sm" id="mes-proximo" aria-label="Próximo mês">&rarr;</button>
