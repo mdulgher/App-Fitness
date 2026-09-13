@@ -85,7 +85,7 @@ export async function render(alvo) {
           <button class="btn btn-sm" id="mes-proximo" aria-label="Próximo mês">&rarr;</button>
         </div>
       </div>
-      <div class="card" style="margin-bottom:var(--sp-5)">
+      <div class="card card-calendario" style="margin-bottom:var(--sp-5)">
         <div class="calendario-mes" id="calendario-grid"></div>
         <div class="muted small" style="margin-top:var(--sp-3);text-align:center">
           preto = treino concluído (clique para desmarcar)

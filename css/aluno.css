@@ -80,7 +80,7 @@
   border: 1px solid #e8e8e8; font-size: 14px; font-weight: 600; color: #555;
   line-height: 1;
 }
-.dia-celula.vazia { border-color: transparent; }
+.dia-celula.vazia { border-color: transparent; background: transparent; }
 .dia-celula.treinou { background: #111; border-color: #111; color: #fff; }
 .dia-celula.hoje { outline: 2px solid #111; outline-offset: 2px; }
 
@@ -99,6 +99,18 @@
   .exercicio-topo h3 { font-size: 16px; }
   .ultima-vez .numeric { font-size: 15px; }
   .serie { grid-template-columns: 26px 1fr 1fr 14px; gap: 8px; padding: 8px; }
+
+  /* calendário: sangra até as bordas da tela no mobile */
+  .card-calendario {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-left: -20px;
+    margin-right: -20px;
+  }
+  .calendario-mes { gap: 3px; }
 }
 
 /* Dois toques para excluir: o segundo estado precisa parecer outro botão. */
