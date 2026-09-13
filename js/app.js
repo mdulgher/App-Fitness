@@ -125,11 +125,12 @@ document.getElementById("sair").addEventListener("click", async () => {
   resolver();
 });
 
-// O convite de instalar aparece só para quem está logado: na tela de login o
-// usuário ainda não sabe se este app é dele, e um convite ali é propaganda.
+// O convite aparece inclusive na tela de login, e isso é de propósito: quem
+// entra pelo Safari e só depois instala abre o app recém-instalado sem sessão e
+// precisa logar de novo. Instalando antes, loga uma vez só — dentro do app.
 function desenharConviteDeInstalar() {
   const caixa = document.getElementById("convite-instalar");
-  if (!usuarioAtual() || !deveConvidar()) {
+  if (!deveConvidar()) {
     caixa.classList.add("hidden");
     caixa.innerHTML = "";
     return;
