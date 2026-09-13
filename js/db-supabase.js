@@ -431,6 +431,14 @@ export async function concluirSessao(sessaoId, porQuem = "student") {
   );
 }
 
+export async function desconcluirSessao(sessaoId) {
+  return ok(
+    await sb.from("attendance")
+      .update({ completed_at: null })
+      .eq("id", sessaoId).select().single()
+  );
+}
+
 export async function removerSessao(sessaoId) {
   ok(await sb.from("attendance").delete().eq("id", sessaoId));
 }

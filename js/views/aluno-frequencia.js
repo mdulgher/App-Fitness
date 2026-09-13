@@ -4,21 +4,20 @@
 // tela mostra a semana corrente em primeiro lugar e só depois o histórico —
 // o número que muda o comportamento é "faltam 2 treinos nesta semana", não
 // "você treinou 38 vezes no ano".
-//
-// O calendário é dos últimos três meses. Mais que isso vira parede de
-// quadradinhos, e a pergunta "faltei muito em julho?" já é respondida pela
-// lista de semanas.
 
 import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import {
   esc, plural, hoje, somarDias, inicioDaSemana, formatarData, textoTempoRelativo,
 } from "../utils.js";
+import { registrarErro } from "../log.js";
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
   "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro",
 ];
+
+const ROTULOS = ["S", "T", "Q", "Q", "S", "S", "D"];
 
 export async function render(alvo) {
   const alunoId = usuarioAtual().id;
@@ -31,9 +30,13 @@ export async function render(alvo) {
   ]);
 
   const concluidas = sessoes.filter((s) => s.completed_at);
-  const diasTreinados = new Set(concluidas.map((s) => s.date));
+  const diasTreinados = new Map(concluidas.map((s) => [s.date, s]));
   const faltam = Math.max(0, semana.meta - semana.feitos);
   const pct = semana.meta ? Math.min(100, (semana.feitos / semana.meta) * 100) : 0;
+
+  const [ano, mes] = hoje().split("-").map(Number);
+  let mesSelecionado = mes;
+  let anoSelecionado = ano;
 
   alvo.innerHTML = `
     <div class="wrap">
@@ -72,6 +75,25 @@ export async function render(alvo) {
         ${cartao("Média por semana", media(concluidas.length), "nos últimos 90 dias")}
       </div>
 
+      <!-- CALENDÁRIO DO MÊS CORRENTE -->
+      <div class="row-between" style="margin-bottom:var(--sp-3);align-items:center">
+        <h2>Calendário</h2>
+        <div class="row" style="gap:var(--sp-2)">
+          <button class="btn btn-sm" id="mes-anterior" aria-label="Mês anterior">&larr;</button>
+          <span class="muted small" style="min-width:200px;text-align:center" id="mes-titulo">
+            ${MESES[mesSelecionado - 1]} de ${anoSelecionado}
+          </span>
+          <button class="btn btn-sm" id="mes-proximo" aria-label="Próximo mês">&rarr;</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom:var(--sp-5)">
+        <div class="calendario-mes" id="calendario-grid"></div>
+        <div class="muted small" style="margin-top:var(--sp-3);text-align:center">
+          preto = treino concluído (clique para desmarcar)
+        </div>
+      </div>
+
+      <!-- SEMANA A SEMANA -->
       <div class="row-between" style="margin-bottom:var(--sp-3)">
         <h2>Semana a semana</h2>
         <span class="muted small">meta de ${semana.meta}</span>
@@ -79,13 +101,104 @@ export async function render(alvo) {
       <div class="list" style="margin-bottom:var(--sp-5)">
         ${semanas(diasTreinados, semana.meta)}
       </div>
-
-      <div class="row-between" style="margin-bottom:var(--sp-3)">
-        <h2>Calendário</h2>
-        <span class="muted small">dia preto = treino concluído</span>
-      </div>
-      <div class="stack">${calendarios(diasTreinados)}</div>
     </div>`;
+
+  const recarregar = () => render(alvo);
+
+  // Renderiza o calendário inicial
+  const calendarioGrid = alvo.querySelector("#calendario-grid");
+  renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
+
+  // Navegação de mês
+  alvo.querySelector("#mes-anterior").addEventListener("click", () => {
+    if (mesSelecionado === 1) {
+      mesSelecionado = 12;
+      anoSelecionado -= 1;
+    } else {
+      mesSelecionado -= 1;
+    }
+    renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
+    alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+  });
+
+  alvo.querySelector("#mes-proximo").addEventListener("click", () => {
+    if (mesSelecionado === 12) {
+      mesSelecionado = 1;
+      anoSelecionado += 1;
+    } else {
+      mesSelecionado += 1;
+    }
+    renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
+    alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+  });
+}
+
+function renderMes(container, ano, mes, diasTreinados, alunoId, aoRecarregar) {
+  const diasNoMes = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
+  const deslocamento = (new Date(Date.UTC(ano, mes - 1, 1)).getUTCDay() + 6) % 7;
+
+  const celulas = [];
+
+  // Cabeçalho com rótulos de dias
+  ROTULOS.forEach((r) => celulas.push(`<span class="dia-rotulo">${r}</span>`));
+
+  // Dias vazios antes do mês
+  for (let i = 0; i < deslocamento; i++) {
+    celulas.push(`<span class="dia-celula vazia"></span>`);
+  }
+
+  // Dias do mês
+  for (let d = 1; d <= diasNoMes; d++) {
+    const iso = `${ano}-${String(mes).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    const sessao = diasTreinados.get(iso);
+    const classes = ["dia-celula"];
+
+    if (sessao && sessao.completed_at) {
+      classes.push("treinou");
+    }
+    if (iso === hoje()) {
+      classes.push("hoje");
+    }
+
+    const dataStr = formatarData(iso);
+    const clicavel = sessao ? ` style="cursor:pointer" data-sessao="${sessao.id}" data-data="${iso}"` : "";
+    celulas.push(`
+      <span class="${classes.join(" ")}" title="${esc(dataStr)}"${clicavel}>
+        ${d}
+      </span>`);
+  }
+
+  container.innerHTML = celulas.join("");
+
+  // Eventos de clique para desmarcar
+  container.querySelectorAll("[data-sessao]").forEach((el) => {
+    el.addEventListener("click", async () => {
+      const sessaoId = el.dataset.sessao;
+      const data = el.dataset.data;
+
+      const confirmou = confirm(
+        `Desmarcar treino concluído em ${formatarData(data)}? ` +
+        `Seu professor ainda verá o histórico.`
+      );
+      if (!confirmou) return;
+
+      el.style.opacity = "0.5";
+      el.style.pointerEvents = "none";
+
+      try {
+        await db.desconcluirSessao(sessaoId);
+        // Recarrega a frequência inteira para atualizar todos os contadores
+        await aoRecarregar();
+      } catch (err) {
+        registrarErro(err, {
+          contexto: { tela: "frequencia", acao: "desconcluirSessao", sessaoId, data },
+        });
+        alert("Erro ao desmarcar: " + err.message);
+        el.style.opacity = "1";
+        el.style.pointerEvents = "auto";
+      }
+    });
+  });
 }
 
 function cartao(rotulo, valor, apoio) {
@@ -132,39 +245,3 @@ function semanas(diasTreinados, meta) {
   return linhas.join("");
 }
 
-function calendarios(diasTreinados) {
-  const [ano, mes] = hoje().split("-").map(Number);
-  const meses = [];
-  for (let i = 2; i >= 0; i--) {
-    const data = new Date(Date.UTC(ano, mes - 1 - i, 1));
-    meses.push(mesEmGrade(data.getUTCFullYear(), data.getUTCMonth() + 1, diasTreinados));
-  }
-  return meses.join("");
-}
-
-function mesEmGrade(ano, mes, diasTreinados) {
-  const diasNoMes = new Date(Date.UTC(ano, mes, 0)).getUTCDate();
-  // 0 = segunda, para a grade começar na mesma coluna que o resto do app conta
-  // a semana.
-  const deslocamento = (new Date(Date.UTC(ano, mes - 1, 1)).getUTCDay() + 6) % 7;
-
-  const celulas = [];
-  for (let i = 0; i < deslocamento; i++) celulas.push(`<span class="dia-celula vazia"></span>`);
-
-  for (let d = 1; d <= diasNoMes; d++) {
-    const iso = `${ano}-${String(mes).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-    const classes = ["dia-celula"];
-    if (diasTreinados.has(iso)) classes.push("treinou");
-    if (iso === hoje()) classes.push("hoje");
-    celulas.push(`<span class="${classes.join(" ")}" title="${esc(formatarData(iso))}">${d}</span>`);
-  }
-
-  return `
-    <div class="card">
-      <div class="eyebrow" style="margin-bottom:var(--sp-3)">${MESES[mes - 1]} de ${ano}</div>
-      <div class="calendario-mes">
-        ${["S", "T", "Q", "Q", "S", "S", "D"].map((r) => `<span class="dia-rotulo">${r}</span>`).join("")}
-        ${celulas.join("")}
-      </div>
-    </div>`;
-}
