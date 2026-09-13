@@ -100,25 +100,11 @@
   .ultima-vez .numeric { font-size: 15px; }
   .serie { grid-template-columns: 26px 1fr 1fr 14px; gap: 8px; padding: 8px; }
 
-  /* calendário: sangra até as bordas da tela (480–700px, padding do wrap = 20px) */
-  .card-calendario {
-    border-radius: 0;
-    border-left: none;
-    border-right: none;
-    padding-left: 8px;
-    padding-right: 8px;
-    margin-left: -20px;
-    margin-right: -20px;
-  }
-  .calendario-mes { gap: 3px; }
-}
-
-@media (max-width: 480px) {
-  /* calendário: padding do wrap cai para 12px neste breakpoint */
-  .card-calendario {
-    margin-left: -12px;
-    margin-right: -12px;
-  }
+  /* calendário: sem padding no card, grade ocupa 100% */
+  .card-calendario { padding: 0; }
+  .card-calendario .calendario-mes { gap: 3px; }
+  .card-calendario .calendarios-legenda,
+  .card-calendario > .muted { padding: 8px 12px 12px; }
 }
 
 /* Dois toques para excluir: o segundo estado precisa parecer outro botão. */
