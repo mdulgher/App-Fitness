@@ -5,6 +5,7 @@
 // e se responde "quem é" e "para onde vai".
 
 import { db } from "./db.js";
+import { registrarErro } from "./log.js";
 
 let usuario = null;
 
@@ -12,7 +13,8 @@ export async function restaurarSessao() {
   try {
     const conta = await db.usuarioDaSessao();
     usuario = conta ? await db.buscarPerfil(conta.id) : null;
-  } catch {
+  } catch (err) {
+    registrarErro(err, { origem: "sessao", contexto: { acao: "restaurarSessao" } });
     usuario = null;
   }
   return usuario;
@@ -73,4 +75,27 @@ export async function sair() {
 export function rotaInicial() {
   if (!usuario) return "#/login";
   return ehProfessor() ? "#/professor" : "#/aluno";
+}
+
+// Liga timeout de inatividade. Após `minutos` sem interação, chama `aoExpirar`.
+// Eventos considerados "atividade": toque, clique, tecla, movimento do mouse.
+// Só conta enquanto há sessão ativa — o timer para sozinho após o logout.
+export function ligarTimeoutDeSessao(minutos, aoExpirar) {
+  const MS = minutos * 60 * 1000;
+  let timer = null;
+
+  function resetar() {
+    if (!usuario) return; // sem sessão, não agenda
+    clearTimeout(timer);
+    timer = setTimeout(async () => {
+      if (!usuario) return;
+      await sair();
+      aoExpirar();
+    }, MS);
+  }
+
+  const EVENTOS = ["mousemove", "keydown", "touchstart", "click"];
+  EVENTOS.forEach((ev) => document.addEventListener(ev, resetar, { passive: true }));
+
+  resetar(); // começa a contar ao ligar
 }
