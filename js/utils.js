@@ -271,10 +271,12 @@ export function uid() {
   return crypto.randomUUID();
 }
 
-/* ---------- pull to refresh (mobile) ---------- */
+/* ---------- pull to refresh (mobile / iOS Safari PWA) ---------- */
 
 // Liga o gesto de puxar para baixo no topo da página.
 // Só ativa em dispositivos touch; no desktop não faz nada.
+// Funciona no Safari PWA (atalho na tela inicial do iPhone): escuta os eventos
+// no <main id="view">, que é o elemento que realmente faz scroll no iOS.
 // aoRefrescar: função async chamada quando o usuário solta após o limiar.
 export function ligarPullToRefresh(aoRefrescar) {
   if (!("ontouchstart" in window)) return; // desktop: sai sem fazer nada
@@ -283,6 +285,9 @@ export function ligarPullToRefresh(aoRefrescar) {
   const LIMITE = 90;   // px máximo de arrasto visual
   let inicioY = 0;
   let puxando = false;
+
+  // No iOS Safari PWA o scroll vive no <main>, não no window.
+  const alvo = document.getElementById("view") ?? document.body;
 
   // Indicador visual
   const indicador = document.createElement("div");
@@ -310,19 +315,20 @@ export function ligarPullToRefresh(aoRefrescar) {
     indicador.style.height = "0";
   }
 
-  document.addEventListener("touchstart", (e) => {
-    if (window.scrollY > 0) return; // só no topo da página
+  alvo.addEventListener("touchstart", (e) => {
+    // só aciona quando está no topo (scrollTop == 0)
+    if (alvo.scrollTop > 0) return;
     inicioY = e.touches[0].clientY;
     puxando = true;
   }, { passive: true });
 
-  document.addEventListener("touchmove", (e) => {
+  alvo.addEventListener("touchmove", (e) => {
     if (!puxando) return;
     const delta = e.touches[0].clientY - inicioY;
     if (delta > 0) mostrar(delta);
   }, { passive: true });
 
-  document.addEventListener("touchend", async () => {
+  alvo.addEventListener("touchend", async () => {
     if (!puxando) return;
     puxando = false;
     const h = parseFloat(indicador.style.height) || 0;
