@@ -8,7 +8,7 @@
 // outro são as políticas de RLS no banco, não este código. Um filtro esquecido
 // abaixo devolve menos dados, nunca dados de outra pessoa.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.111.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { SUPABASE } from "./config.js";
 import { validarExercicio } from "./exercise-validation.js";
 import { hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia } from "./utils.js";
@@ -148,7 +148,7 @@ async function montarResumos(alunos) {
 
   const [sessoes, fichas, pagamentos] = await Promise.all([
     ok(await sb.from("attendance").select("student_id,date,completed_at").in("student_id", ids).not("completed_at", "is", null)),
-    ok(await sb.from("workout_plans").select("id,student_id,end_date,weekly_target").in("student_id", ids).eq("active", true)),
+    ok(await sb.from("workout_plans").select("id,student_id,end_date").in("student_id", ids).eq("active", true)),
     ok(await sb.from("payments").select("student_id,due_date,paid_date").in("student_id", ids).is("paid_date", null)),
   ]);
 
@@ -165,7 +165,7 @@ async function montarResumos(alunos) {
       ultimoTreino,
       diasSemTreinar: ultimoTreino ? diasEntre(ultimoTreino, H) : null,
       treinosNaSemana: minhas.filter((s) => s.date >= segunda).length,
-      metaSemanal: ficha?.weekly_target ?? null,
+      metaSemanal: aluno.weekly_target,
       temFichaAtiva: Boolean(ficha),
       fichaAtivaId: ficha?.id ?? null,
       fichaVenceEm: ficha?.end_date ?? null,
@@ -327,12 +327,11 @@ export async function listarTemplates() {
 
 /* ---------- edição da ficha (só o professor; garantido por RLS) ---------- */
 
-export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null, metaSemanal = null }) {
+export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null }) {
   return ok(
     await sb.from("workout_plans").insert({
       student_id: alunoId, title: titulo, description: descricao,
       start_date: inicio, end_date: fim, active: false,
-      weekly_target: metaSemanal,
     }).select().single()
   );
 }
@@ -345,7 +344,10 @@ export async function atualizarFicha(id, patch) {
 // `maybeSingle()` e duas ativas quebrariam a tela do aluno com erro de
 // "múltiplas linhas" em vez de simplesmente mostrar a mais nova.
 export async function ativarFicha(id) {
-  return ok(await sb.rpc("ativar_ficha", { p_ficha_id: id }));
+  const ficha = ok(await sb.from("workout_plans").select("student_id").eq("id", id).maybeSingle());
+  if (!ficha) throw new Error("Ficha não encontrada.");
+  ok(await sb.from("workout_plans").update({ active: false }).eq("student_id", ficha.student_id));
+  return ok(await sb.from("workout_plans").update({ active: true }).eq("id", id).select().single());
 }
 
 export async function removerFicha(id) {
@@ -445,21 +447,20 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
   const segunda = inicioDaSemana(referencia);
   const domingo = somarDias(segunda, 6);
 
-  const [ficha, feitos] = await Promise.all([
-    ok(await sb.from("workout_plans").select("weekly_target").eq("student_id", alunoId).eq("active", true).maybeSingle()),
+  const [aluno, feitos] = await Promise.all([
+    ok(await sb.from("students").select("weekly_target").eq("id", alunoId).maybeSingle()),
     ok(await sb.from("attendance").select("date").eq("student_id", alunoId)
       .not("completed_at", "is", null).gte("date", segunda).lte("date", domingo)),
   ]);
 
-  const datas = [...new Set(feitos.map((f) => f.date))].sort();
-  const meta = ficha?.weekly_target ?? 0;
+  const meta = aluno?.weekly_target ?? 0;
   return {
     inicio: segunda,
     fim: domingo,
-    feitos: datas.length,
+    feitos: feitos.length,
     meta,
-    aderencia: meta ? Math.min(1, datas.length / meta) : 0,
-    datas,
+    aderencia: meta ? Math.min(1, feitos.length / meta) : 0,
+    datas: feitos.map((f) => f.date).sort(),
   };
 }
 
@@ -688,7 +689,7 @@ export async function criarPagamento(dados) {
 
 export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
   const [alunos, existentes] = await Promise.all([
-    ok(await sb.from("students").select("id,monthly_fee,due_day").eq("active", true).gt("monthly_fee", 0)),
+    ok(await sb.from("students").select("id,monthly_fee,due_day").eq("active", true).not("monthly_fee", "is", null)),
     ok(await sb.from("payments").select("student_id").eq("reference_month", mes)),
   ]);
 

@@ -4,7 +4,6 @@ import { db, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import {
   esc, iniciais, textoTempoRelativo, plural, moeda, ligarMascaraDeMoeda, moedaParaNumero,
 } from "../utils.js";
-import { registrarErro } from "../log.js";
 
 export async function render(alvo) {
   let alunos = [];
@@ -44,7 +43,6 @@ export async function render(alvo) {
         `${plural(ativos, "aluno ativo", "alunos ativos")}${alunos.length > ativos ? ` · ${alunos.length - ativos} inativo(s)` : ""}`;
       desenhar();
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "alunos", acao: "carregar" } });
       lista.innerHTML = `<div class="empty"><p>Não foi possível carregar os alunos.</p><p class="small">${esc(err.message)}</p></div>`;
     }
   }
@@ -84,11 +82,15 @@ export async function render(alvo) {
             <input id="f-telefone" name="phone" placeholder="(11) 90000-0000" /></div>
         </div>
 
-        <div class="field"><label for="f-objetivo">Objetivo</label>
-          <select id="f-objetivo" name="goal">
-            <option>Hipertrofia</option><option>Emagrecimento</option>
-            <option>Condicionamento</option><option>Reabilitação</option><option>Saúde geral</option>
-          </select></div>
+        <div class="exercise-form-grid">
+          <div class="field"><label for="f-objetivo">Objetivo</label>
+            <select id="f-objetivo" name="goal">
+              <option>Hipertrofia</option><option>Emagrecimento</option>
+              <option>Condicionamento</option><option>Reabilitação</option><option>Saúde geral</option>
+            </select></div>
+          <div class="field"><label for="f-meta">Treinos por semana</label>
+            <input id="f-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14" value="3" /></div>
+        </div>
 
         <div class="field"><label for="f-restricoes">Restrições e lesões</label>
           <textarea id="f-restricoes" name="health_restrictions" rows="3"
@@ -137,7 +139,6 @@ export async function render(alvo) {
         await carregar();
         credenciais(criado);
       } catch (err) {
-        registrarErro(err, { contexto: { tela: "alunos", acao: "criarAluno" } });
         erro.textContent = err.message;
         erro.classList.remove("hidden");
         salvar.disabled = false;

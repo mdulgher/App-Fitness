@@ -13,7 +13,6 @@ import { usuarioAtual, ehProfessor, recarregarPerfil } from "../auth.js";
 import { PROFESSOR, DATA_SOURCE } from "../config.js";
 import { pixCopiaECola } from "../pix.js";
 import { esc, iniciais, moeda, plural } from "../utils.js";
-import { registrarErro } from "../log.js";
 
 const MODELO_PADRAO =
   "Oi {nome}! Tudo certo?\n\n" +
@@ -117,7 +116,6 @@ export async function render(alvo) {
       alvo.querySelector(".page-head .avatar").textContent = iniciais(nome);
       avisar("Dados atualizados.");
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "perfil", acao: "salvarPerfil" } });
       erro.textContent = err.message;
       erro.classList.remove("hidden");
     } finally {
@@ -152,7 +150,6 @@ export async function render(alvo) {
       formSenha.reset();
       avisar("Senha alterada. Ela vale a partir do próximo login.");
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "perfil", acao: "alterarSenha" } });
       mostrarErro(err.message);
     } finally {
       botao.disabled = false;
@@ -199,7 +196,6 @@ export async function render(alvo) {
         ? pixCopiaECola({ chave: patch.pix_key, nome: patch.pix_name, cidade: patch.pix_city, valor: 100 })
         : "";
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "perfil", acao: "salvarCobranca" } });
       erro.textContent = err.message;
       erro.classList.remove("hidden");
     } finally {
@@ -272,7 +268,7 @@ function blocoDoAluno(aluno) {
       <div class="eyebrow" style="margin-bottom:var(--sp-3)">Definido pelo seu professor</div>
       <div class="list">
         ${item("Objetivo", aluno.goal ?? "Sem objetivo definido")}
-        ${aluno.resumo?.metaSemanal ? item("Meta semanal", plural(aluno.resumo.metaSemanal, "treino", "treinos") + " por semana") : ""}
+        ${item("Meta semanal", plural(aluno.weekly_target ?? 0, "treino", "treinos") + " por semana")}
         ${item("Mensalidade", aluno.monthly_fee != null
           ? `${moeda(aluno.monthly_fee)} · vence dia ${aluno.due_day ?? "—"}`
           : "Sem mensalidade cadastrada")}

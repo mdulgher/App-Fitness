@@ -23,7 +23,6 @@ import {
   somarDias,
 } from "../utils.js";
 import { renderizarCalendario } from "../calendar-grid.js";
-import { registrarErro } from "../log.js";
 
 export async function render(alvo, { params }) {
   const [id] = params;
@@ -57,8 +56,8 @@ export async function render(alvo, { params }) {
           <div>
             <h1>${esc(aluno.full_name)}</h1>
             <div class="muted small">
-              ${esc(aluno.goal ?? "Sem objetivo")}
-              ${aluno.resumo.metaSemanal ? ` · meta de ${plural(aluno.resumo.metaSemanal, "treino", "treinos")}/semana` : ""}
+              ${esc(aluno.goal ?? "Sem objetivo")} ·
+              meta de ${plural(aluno.weekly_target, "treino", "treinos")}/semana
               ${aluno.active ? "" : " · <strong>inativo</strong>"}
             </div>
           </div>
@@ -162,8 +161,13 @@ function formularioDeEdicao(alvo, aluno) {
       <div class="field"><label for="e-nome">Nome completo</label>
         <input id="e-nome" name="full_name" required maxlength="120" value="${esc(aluno.full_name)}" /></div>
 
-      <div class="field"><label for="e-telefone">Telefone (WhatsApp)</label>
-        <input id="e-telefone" name="phone" value="${esc(aluno.phone ?? "")}" placeholder="(11) 90000-0000" /></div>
+      <div class="exercise-form-grid">
+        <div class="field"><label for="e-telefone">Telefone (WhatsApp)</label>
+          <input id="e-telefone" name="phone" value="${esc(aluno.phone ?? "")}" placeholder="(11) 90000-0000" /></div>
+        <div class="field"><label for="e-meta">Treinos por semana</label>
+          <input id="e-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14"
+                 value="${esc(aluno.weekly_target ?? 3)}" /></div>
+      </div>
 
       <div class="field"><label for="e-objetivo">Objetivo</label>
         <select id="e-objetivo" name="goal">
@@ -212,6 +216,7 @@ function formularioDeEdicao(alvo, aluno) {
       full_name: d.full_name.trim(),
       phone: d.phone.trim() || null,
       goal: d.goal,
+      weekly_target: Number(d.weekly_target) || 3,
       health_restrictions: d.health_restrictions.trim() || null,
       // Campo vazio vira null, não 0: "sem mensalidade" e "mensalidade de zero"
       // são coisas diferentes na hora de gerar cobrança.
@@ -233,7 +238,6 @@ function formularioDeEdicao(alvo, aluno) {
       dialogo.close();
       await render(alvo, { params: [aluno.id] });
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "aluno do professor", acao: "salvarCadastro", alunoId: aluno.id } });
       erro.textContent = err.message;
       erro.classList.remove("hidden");
       salvar.disabled = false;
@@ -309,7 +313,6 @@ function formularioDeRecado(alvo, aluno, existente, aoSalvar) {
       dialogo.close();
       await aoSalvar();
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "aluno do professor", acao: "removerRecado", alunoId: aluno.id } });
       mostrarErro(err.message);
     }
   });
@@ -336,7 +339,6 @@ function formularioDeRecado(alvo, aluno, existente, aoSalvar) {
       dialogo.close();
       await aoSalvar();
     } catch (err) {
-      registrarErro(err, { contexto: { tela: "aluno do professor", acao: existente ? "editarRecado" : "criarRecado", alunoId: aluno.id } });
       mostrarErro(err.message);
       salvar.disabled = false;
       salvar.textContent = existente ? "Salvar" : "Enviar recado";
@@ -370,6 +372,7 @@ function cartao(rotulo, valor, apoio) {
 function blocoCadastro(aluno) {
   const linhas = [
     ["Objetivo", aluno.goal ?? "—"],
+    ["Meta semanal", plural(aluno.weekly_target ?? 0, "treino", "treinos")],
     ["Telefone", aluno.phone ?? "—"],
     ["Situação", aluno.active ? "Ativo" : "Inativo"],
   ];
