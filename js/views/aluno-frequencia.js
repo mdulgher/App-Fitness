@@ -9,6 +9,7 @@ import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import {
   esc, plural, hoje, somarDias, inicioDaSemana, formatarData, textoTempoRelativo,
+  ligarPullToRefresh,
 } from "../utils.js";
 import { registrarErro } from "../log.js";
 import { renderizarCalendario, nomeDoMes } from "../calendar-grid.js";
@@ -130,6 +131,11 @@ export async function render(alvo) {
     renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
     alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
   });
+
+  // Pull to refresh — só no mobile (touch); no desktop ligarPullToRefresh retorna sem fazer nada.
+  // Remove indicador antigo caso a tela seja re-renderizada sem trocar de rota.
+  document.getElementById("ptr-indicador")?.remove();
+  ligarPullToRefresh(() => render(alvo));
 }
 
 function renderMes(container, ano, mes, diasTreinados, alunoId, aoRecarregar) {

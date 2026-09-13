@@ -270,3 +270,68 @@ export function el(html) {
 export function uid() {
   return crypto.randomUUID();
 }
+
+/* ---------- pull to refresh (mobile) ---------- */
+
+// Liga o gesto de puxar para baixo no topo da página.
+// Só ativa em dispositivos touch; no desktop não faz nada.
+// aoRefrescar: função async chamada quando o usuário solta após o limiar.
+export function ligarPullToRefresh(aoRefrescar) {
+  if (!("ontouchstart" in window)) return; // desktop: sai sem fazer nada
+
+  const LIMIAR = 65;   // px para acionar
+  const LIMITE = 90;   // px máximo de arrasto visual
+  let inicioY = 0;
+  let puxando = false;
+
+  // Indicador visual
+  const indicador = document.createElement("div");
+  indicador.id = "ptr-indicador";
+  indicador.innerHTML = `<span class="ptr-icone">↓</span>`;
+  indicador.style.cssText = [
+    "position:fixed", "top:0", "left:0", "right:0", "z-index:999",
+    "display:flex", "align-items:center", "justify-content:center",
+    "height:0", "overflow:hidden", "background:var(--white)",
+    "transition:height .15s ease", "border-bottom:1px solid #e5e5e5",
+    "font-size:18px", "color:#aaa",
+  ].join(";");
+  document.body.appendChild(indicador);
+
+  function mostrar(px) {
+    const h = Math.min(px, LIMITE);
+    indicador.style.height = h + "px";
+    indicador.style.transition = "none";
+    indicador.querySelector(".ptr-icone").style.transform =
+      `rotate(${Math.min(px / LIMIAR, 1) * 180}deg)`;
+  }
+
+  function esconder() {
+    indicador.style.transition = "height .2s ease";
+    indicador.style.height = "0";
+  }
+
+  document.addEventListener("touchstart", (e) => {
+    if (window.scrollY > 0) return; // só no topo da página
+    inicioY = e.touches[0].clientY;
+    puxando = true;
+  }, { passive: true });
+
+  document.addEventListener("touchmove", (e) => {
+    if (!puxando) return;
+    const delta = e.touches[0].clientY - inicioY;
+    if (delta > 0) mostrar(delta);
+  }, { passive: true });
+
+  document.addEventListener("touchend", async () => {
+    if (!puxando) return;
+    puxando = false;
+    const h = parseFloat(indicador.style.height) || 0;
+    esconder();
+    if (h >= LIMIAR) {
+      indicador.querySelector(".ptr-icone").textContent = "↻";
+      indicador.style.height = "40px";
+      indicador.style.transition = "none";
+      try { await aoRefrescar(); } finally { esconder(); }
+    }
+  });
+}
