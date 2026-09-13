@@ -102,9 +102,11 @@ export async function render(alvo) {
       </div>
     </div>`;
 
-  // Renderiza o calendário inicial (read-only)
+  const recarregar = () => render(alvo);
+
+  // Renderiza o calendário inicial
   const calendarioGrid = alvo.querySelector("#calendario-grid");
-  calendarioGrid.innerHTML = renderizarCalendario(anoSelecionado, mesSelecionado, diasTreinados, null);
+  renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
 
   // Navegação de mês
   alvo.querySelector("#mes-anterior").addEventListener("click", () => {
@@ -114,7 +116,7 @@ export async function render(alvo) {
     } else {
       mesSelecionado -= 1;
     }
-    calendarioGrid.innerHTML = renderizarCalendario(anoSelecionado, mesSelecionado, diasTreinados, null);
+    renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
     alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
   });
 
@@ -125,11 +127,43 @@ export async function render(alvo) {
     } else {
       mesSelecionado += 1;
     }
-    calendarioGrid.innerHTML = renderizarCalendario(anoSelecionado, mesSelecionado, diasTreinados, null);
+    renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
     alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
   });
 }
 
+function renderMes(container, ano, mes, diasTreinados, alunoId, aoRecarregar) {
+  async function aoDesmarcar(sessaoId, data) {
+    const confirmou = confirm(
+      `Desmarcar treino concluído em ${formatarData(data)}? ` +
+      `Seu professor ainda verá o histórico.`
+    );
+    if (!confirmou) return;
+
+    const el = container.querySelector(`[data-sessao="${sessaoId}"]`);
+    el.style.opacity = "0.5";
+    el.style.pointerEvents = "none";
+
+    try {
+      await db.desconcluirSessao(sessaoId);
+      await aoRecarregar();
+    } catch (err) {
+      registrarErro(err, {
+        contexto: { tela: "frequencia", acao: "desconcluirSessao", sessaoId, data },
+      });
+      alert("Erro ao desmarcar: " + err.message);
+      el.style.opacity = "1";
+      el.style.pointerEvents = "auto";
+    }
+  }
+
+  container.innerHTML = renderizarCalendario(ano, mes, diasTreinados, aoDesmarcar);
+
+  // Eventos de clique para desmarcar
+  container.querySelectorAll("[data-sessao]").forEach((el) => {
+    el.addEventListener("click", () => aoDesmarcar(el.dataset.sessao, el.dataset.data));
+  });
+}
 
 function cartao(rotulo, valor, apoio) {
   return `

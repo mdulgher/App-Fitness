@@ -205,34 +205,8 @@ export async function render(alvo, { params }) {
           <p class="muted small" style="margin-bottom:var(--sp-4)">
             Registrado às ${esc(horaDe(sessao.completed_at))}. As cargas continuam editáveis se você errou alguma.
           </p>
-          <div class="row" style="gap:var(--sp-2);margin-bottom:var(--sp-3)">
-            <a class="btn btn-block" href="#/aluno">Voltar para os meus treinos</a>
-            <button class="btn btn-block" id="desmarcar" style="color:var(--gray-600)">Desmarcar</button>
-          </div>
+          <a class="btn btn-block" href="#/aluno">Voltar para os meus treinos</a>
         </div>`;
-
-      fimEl.querySelector("#desmarcar").addEventListener("click", async (ev) => {
-        const botao = ev.currentTarget;
-        const confirmou = confirm(
-          `Desmarcar treino de hoje? Seu professor ainda verá o histórico.`
-        );
-        if (!confirmou) return;
-
-        botao.disabled = true;
-        botao.textContent = "Dessmarcando…";
-        try {
-          await db.desconcluirSessao(sessao.id);
-          sessao = null;
-          desenharProgresso();
-          desenharFim();
-          avisar("Treino desmarcado. Registre as cargas quando quiser.");
-        } catch (err) {
-          registrarErro(err, { contexto: { acao: "desconcluirTreino", diaId } });
-          avisar("Erro ao desmarcar: " + err.message);
-          botao.disabled = false;
-          botao.textContent = "Desmarcar";
-        }
-      });
       return;
     }
 

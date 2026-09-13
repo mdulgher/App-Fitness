@@ -65,16 +65,15 @@
 
 /* ---------- frequência ---------- */
 
-/* Calendário menor e mais sutil com forma circular */
-.calendario-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
-.calendario-mes .dia-rotulo { font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: #bbb; text-align: center; padding-bottom: 2px; }
+.calendario-mes { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.calendario-mes .dia-rotulo { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: #999; text-align: center; padding-bottom: 4px; }
 .dia-celula {
-  aspect-ratio: 1; display: grid; place-items: center; border-radius: 50%;
-  border: 1px solid #e5e5e5; font-size: 11px; font-weight: 600; color: #aaa;
+  aspect-ratio: 1; display: grid; place-items: center; border-radius: 10px;
+  border: 1px solid #ececec; font-size: 13px; font-weight: 600; color: #999;
 }
-.dia-celula.vazia { border-color: transparent; background: transparent; }
+.dia-celula.vazia { border-color: transparent; }
 .dia-celula.treinou { background: #111; border-color: #111; color: #fff; }
-.dia-celula.hoje { outline: 1px solid #111; outline-offset: -1px; }
+.dia-celula.hoje { outline: 2px solid #111; outline-offset: 1px; }
 
 /* ---------- evolução ---------- */
 
