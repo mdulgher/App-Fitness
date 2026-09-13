@@ -2,9 +2,6 @@
 :root { --border: 1px solid var(--gray-100); }
 body { background: #f5f5f5; }
 
-/* iOS Safari PWA: o <main> precisa de overflow:auto para o scrollTop funcionar
-   e para o pull-to-refresh detectar o topo corretamente. */
-#view { overflow-y: auto; -webkit-overflow-scrolling: touch; }
 h1 { font-size: clamp(30px, 3.4vw, 44px); font-weight: 600; letter-spacing: -.055em; }
 h2 { font-weight: 600; letter-spacing: -.035em; }
 .wrap { max-width: 1180px; padding: 44px 40px 64px; }

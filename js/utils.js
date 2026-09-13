@@ -275,68 +275,75 @@ export function uid() {
 
 // Liga o gesto de puxar para baixo no topo da página.
 // Só ativa em dispositivos touch; no desktop não faz nada.
-// Funciona no Safari PWA (atalho na tela inicial do iPhone): escuta os eventos
-// no <main id="view">, que é o elemento que realmente faz scroll no iOS.
+// Compatível com Safari PWA (atalho na tela inicial do iPhone).
 // aoRefrescar: função async chamada quando o usuário solta após o limiar.
 export function ligarPullToRefresh(aoRefrescar) {
   if (!("ontouchstart" in window)) return; // desktop: sai sem fazer nada
 
-  const LIMIAR = 65;   // px para acionar
-  const LIMITE = 90;   // px máximo de arrasto visual
+  const LIMIAR = 65;   // px de arrasto para acionar
+  const LIMITE = 90;   // px máximo de deslocamento visual
   let inicioY = 0;
-  let puxando = false;
+  let deltaAtual = 0;
+  let ativo = false;
 
-  // No iOS Safari PWA o scroll vive no <main>, não no window.
-  const alvo = document.getElementById("view") ?? document.body;
-
-  // Indicador visual
+  // Indicador visual fixo no topo
   const indicador = document.createElement("div");
   indicador.id = "ptr-indicador";
   indicador.innerHTML = `<span class="ptr-icone">↓</span>`;
   indicador.style.cssText = [
-    "position:fixed", "top:0", "left:0", "right:0", "z-index:999",
+    "position:fixed", "top:0", "left:0", "right:0", "z-index:9999",
     "display:flex", "align-items:center", "justify-content:center",
-    "height:0", "overflow:hidden", "background:var(--white)",
-    "transition:height .15s ease", "border-bottom:1px solid #e5e5e5",
-    "font-size:18px", "color:#aaa",
+    "height:0", "overflow:hidden", "background:#fff",
+    "border-bottom:1px solid #e5e5e5",
+    "font-size:20px", "color:#aaa", "pointer-events:none",
   ].join(";");
   document.body.appendChild(indicador);
 
+  function scrollTopo() {
+    return Math.max(
+      document.documentElement.scrollTop,
+      document.body.scrollTop,
+      window.scrollY ?? 0
+    );
+  }
+
   function mostrar(px) {
+    deltaAtual = px;
     const h = Math.min(px, LIMITE);
     indicador.style.height = h + "px";
-    indicador.style.transition = "none";
-    indicador.querySelector(".ptr-icone").style.transform =
-      `rotate(${Math.min(px / LIMIAR, 1) * 180}deg)`;
+    const giro = Math.min(px / LIMIAR, 1) * 180;
+    indicador.querySelector(".ptr-icone").style.transform = `rotate(${giro}deg)`;
   }
 
   function esconder() {
     indicador.style.transition = "height .2s ease";
     indicador.style.height = "0";
+    setTimeout(() => { indicador.style.transition = ""; }, 250);
   }
 
-  alvo.addEventListener("touchstart", (e) => {
-    // só aciona quando está no topo (scrollTop == 0)
-    if (alvo.scrollTop > 0) return;
+  document.addEventListener("touchstart", (e) => {
+    if (scrollTopo() > 2) return; // pequena tolerância para iOS
     inicioY = e.touches[0].clientY;
-    puxando = true;
+    deltaAtual = 0;
+    ativo = true;
   }, { passive: true });
 
-  alvo.addEventListener("touchmove", (e) => {
-    if (!puxando) return;
+  document.addEventListener("touchmove", (e) => {
+    if (!ativo) return;
     const delta = e.touches[0].clientY - inicioY;
-    if (delta > 0) mostrar(delta);
+    if (delta <= 0) { ativo = false; return; }
+    mostrar(delta);
   }, { passive: true });
 
-  alvo.addEventListener("touchend", async () => {
-    if (!puxando) return;
-    puxando = false;
-    const h = parseFloat(indicador.style.height) || 0;
+  document.addEventListener("touchend", async () => {
+    if (!ativo) return;
+    ativo = false;
+    const h = deltaAtual;
     esconder();
     if (h >= LIMIAR) {
-      indicador.querySelector(".ptr-icone").textContent = "↻";
-      indicador.style.height = "40px";
       indicador.style.transition = "none";
+      indicador.style.height = "44px";
+      indicador.querySelector(".ptr-icone").textContent = "↻";
       try { await aoRefrescar(); } finally { esconder(); }
     }
   });
