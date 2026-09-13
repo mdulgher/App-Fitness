@@ -409,6 +409,14 @@ antiga nunca era removida e sobrava órfã. Coberto por `scripts/test-security.m
   (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`,
   `reauthentication_token`): criadas nulas, o login devolve 500 "Database error
   querying schema". A API oficial as cria como string vazia.
+- `cobranca_de_pacote_fora_da_unicidade_mensal` — `payments.kind`
+  (`monthly`/`package`) e o índice `cobranca_unica_por_mes` virou **parcial**
+  (`where kind = 'monthly'`). Sem isso, vender dois pacotes no mesmo mês batia
+  em "duplicate key": o índice antigo era uma cobrança por aluno por mês, o que
+  vale para mensalidade e não vale para pacote. **A consequência que morde:**
+  índice parcial **não serve** para inferência de `ON CONFLICT`, então o
+  `upsert` de `gerarCobrancasDoMes` passou a responder 400 e virou INSERT que
+  trata a violação. A garantia de não duplicar continua sendo do banco.
 - `pacote_de_aulas_avulsas` — pagamento avulso por aula, **pré-pago**. O aluno
   é de um tipo só (`students.billing_type`: `monthly` ou `package`); quem é de
   pacote **não entra** na geração de cobranças do mês, porque a cobrança dele
@@ -462,6 +470,14 @@ verdade; o aluno pode trocar a dele em "Meu cadastro".
 | Aluno | `henrique.tavares@teste.com` | Pago, alta frequência |
 | Aluna | `isabela.moreira@teste.com` | A vencer (dia 25), parou há ~10 dias |
 | Aluno | `rafael.pimentel@teste.com` | **Sem mensalidade cadastrada** — fica de fora da geração de cobranças |
+| Aluna | `ana.paula@teste.com` | **Pacote de aulas**: 4 compradas, 3 usadas — saldo 1 |
+| Aluno | `ricardo.alves@teste.com` | **Pacote de aulas**: 8 compradas, 6 usadas — saldo 2 |
+| Aluna | `juliana.castro@teste.com` | **Pacote de aulas**: saldo **zerado**, precisa renovar |
+| Aluno | `marcelo.pinto@teste.com` | **Pacote de aulas**: 2 pacotes, saldo 3, 1 cobrança em aberto |
+
+Os quatro de pacote foram semeados em 13/09/2026 para o Leo ver a tela em cada
+estado — inclusive o saldo zerado, que é o momento em que ele precisa vender de
+novo. Nenhum deles entra na geração de cobranças do mês.
 
 Os `@teste.com` são fictícios, criados pelo próprio fluxo do app (Edge Function
 `criar-aluno`). Para limpar tudo de uma vez:

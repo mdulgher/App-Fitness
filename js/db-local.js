@@ -862,6 +862,7 @@ export async function criarPagamento(dados) {
     paid_date: null,
     payment_method: null,
     notes: dados.notas ?? null,
+    kind: dados.tipo ?? "monthly",
     created_at: hoje(),
   };
   tabela("payments").push(novo);
@@ -914,6 +915,7 @@ export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = 
     valor,
     vencimento: vencimento ?? hoje(),
     notas: notas ?? `Pacote de ${aulas} ${aulas === 1 ? "aula" : "aulas"}`,
+    tipo: "package",
   });
 
   const novo = {

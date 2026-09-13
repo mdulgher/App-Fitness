@@ -738,6 +738,10 @@ export async function criarPagamento(dados) {
       amount: dados.valor,
       due_date: dados.vencimento,
       notes: dados.notas ?? null,
+      // `package` fica fora da unicidade de uma cobrança por mês: o aluno pode
+      // comprar dois pacotes no mesmo mês, e compra mesmo, quando as aulas
+      // acabam antes do fim do mês.
+      kind: dados.tipo ?? "monthly",
     }).select().single()
   );
 }
@@ -763,9 +767,25 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
     }));
 
   if (!novos.length) return [];
-  // ignoreDuplicates: clicar duas vezes não gera cobrança repetida, garantido
-  // pela restrição de unicidade do banco e não por sorte de temporização.
-  return ok(await sb.from("payments").upsert(novos, { onConflict: "student_id,reference_month", ignoreDuplicates: true }).select());
+
+  // O índice único que impede cobrança repetida no mês virou **parcial**
+  // (`where kind = 'monthly'`), para o aluno poder comprar dois pacotes de
+  // aulas no mesmo mês. Índice parcial não serve para inferência de
+  // `ON CONFLICT`: o upsert que havia aqui passou a responder 400 "no unique or
+  // exclusion constraint matching the ON CONFLICT specification".
+  //
+  // A garantia continua sendo do banco, não da tela: numa corrida entre dois
+  // cliques o segundo INSERT é recusado inteiro pelo índice, e nenhuma cobrança
+  // duplicada nasce. O que se perde é só a gravação parcial, que aqui não faz
+  // falta — quem chamar de novo vê a prévia já sem os que existem.
+  const { data, error } = await sb.from("payments")
+    .insert(novos.map((n) => ({ ...n, kind: "monthly" }))).select();
+
+  if (error) {
+    if (/duplicate key|cobranca_unica_por_mes/i.test(error.message)) return [];
+    throw new Error(error.message);
+  }
+  return data;
 }
 
 /* ==================== pacote de aulas avulsas ====================
@@ -792,6 +812,7 @@ export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = 
     valor,
     vencimento: vencimento ?? hoje(),
     notas: notas ?? `Pacote de ${aulas} ${aulas === 1 ? "aula" : "aulas"}`,
+    tipo: "package",
   });
 
   try {
