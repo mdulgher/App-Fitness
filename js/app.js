@@ -8,6 +8,7 @@ import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
 import { ligarSincronizacaoAutomatica } from "./sync.js";
 import { configurarLog, ligarCapturaGlobal } from "./log.js";
+import { ligarCapturaDoConvite, deveConvidar, podeInstalarDireto, instalar, dispensar, ehIOS } from "./instalar.js";
 
 const NAV_PROFESSOR = [
   ["#/professor", "Painel"],
@@ -124,6 +125,59 @@ document.getElementById("sair").addEventListener("click", async () => {
   resolver();
 });
 
+// O convite de instalar aparece só para quem está logado: na tela de login o
+// usuário ainda não sabe se este app é dele, e um convite ali é propaganda.
+function desenharConviteDeInstalar() {
+  const caixa = document.getElementById("convite-instalar");
+  if (!usuarioAtual() || !deveConvidar()) {
+    caixa.classList.add("hidden");
+    caixa.innerHTML = "";
+    return;
+  }
+  if (caixa.dataset.desenhado === "1") return;
+  caixa.dataset.desenhado = "1";
+
+  caixa.innerHTML = `
+    <img class="convite-icone" src="assets/icons/icone-192.png" alt="" aria-hidden="true" />
+    <div class="convite-texto">
+      <strong>Deixe o treino a um toque</strong>
+      <span class="small">Instale na tela inicial e abra sem o navegador.</span>
+    </div>
+    <button class="btn btn-sm" id="convite-instalar-botao">${ehIOS() ? "Como instalar" : "Instalar"}</button>
+    <button class="convite-fechar" id="convite-fechar" aria-label="Agora não">&times;</button>`;
+
+  caixa.classList.remove("hidden");
+
+  caixa.querySelector("#convite-fechar").addEventListener("click", () => {
+    dispensar();
+    caixa.classList.add("hidden");
+  });
+
+  caixa.querySelector("#convite-instalar-botao").addEventListener("click", async () => {
+    if (podeInstalarDireto()) {
+      const desfecho = await instalar();
+      if (desfecho === "instalado") caixa.classList.add("hidden");
+      if (desfecho === "recusado") return; // deixa o convite, ele pode mudar de ideia
+      if (desfecho !== "instrucao") return;
+    }
+    // iOS, ou o evento se perdeu: só resta ensinar o caminho.
+    caixa.innerHTML = `
+      <img class="convite-icone" src="assets/icons/icone-192.png" alt="" aria-hidden="true" />
+      <div class="convite-texto">
+        <strong>No iPhone, são dois toques</strong>
+        <span class="small">
+          Toque em <b>Compartilhar</b> na barra do Safari e escolha
+          <b>Adicionar à Tela de Início</b>.
+        </span>
+      </div>
+      <button class="convite-fechar" id="convite-fechar" aria-label="Fechar">&times;</button>`;
+    caixa.querySelector("#convite-fechar").addEventListener("click", () => {
+      dispensar();
+      caixa.classList.add("hidden");
+    });
+  });
+}
+
 // O log sobe antes de tudo: erro na partida é exatamente o que ninguém vê.
 // O cliente do Supabase é injetado em vez de importado para o log continuar
 // funcionando quando o problema for a própria camada de dados.
@@ -135,7 +189,14 @@ ligarCapturaGlobal();
 
 desenharBarraDeModo();
 
-definirCallbackDeTroca(desenharCabecalho);
+// Antes de qualquer await: o Chrome dispara `beforeinstallprompt` uma vez só,
+// e quem não estiver escutando na hora perde o evento para sempre.
+ligarCapturaDoConvite(() => desenharConviteDeInstalar());
+
+definirCallbackDeTroca((caminho) => {
+  desenharCabecalho(caminho);
+  desenharConviteDeInstalar();
+});
 
 await restaurarSessao();
 // A fila precisa saber qual aluno está autenticado antes da primeira tentativa.

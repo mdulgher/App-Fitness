@@ -294,3 +294,31 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
   overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
 }
+
+/* ---------- convite para instalar na tela inicial ---------- */
+
+/* Faixa que sangra, logo abaixo do cabeçalho, com o mesmo recuo lateral dele:
+   centralizada com largura máxima virava uma ilha preta flutuando na página. */
+.convite-instalar {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 40px;
+  background: #000; color: #fff;
+}
+.convite-icone { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 40px; background: #fff; }
+.convite-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.convite-texto .small { color: #a3a3a3; }
+.convite-texto b { color: #fff; }
+.convite-instalar .btn { flex: 0 0 auto; min-height: 40px; }
+.convite-fechar {
+  flex: 0 0 auto; width: 32px; height: 32px; padding: 0;
+  border: 0; border-radius: 8px; background: none; color: #a3a3a3;
+  font-size: 22px; line-height: 1; cursor: pointer;
+}
+.convite-fechar:hover { background: #1a1a1a; color: #fff; }
+
+@media (max-width: 700px) {
+  /* O texto secundário some: no celular o que importa é o botão, e a barra
+     não pode empurrar o conteúdo da tela para fora da primeira dobra. */
+  .convite-instalar { padding: 10px 12px; gap: 10px; }
+  .convite-texto .small { display: none; }
+}

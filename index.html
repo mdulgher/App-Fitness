@@ -11,6 +11,10 @@
     <title>Leo Personal Trainning</title>
     <meta name="theme-color" content="#000000" />
     <link rel="manifest" href="manifest.json" />
+    <!-- O iOS ignora o manifest e só olha para estas duas linhas ao adicionar
+         o app à tela de início. Sem elas, o ícone vira uma miniatura da página. -->
+    <link rel="apple-touch-icon" href="assets/icons/icone-180.png" />
+    <meta name="apple-mobile-web-app-title" content="Leo Personal" />
     <link
       rel="preconnect"
       href="https://fonts.gstatic.com"
@@ -46,6 +50,8 @@
           </div>
         </div>
       </header>
+
+      <div class="convite-instalar hidden" id="convite-instalar"></div>
 
       <main id="view"></main>
     </div>
