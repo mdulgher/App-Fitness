@@ -4,11 +4,10 @@ import { APP_NAME, DATA_SOURCE, SUPABASE } from "./config.js";
 import { db } from "./db.js";
 import { restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial, ligarTimeoutDeSessao } from "./auth.js";
 import { iniciar, resolver, navegar, definirCallbackDeTroca } from "./router.js";
-import { esc, primeiroNome, iniciais } from "./utils.js";
+import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
 import { ligarSincronizacaoAutomatica } from "./sync.js";
 import { configurarLog, ligarCapturaGlobal } from "./log.js";
-import { urlDeImagemSegura } from "./exercise-validation.js";
 
 const NAV_PROFESSOR = [
   ["#/professor", "Painel"],
@@ -48,7 +47,7 @@ function desenharCabecalho(caminhoAtual) {
   document.getElementById("conta-botao").setAttribute(
     "aria-label", `Conta de ${usuario.full_name}`
   );
-  const avatarSeguro = urlDeImagemSegura(usuario.avatar_url);
+  const avatarSeguro = urlDeAvatarSeguro(usuario.avatar_url);
   document.getElementById("conta-avatar").innerHTML = avatarSeguro
     ? `<img src="${esc(avatarSeguro)}" alt="" referrerpolicy="no-referrer" />`
     : esc(iniciais(usuario.full_name));

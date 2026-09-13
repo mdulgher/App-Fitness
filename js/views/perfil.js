@@ -12,7 +12,15 @@ import { db } from "../db.js";
 import { usuarioAtual, ehProfessor, recarregarPerfil } from "../auth.js";
 import { PROFESSOR, DATA_SOURCE } from "../config.js";
 import { pixCopiaECola } from "../pix.js";
-import { esc, iniciais, moeda, plural } from "../utils.js";
+import { esc, iniciais, moeda, plural, urlDeAvatarSeguro, reduzirImagem } from "../utils.js";
+import { registrarErro } from "../log.js";
+
+const avatarInterno = (usuario) => {
+  const foto = urlDeAvatarSeguro(usuario.avatar_url);
+  return foto
+    ? `<img src="${esc(foto)}" alt="" referrerpolicy="no-referrer" />`
+    : esc(iniciais(usuario.full_name));
+};
 
 const MODELO_PADRAO =
   "Oi {nome}! Tudo certo?\n\n" +
@@ -33,13 +41,20 @@ export async function render(alvo) {
   alvo.innerHTML = `
     <div class="wrap">
       <div class="page-head row" style="gap:var(--sp-4)">
-        <span class="avatar" style="width:56px;height:56px;flex-basis:56px;font-size:17px">
-          ${esc(iniciais(usuario.full_name))}
-        </span>
+        <div class="avatar-editor">
+          <span class="avatar avatar-grande" id="meu-avatar">${avatarInterno(usuario)}</span>
+          <label class="avatar-trocar" for="p-foto">
+            Trocar foto
+            <input type="file" id="p-foto" accept="image/jpeg,image/png,image/webp" class="sr-only" />
+          </label>
+        </div>
         <div>
           <div class="eyebrow">Meu cadastro</div>
           <h1>${esc(usuario.full_name)}</h1>
           <p class="muted page-description">${professor ? "Professor" : "Aluno"} · ${esc(usuario.email ?? "")}</p>
+          <button type="button" class="btn btn-sm" id="remover-foto" ${usuario.avatar_url ? "" : "hidden"}>
+            Remover foto
+          </button>
         </div>
       </div>
 
@@ -87,6 +102,58 @@ export async function render(alvo) {
     feedback.classList.remove("hidden");
   };
 
+  /* ---------- foto de perfil ---------- */
+
+  const avatarEl = alvo.querySelector("#meu-avatar");
+  const campoFoto = alvo.querySelector("#p-foto");
+  const botaoRemover = alvo.querySelector("#remover-foto");
+
+  function redesenharAvatar() {
+    avatarEl.innerHTML = avatarInterno(usuarioAtual());
+    botaoRemover.hidden = !usuarioAtual().avatar_url;
+    // O cabeçalho do app tem o mesmo avatar e não se redesenha sozinho.
+    window.dispatchEvent(new CustomEvent("lpt:perfil"));
+  }
+
+  campoFoto.addEventListener("change", async () => {
+    const arquivo = campoFoto.files?.[0];
+    if (!arquivo) return;
+    campoFoto.disabled = true;
+    avisar("Enviando a foto…");
+    try {
+      // A redução acontece aqui, e não na camada de dados, porque é decisão de
+      // interface: o avatar aparece com 44 px e uma selfie de 4 MB não muda
+      // nada na tela, só gasta a internet de quem está na academia.
+      await db.enviarMeuAvatar(await reduzirImagem(arquivo));
+      await recarregarPerfil();
+      redesenharAvatar();
+      avisar("Foto atualizada.");
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "perfil", acao: "enviarAvatar" } });
+      avisar(`Não foi possível enviar a foto: ${err.message}`);
+    } finally {
+      // Zerar o campo é o que permite escolher o mesmo arquivo de novo depois
+      // de um erro: sem isso o `change` não dispara na segunda tentativa.
+      campoFoto.value = "";
+      campoFoto.disabled = false;
+    }
+  });
+
+  botaoRemover.addEventListener("click", async () => {
+    botaoRemover.disabled = true;
+    try {
+      await db.removerMeuAvatar();
+      await recarregarPerfil();
+      redesenharAvatar();
+      avisar("Foto removida.");
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "perfil", acao: "removerAvatar" } });
+      avisar(`Não foi possível remover a foto: ${err.message}`);
+    } finally {
+      botaoRemover.disabled = false;
+    }
+  });
+
   /* ---------- dados do perfil ---------- */
 
   const formDados = alvo.querySelector("#form-dados");
@@ -113,7 +180,9 @@ export async function render(alvo) {
       // mensagem "dados atualizados" apareceria ao lado do nome antigo.
       window.dispatchEvent(new CustomEvent("lpt:perfil"));
       alvo.querySelector(".page-head h1").textContent = nome;
-      alvo.querySelector(".page-head .avatar").textContent = iniciais(nome);
+      // Só as iniciais são redesenhadas, e só quando não há foto: usar
+      // `textContent` aqui de qualquer jeito apagaria a <img> do avatar.
+      if (!usuarioAtual().avatar_url) avatarEl.textContent = iniciais(nome);
       avisar("Dados atualizados.");
     } catch (err) {
       erro.textContent = err.message;

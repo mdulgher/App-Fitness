@@ -264,3 +264,33 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
   .dia-banner-acoes { align-self: center; width: 100%; padding-bottom: 14px; flex-wrap: wrap; }
   .arte-grade { grid-template-columns: repeat(2, 1fr); }
 }
+
+/* ---------- foto de perfil ---------- */
+
+/* Vale para todo avatar com foto, não só o do cabeçalho: sem `overflow:hidden`
+   a imagem vaza pelos cantos arredondados. */
+.avatar { overflow: hidden; }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.avatar-editor { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+/* O raio acompanha o tamanho: 13px num quadrado de 72px pareceria quase reto
+   ao lado do avatar de 44px do resto do app. */
+.avatar-grande { width: 72px; height: 72px; flex-basis: 72px; font-size: 20px; border-radius: 20px; }
+
+/* O <input type="file"> nativo não dá para estilizar e escreve "Nenhum arquivo
+   selecionado" em inglês ou português conforme o sistema. O <label> vira o
+   botão e o campo fica só para o leitor de tela. */
+.avatar-trocar {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 32px; padding: 0 10px; border: 1px solid #e5e5e5; border-radius: 8px;
+  background: var(--white); font-size: 12px; font-weight: 600; cursor: pointer;
+  white-space: nowrap;
+}
+.avatar-trocar:hover { border-color: #111; }
+.avatar-trocar:focus-within { outline: 2px solid #111; outline-offset: 2px; }
+#remover-foto { margin-top: var(--sp-2); }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}

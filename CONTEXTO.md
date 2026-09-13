@@ -383,12 +383,22 @@ banco. Já aconteceu: as duas migrations de 13/09/2026 foram primeiro aplicadas
 por SQL solto e ficaram fora do histórico, com o arquivo no repositório
 parecendo aplicado sem estar registrado.
 
+**Storage.** Um bucket: `avatars`, público, 2 MB, só imagem. O arquivo é
+`<uid>/<uuid aleatório>.jpg` — o nome aleatório tira a URL de quem apenas
+conhece o id do usuário, e força o navegador a recarregar depois da troca. As
+políticas prendem a escrita à pasta do próprio usuário. **Existe uma política de
+SELECT que parece redundante num bucket público e não é:** o Storage lê a linha
+do objeto antes de apagar, e sem ela o DELETE volta "Access denied" — a foto
+antiga nunca era removida e sobrava órfã. Coberto por `scripts/test-security.mjs`.
+
 **Aplicadas em 13/09/2026:**
 
 - `ativar_ficha_atomica` — função `ativar_ficha(uuid)`, `security invoker`, que
   desativa as outras fichas do aluno e ativa a escolhida **numa transação só**.
   Em duas requisições, falhar na segunda deixava o aluno sem ficha nenhuma.
   `db-supabase.ativarFicha` chama esse RPC — **não volte aos dois UPDATEs.**
+- `banner_da_divisao` — `workout_days.banner`, o slug da arte do cabeçalho.
+- `bucket_de_avatares` + `avatar_leitura_autenticada` — ver "Storage" acima.
 - `hardening_pre_producao` — tira o `update` da coluna `role` de `profiles`
   (um aluno podia se promover a professor, e `is_trainer()` lê essa coluna),
   restringe a leitura da chave Pix e o insert em `app_errors` a sessões

@@ -137,6 +137,24 @@ export async function alterarMinhaSenha() {
   throw new Error("Trocar senha só funciona com o banco conectado.");
 }
 
+// Sem Storage aqui: a foto vira `data:` dentro do próprio perfil. A imagem já
+// chega recortada e reduzida pela tela, então cabe na cota do localStorage —
+// que é justamente por que a redução acontece antes de chamar o banco, e não
+// dentro da implementação Supabase.
+export async function enviarMeuAvatar(arquivo) {
+  const dataUrl = await new Promise((resolve, reject) => {
+    const leitor = new FileReader();
+    leitor.onload = () => resolve(leitor.result);
+    leitor.onerror = () => reject(new Error("Não foi possível ler a imagem."));
+    leitor.readAsDataURL(arquivo);
+  });
+  return atualizarMeuPerfil({ avatar_url: dataUrl });
+}
+
+export async function removerMeuAvatar() {
+  return atualizarMeuPerfil({ avatar_url: null });
+}
+
 export async function buscarPerfil(id) {
   return clone(tabela("profiles").find((p) => p.id === id) ?? null);
 }

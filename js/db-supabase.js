@@ -136,6 +136,59 @@ export async function alterarMinhaSenha(nova) {
   if (error) throw new Error(traduzErro(error.message));
 }
 
+const BUCKET_AVATAR = "avatars";
+
+// O caminho do arquivo dentro do bucket, a partir da URL pública guardada em
+// `profiles`. Devolve null para URL de fora — assim apagar a foto anterior
+// nunca tenta mexer em algo que o app não subiu.
+function caminhoDoAvatar(url) {
+  const marca = `/${BUCKET_AVATAR}/`;
+  const i = String(url ?? "").indexOf(marca);
+  return i < 0 ? null : decodeURIComponent(url.slice(i + marca.length));
+}
+
+// O nome do arquivo é aleatório, e não `<uid>/avatar.jpg`, por dois motivos:
+// a URL pública deixa de ser adivinhável a partir do id do usuário, e o
+// navegador não serve a foto velha de cache depois da troca.
+export async function enviarMeuAvatar(arquivo) {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Sua sessão expirou. Entre de novo.");
+
+  const anterior = caminhoDoAvatar((await buscarPerfil(user.id))?.avatar_url);
+  const caminho = `${user.id}/${crypto.randomUUID()}.jpg`;
+
+  const envio = await sb.storage.from(BUCKET_AVATAR)
+    .upload(caminho, arquivo, { contentType: "image/jpeg" });
+  if (envio.error) throw new Error(envio.error.message);
+
+  const { data: publica } = sb.storage.from(BUCKET_AVATAR).getPublicUrl(caminho);
+
+  let perfil;
+  try {
+    perfil = await atualizarMeuPerfil({ avatar_url: publica.publicUrl });
+  } catch (err) {
+    // O perfil continua apontando para a foto antiga: o arquivo novo que
+    // ninguém referencia é lixo, e deixá-lo seria cobrar armazenamento por ele.
+    await sb.storage.from(BUCKET_AVATAR).remove([caminho]);
+    throw err;
+  }
+
+  // Só depois de o perfil apontar para a nova. Apagar antes deixaria o usuário
+  // sem foto nenhuma se a gravação falhasse.
+  if (anterior) await sb.storage.from(BUCKET_AVATAR).remove([anterior]);
+  return perfil;
+}
+
+export async function removerMeuAvatar() {
+  const { data: { user } } = await sb.auth.getUser();
+  if (!user) throw new Error("Sua sessão expirou. Entre de novo.");
+
+  const anterior = caminhoDoAvatar((await buscarPerfil(user.id))?.avatar_url);
+  const perfil = await atualizarMeuPerfil({ avatar_url: null });
+  if (anterior) await sb.storage.from(BUCKET_AVATAR).remove([anterior]);
+  return perfil;
+}
+
 /* ==================== alunos ==================== */
 
 // O resumo é calculado aqui, e não no banco, porque depende de "hoje" e de

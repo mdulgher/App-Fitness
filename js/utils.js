@@ -360,3 +360,49 @@ export function ligarPullToRefresh(aoRefrescar) {
     indicador.remove();
   };
 }
+
+// Foto de perfil: aceita HTTPS (o Storage do Supabase) e imagem embutida
+// (`data:`), que é como o modo local guarda a foto sem servidor nenhum.
+//
+// Separada de `urlDeImagemSegura` de propósito: aquela valida link que o
+// professor cola de qualquer lugar da internet e por isso é mais fechada. Aqui
+// a origem é sempre o próprio app. Só formato raster — SVG carrega script, que
+// não roda dentro de <img>, mas não há motivo para aceitar.
+export function urlDeAvatarSeguro(valor) {
+  if (!valor) return null;
+  const texto = String(valor).trim();
+  if (/^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/.test(texto)) return texto;
+  try {
+    const u = new URL(texto);
+    return u.protocol === "https:" && !u.username && !u.password ? u.href : null;
+  } catch {
+    return null;
+  }
+}
+
+// Reduz a foto no próprio aparelho antes de subir.
+//
+// Uma selfie de celular tem 3 a 5 MB; o avatar aparece com 44 px. Subir o
+// original gastaria a franquia do aluno e o tempo dele numa academia com sinal
+// ruim, para um resultado idêntico. Corta no quadrado central porque a moldura
+// do avatar é quadrada: guardar a foto inteira e deixar o `object-fit` cortar
+// significaria carregar pixels que nunca aparecem.
+export async function reduzirImagem(arquivo, lado = 512, qualidade = 0.85) {
+  const bitmap = await createImageBitmap(arquivo);
+  try {
+    const corte = Math.min(bitmap.width, bitmap.height);
+    const canvas = document.createElement("canvas");
+    canvas.width = canvas.height = Math.min(lado, corte);
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(
+      bitmap,
+      (bitmap.width - corte) / 2, (bitmap.height - corte) / 2, corte, corte,
+      0, 0, canvas.width, canvas.height
+    );
+    const blob = await new Promise((r) => canvas.toBlob(r, "image/jpeg", qualidade));
+    if (!blob) throw new Error("Não foi possível preparar a imagem.");
+    return blob;
+  } finally {
+    bitmap.close();
+  }
+}

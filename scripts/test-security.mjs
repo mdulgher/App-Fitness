@@ -83,6 +83,36 @@ assert.ok([401, 403].includes(promover.status), `CRÍTICO: aluno conseguiu alter
 const continuaAluno = await requisitar(`/rest/v1/profiles?select=role&id=eq.${alunoA.id}`, { token: alunoA.token });
 assert.equal(continuaAluno.corpo?.[0]?.role, "student", "A tentativa de promoção alterou a conta.");
 
+// Bucket de avatares: cada um escreve só na própria pasta. É a barreira que
+// impede um aluno de trocar a foto de outro — e o teste limpa o que sobe.
+const jpegMinimo = Buffer.from(
+  "/9j/4AAQSkZJRgABAQEAYABgAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0a" +
+  "HBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/wAALCAABAAEBAREA/8QAFAABAAAAAAAA" +
+  "AAAAAAAAAAAACf/EABQQAQAAAAAAAAAAAAAAAAAAAAD/2gAIAQEAAD8AKp//2Q==", "base64");
+
+async function enviarAvatar({ token }, pasta, nome) {
+  const r = await fetch(`${SUPABASE.url}/storage/v1/object/avatars/${pasta}/${nome}`, {
+    method: "POST",
+    headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${token}`, "Content-Type": "image/jpeg" },
+    body: jpegMinimo,
+  });
+  return r.status;
+}
+
+const nomeDoTeste = `${crypto.randomUUID()}.jpg`;
+const naPastaDeOutro = await enviarAvatar(alunoA, alunoB.id, nomeDoTeste);
+assert.ok([400, 401, 403].includes(naPastaDeOutro),
+  `CRÍTICO: um aluno conseguiu escrever na pasta de avatar de outro (HTTP ${naPastaDeOutro}).`);
+
+const naPropriaPasta = await enviarAvatar(alunoA, alunoA.id, nomeDoTeste);
+assert.ok(naPropriaPasta === 200, `O aluno não consegue subir o próprio avatar: HTTP ${naPropriaPasta}.`);
+
+const apagar = await fetch(`${SUPABASE.url}/storage/v1/object/avatars/${alunoA.id}/${nomeDoTeste}`, {
+  method: "DELETE",
+  headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${alunoA.token}` },
+});
+assert.equal(apagar.ok, true, `O aluno não consegue apagar o próprio avatar: HTTP ${apagar.status}.`);
+
 const senhasAtuaisNoHistorico = linhas.filter(({ senha }) => {
   const busca = spawnSync("git", ["log", "--all", "--format=%H", `-S${senha}`, "--", "."], {
     cwd: new URL("..", import.meta.url), encoding: "utf8",
@@ -90,5 +120,5 @@ const senhasAtuaisNoHistorico = linhas.filter(({ senha }) => {
   return busca.status === 0 && busca.stdout.trim();
 }).length;
 
-console.log("OK: acesso anônimo bloqueado, isolamento entre alunos e promoção de papel recusada.");
+console.log("OK: acesso anônimo bloqueado, isolamento entre alunos, promoção de papel recusada e avatar isolado por pasta.");
 console.log(`INFO: ${senhasAtuaisNoHistorico} senha(s) atual(is) de contas de teste aparecem no histórico Git.`);
