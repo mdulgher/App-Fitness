@@ -26,6 +26,7 @@ const MODELO_PADRAO =
   "Oi {nome}! Tudo certo?\n\n" +
   "Sua mensalidade de {mes} é de {valor}, com vencimento em {vencimento}.\n\n" +
   "Pix: {chave}\n\n" +
+  "Para copiar o código com um toque, é só abrir:\n{link}\n\n" +
   "Se preferir, o copia e cola:\n{copiaecola}\n\n" +
   "Qualquer dúvida é só me chamar. Bons treinos! — {professor}";
 
@@ -317,7 +318,7 @@ function blocoCobranca(config) {
 
         <div class="field"><label for="c-msg">Modelo da mensagem de cobrança</label>
           <textarea id="c-msg" name="charge_message" rows="9">${esc(config?.charge_message ?? MODELO_PADRAO)}</textarea>
-          <small>Trocas automáticas: {nome} {mes} {valor} {vencimento} {chave} {copiaecola} {professor}</small></div>
+          <small>Trocas automáticas: {nome} {mes} {valor} {vencimento} {chave} {copiaecola} {link} {professor}</small></div>
 
         ${previa ? `<div class="eyebrow" style="margin-bottom:var(--sp-2)">Prévia do copia e cola (exemplo de R$ 100,00)</div>` : ""}
         <code class="pix-code" id="previa-pix" style="${previa ? "" : "display:none"}">${esc(previa)}</code>

@@ -406,3 +406,11 @@ export async function reduzirImagem(arquivo, lado = 512, qualidade = 0.85) {
     bitmap.close();
   }
 }
+
+// Endereço absoluto de uma tela do app, para pôr dentro de mensagem que sai
+// daqui (a cobrança no WhatsApp). Derivado do `location` em vez de fixado numa
+// constante: o app roda em `localhost` no teste e embaixo de `/App-Fitness/` em
+// produção, e um endereço fixo mandaria o aluno para o lugar errado num dos dois.
+export function linkDoApp(hash = "") {
+  return `${location.origin}${location.pathname}${hash}`;
+}

@@ -12,13 +12,14 @@ import { PROFESSOR } from "../config.js";
 import { pixCopiaECola, linkDoWhatsapp } from "../pix.js";
 import { registrarErro } from "../log.js";
 import {
-  esc, moeda, formatarData, nomeDoMes, mesDeReferencia, somarDias, plural, hoje, diasEntre,
+  esc, moeda, formatarData, nomeDoMes, mesDeReferencia, somarDias, plural, hoje, diasEntre, linkDoApp,
 } from "../utils.js";
 
 const MODELO_PADRAO =
   "Oi {nome}! Tudo certo?\n\n" +
   "Sua mensalidade de {mes} é de {valor}, com vencimento em {vencimento}.\n\n" +
   "Pix: {chave}\n\n" +
+  "Para copiar o código com um toque, é só abrir:\n{link}\n\n" +
   "Se preferir, o copia e cola:\n{copiaecola}\n\n" +
   "Qualquer dúvida é só me chamar. Bons treinos! — {professor}";
 
@@ -240,6 +241,10 @@ export async function render(alvo) {
       .replaceAll("{vencimento}", formatarData(pagamento.due_date))
       .replaceAll("{chave}", chave || "(chave Pix não configurada)")
       .replaceAll("{copiaecola}", copiaECola || "(configure a chave Pix em “Dados de cobrança”)")
+      // O WhatsApp não tem botão de copiar dentro da mensagem — isso só existe
+      // na API Business, com template homologado. O link leva o aluno para a
+      // tela onde o botão de copiar é de verdade.
+      .replaceAll("{link}", linkDoApp("#/aluno/financeiro"))
       .replaceAll("{professor}", PROFESSOR.nome.split(/\s+/)[0]);
   }
 

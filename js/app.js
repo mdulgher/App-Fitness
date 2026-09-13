@@ -3,7 +3,7 @@
 import { APP_NAME, DATA_SOURCE, SUPABASE } from "./config.js";
 import { db } from "./db.js";
 import { restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial, ligarTimeoutDeSessao } from "./auth.js";
-import { iniciar, resolver, navegar, definirCallbackDeTroca } from "./router.js";
+import { iniciar, resolver, navegar, definirCallbackDeTroca, destinoAposLogin } from "./router.js";
 import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
 import { ligarSincronizacaoAutomatica } from "./sync.js";
@@ -209,7 +209,8 @@ iniciar();
 
 // Reage ao login/logout feito dentro das telas.
 window.addEventListener("lpt:sessao", () => {
-  navegar(rotaInicial());
+  // Volta para o link que o usuario tentou abrir antes de entrar, quando havia um.
+  navegar(usuarioAtual() ? destinoAposLogin(usuarioAtual().role) : rotaInicial());
   resolver();
 });
 

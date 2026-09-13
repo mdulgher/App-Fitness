@@ -45,6 +45,19 @@ function casar(caminho) {
 let aoTrocar = () => {};
 let limparView = () => {};
 let versaoDaRota = 0;
+let destinoPendente = null;
+
+// Para onde ir depois do login: o link que o usuário tentou abrir, se o papel
+// dele permitir, senão a própria área. Consome o destino — recusado ou usado,
+// ele não vale para o próximo login.
+export function destinoAposLogin(papel) {
+  const caminho = destinoPendente;
+  destinoPendente = null;
+  if (!caminho) return rotaInicial();
+  const achado = casar(caminho);
+  if (!achado?.rota.papel || !cumprePapel(achado.rota.papel, papel)) return rotaInicial();
+  return `#${caminho}`;
+}
 
 export function navegar(hash) {
   if (location.hash === hash) resolver();
@@ -69,8 +82,11 @@ export async function resolver() {
 
   const { rota, params } = achado;
 
-  // Precisa estar logado
+  // Precisa estar logado. O destino fica guardado: quem chega por um link
+  // direto — a cobrança no WhatsApp aponta para o financeiro — cairia no
+  // painel depois de entrar e teria que procurar a tela de novo.
   if (rota.papel && !usuario) {
+    destinoPendente = caminho;
     navegar("#/login");
     return;
   }
