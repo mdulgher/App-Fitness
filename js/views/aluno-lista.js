@@ -8,6 +8,7 @@
 import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import { esc, plural } from "../utils.js";
+import { registrarErro } from "../log.js";
 
 export async function render(alvo) {
   const alunoId = usuarioAtual().id;
@@ -48,6 +49,7 @@ export async function render(alvo) {
       ]);
       desenhar();
     } catch (err) {
+      registrarErro(err, { contexto: { tela: "lista pessoal", acao: "carregar" } });
       lista.innerHTML = `<div class="empty"><p>Não foi possível carregar sua lista.</p><p class="small">${esc(err.message)}</p></div>`;
     }
   }
@@ -63,7 +65,10 @@ export async function render(alvo) {
           await db.removerDaListaPessoal(b.dataset.remover);
           await carregar();
           avisar("Removido da sua lista.");
-        } catch (err) { avisar(err.message); }
+        } catch (err) {
+          registrarErro(err, { contexto: { tela: "lista pessoal", acao: "remover" } });
+          avisar(err.message);
+        }
       })
     );
 
@@ -72,7 +77,10 @@ export async function render(alvo) {
         try {
           await db.atualizarItemDaListaPessoal(input.dataset.nota, { notes: input.value.trim() || null });
           avisar("Anotação salva.");
-        } catch (err) { avisar(err.message); }
+        } catch (err) {
+          registrarErro(err, { contexto: { tela: "lista pessoal", acao: "salvarNota" } });
+          avisar(err.message);
+        }
       })
     );
   }
@@ -149,6 +157,7 @@ export async function render(alvo) {
             desenharResultado();
             await carregar();
           } catch (err) {
+            registrarErro(err, { contexto: { tela: "lista pessoal", acao: "adicionar" } });
             avisar(err.message);
             b.disabled = false;
           }

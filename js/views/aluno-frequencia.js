@@ -86,6 +86,7 @@ export async function render(alvo) {
           <button class="btn btn-sm" id="mes-proximo" aria-label="Próximo mês">&rarr;</button>
         </div>
       </div>
+      <div id="feedback-frequencia" class="library-feedback hidden" role="status"></div>
       <div class="card card-calendario" style="margin-bottom:var(--sp-5)">
         <div class="calendario-mes" id="calendario-grid"></div>
         <div class="muted small" style="margin-top:var(--sp-3);text-align:center">
@@ -103,64 +104,84 @@ export async function render(alvo) {
       </div>
     </div>`;
 
-  const recarregar = () => render(alvo);
-
-  // Renderiza o calendário inicial
   const calendarioGrid = alvo.querySelector("#calendario-grid");
-  renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
+  let pedidoDoMes = 0;
+
+  async function mostrarMes() {
+    const pedido = ++pedidoDoMes;
+    const primeiro = `${anoSelecionado}-${String(mesSelecionado).padStart(2, "0")}-01`;
+    const ultimoDia = new Date(Date.UTC(anoSelecionado, mesSelecionado, 0)).getUTCDate();
+    const ultimo = `${anoSelecionado}-${String(mesSelecionado).padStart(2, "0")}-${ultimoDia}`;
+    try {
+      const doMes = (await db.listarSessoes(alunoId, { de: primeiro, ate: ultimo }))
+        .filter((s) => s.completed_at);
+      if (pedido !== pedidoDoMes || !alvo.isConnected) return;
+      renderMes(calendarioGrid, anoSelecionado, mesSelecionado,
+        new Map(doMes.map((s) => [s.date, s])), () => location.reload());
+      alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "frequencia", acao: "carregarMes", primeiro, ultimo } });
+      calendarioGrid.innerHTML = `<div class="empty">Não foi possível carregar este mês.</div>`;
+    }
+  }
+
+  await mostrarMes();
 
   // Navegação de mês
-  alvo.querySelector("#mes-anterior").addEventListener("click", () => {
+  alvo.querySelector("#mes-anterior").addEventListener("click", async () => {
     if (mesSelecionado === 1) {
       mesSelecionado = 12;
       anoSelecionado -= 1;
     } else {
       mesSelecionado -= 1;
     }
-    renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
-    alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    await mostrarMes();
   });
 
-  alvo.querySelector("#mes-proximo").addEventListener("click", () => {
+  alvo.querySelector("#mes-proximo").addEventListener("click", async () => {
     if (mesSelecionado === 12) {
       mesSelecionado = 1;
       anoSelecionado += 1;
     } else {
       mesSelecionado += 1;
     }
-    renderMes(calendarioGrid, anoSelecionado, mesSelecionado, diasTreinados, alunoId, recarregar);
-    alvo.querySelector("#mes-titulo").textContent = `${MESES[mesSelecionado - 1]} de ${anoSelecionado}`;
+    await mostrarMes();
   });
 
   // Pull to refresh — só no mobile (touch); no desktop ligarPullToRefresh retorna sem fazer nada.
   // Remove indicador antigo caso a tela seja re-renderizada sem trocar de rota.
-  document.getElementById("ptr-indicador")?.remove();
-  ligarPullToRefresh(() => render(alvo));
+  const desligarPull = ligarPullToRefresh(() => location.reload());
+  return desligarPull;
 }
 
-function renderMes(container, ano, mes, diasTreinados, alunoId, aoRecarregar) {
+function renderMes(container, ano, mes, diasTreinados, aoRecarregar) {
   async function aoDesmarcar(sessaoId, data) {
-    const confirmou = confirm(
-      `Desmarcar treino concluído em ${formatarData(data)}? ` +
-      `Seu professor ainda verá o histórico.`
-    );
-    if (!confirmou) return;
+    const feedback = container.closest(".wrap").querySelector("#feedback-frequencia");
+    feedback.innerHTML = `
+      <span>Desmarcar o treino de ${esc(formatarData(data))}?</span>
+      <button class="btn btn-sm" type="button" data-confirmar>Confirmar</button>
+      <button class="btn btn-sm" type="button" data-cancelar>Cancelar</button>`;
+    feedback.classList.remove("hidden");
+    feedback.querySelector("[data-cancelar]").addEventListener("click", () => feedback.classList.add("hidden"));
+    feedback.querySelector("[data-confirmar]").addEventListener("click", async () => {
+      feedback.querySelectorAll("button").forEach((b) => { b.disabled = true; });
 
-    const el = container.querySelector(`[data-sessao="${sessaoId}"]`);
-    el.style.opacity = "0.5";
-    el.style.pointerEvents = "none";
+      const el = container.querySelector(`[data-sessao="${sessaoId}"]`);
+      el.style.opacity = "0.5";
+      el.style.pointerEvents = "none";
 
-    try {
-      await db.desconcluirSessao(sessaoId);
-      await aoRecarregar();
-    } catch (err) {
-      registrarErro(err, {
-        contexto: { tela: "frequencia", acao: "desconcluirSessao", sessaoId, data },
-      });
-      alert("Erro ao desmarcar: " + err.message);
-      el.style.opacity = "1";
-      el.style.pointerEvents = "auto";
-    }
+      try {
+        await db.desconcluirSessao(sessaoId);
+        await aoRecarregar();
+      } catch (err) {
+        registrarErro(err, {
+          contexto: { tela: "frequencia", acao: "desconcluirSessao", sessaoId, data },
+        });
+        feedback.textContent = `Erro ao desmarcar: ${err.message}`;
+        el.style.opacity = "1";
+        el.style.pointerEvents = "auto";
+      }
+    });
   }
 
   container.innerHTML = renderizarCalendario(ano, mes, diasTreinados, aoDesmarcar);
@@ -192,7 +213,7 @@ function semanas(diasTreinados, meta) {
   for (let i = 0; i < 8; i++) {
     const segunda = somarDias(inicioDaSemana(hoje()), -7 * i);
     const domingo = somarDias(segunda, 6);
-    const feitos = [...diasTreinados].filter((d) => d >= segunda && d <= domingo).length;
+    const feitos = [...diasTreinados.keys()].filter((data) => data >= segunda && data <= domingo).length;
     const bateu = meta > 0 && feitos >= meta;
 
     linhas.push(`

@@ -23,7 +23,7 @@ import {
 import { urlDeImagemSegura, videoSeguro } from "../exercise-validation.js";
 import {
   enfileirarSerie, enfileirarConclusao, seriesNaFila, conclusaoNaFila,
-  pareceFaltaDeRede, sincronizar, pendentes,
+  sincronizar, pendentes,
 } from "../sync.js";
 import { registrarErro } from "../log.js";
 
@@ -52,6 +52,7 @@ export async function render(alvo, { params }) {
   // saído do app e voltado. O que ele viu na tela precisa continuar lá.
   let fila = seriesNaFila(alunoId, diaId, hoje());
   let conclusaoPendente = conclusaoNaFila(alunoId, diaId, hoje());
+  let salvamentosEmCurso = 0;
 
   // "Da última vez" ignora a sessão de hoje: comparar o treino com ele mesmo
   // não diz nada.
@@ -101,13 +102,6 @@ export async function render(alvo, { params }) {
     feedback.classList.remove("hidden");
   };
 
-  // A sessão nasce no primeiro registro. Idempotente: se outra aba já criou a
-  // de hoje, `abrirSessao` devolve a mesma.
-  async function garantirSessao() {
-    if (!sessao) sessao = await db.abrirSessao(alunoId, diaId);
-    return sessao;
-  }
-
   const cargaDe = (itemId, serie) =>
     cargas.find((c) => c.workout_day_exercise_id === itemId && c.set_number === serie) ?? null;
 
@@ -146,7 +140,7 @@ export async function render(alvo, { params }) {
   }
 
   // Depois que a fila vai embora, quem manda é o banco.
-  async function recarregarDoBanco() {
+  async function recarregarDoBanco(redesenharTudo = true) {
     try {
       sessao = (await db.listarSessoes(alunoId, { de: hoje(), ate: hoje() }))
         .find((s) => s.workout_day_id === diaId) ?? sessao;
@@ -156,6 +150,7 @@ export async function render(alvo, { params }) {
     }
     fila = seriesNaFila(alunoId, diaId, hoje());
     conclusaoPendente = conclusaoNaFila(alunoId, diaId, hoje());
+    if (!alvo.isConnected || !redesenharTudo) return;
     desenharProgresso();
     desenharExercicios();
     desenharFim();
@@ -220,26 +215,31 @@ export async function render(alvo, { params }) {
       const botao = ev.currentTarget;
       botao.disabled = true;
       botao.textContent = "Registrando…";
+      salvamentosEmCurso += 1;
       try {
-        await garantirSessao();
-        sessao = await db.concluirSessao(sessao.id, "student");
-        desenharProgresso();
-        desenharFim();
-        avisar("Presença registrada. Bom treino feito.");
-      } catch (err) {
-        if (!pareceFaltaDeRede(err)) {
-          registrarErro(err, { contexto: { acao: "concluirTreino", diaId } });
-          avisar(err.message);
-          botao.disabled = false;
-          botao.textContent = "Concluir treino";
-          return;
-        }
-        enfileirarConclusao({ alunoId, diaId, data: hoje() });
+        await enfileirarConclusao({ alunoId, diaId, data: hoje() });
         conclusaoPendente = true;
+        desenharFim();
+        desenharPendencias();
+        const { erro } = await sincronizar();
+        await recarregarDoBanco(false);
         desenharProgresso();
         desenharFim();
         desenharPendencias();
-        avisar("Sem internet. Presença guardada no aparelho — mando sozinho quando a rede voltar.");
+        if (!conclusaoNaFila(alunoId, diaId, hoje())) {
+          avisar("Presença registrada. Bom treino feito.");
+        } else if (erro) {
+          avisar(`Presença guardada, mas ainda não enviada: ${erro.message}`);
+        } else {
+          avisar("Sem internet. Presença guardada no aparelho — mando sozinho quando a rede voltar.");
+        }
+      } catch (err) {
+        registrarErro(err, { contexto: { acao: "concluirTreino", diaId } });
+        avisar(err.message);
+        botao.disabled = false;
+        botao.textContent = "Concluir treino";
+      } finally {
+        salvamentosEmCurso -= 1;
       }
     });
   }
@@ -306,8 +306,9 @@ export async function render(alvo, { params }) {
 
   function linhaDeSerie(item, serie, ultima) {
     const guardada = naFilaDe(item.id, serie);
-    const registro = cargaDe(item.id, serie) ??
-      (guardada ? { weight_kg: guardada.peso, reps_done: guardada.reps } : null);
+    const registro = guardada
+      ? { weight_kg: guardada.peso, reps_done: guardada.reps }
+      : cargaDe(item.id, serie);
     // O campo vem vazio, mas com a série equivalente da última vez como
     // sugestão cinza: mostra a referência sem gravar número que o aluno não
     // levantou.
@@ -369,37 +370,9 @@ export async function render(alvo, { params }) {
       return;
     }
 
+    salvamentosEmCurso += 1;
     try {
-      await garantirSessao();
-      const salvo = await db.registrarSerie({
-        alunoId,
-        sessaoId: sessao.id,
-        workoutDayExerciseId: item.id,
-        exercicioId: item.exercise_id,
-        serie,
-        peso,
-        reps,
-      });
-
-      cargas = [
-        ...cargas.filter((c) => !(c.workout_day_exercise_id === item.id && c.set_number === serie)),
-        salvo,
-      ];
-      delete fila[`${item.id}:${serie}`];
-
-      marcarLinha(linha, peso != null || reps != null, false);
-      desenharProgresso();
-      desenharPendencias();
-      avisar("Série registrada.");
-    } catch (err) {
-      if (!pareceFaltaDeRede(err)) {
-        registrarErro(err, { contexto: { acao: "registrarSerie", diaId, itemId: item.id, serie } });
-        avisar(err.message);
-        return;
-      }
-      // Sem sinal: guarda no aparelho e segue o treino. Nada de erro vermelho
-      // no meio de uma série.
-      enfileirarSerie({
+      await enfileirarSerie({
         alunoId, diaId, data: hoje(), itemId: item.id,
         exercicioId: item.exercise_id, serie, peso, reps,
       });
@@ -407,7 +380,24 @@ export async function render(alvo, { params }) {
       marcarLinha(linha, peso != null || reps != null, true);
       desenharProgresso();
       desenharPendencias();
-      avisar("Sem internet. Série guardada no aparelho — mando sozinho quando a rede voltar.");
+      const { erro } = await sincronizar();
+      await recarregarDoBanco(false);
+      const continuaPendente = Boolean(seriesNaFila(alunoId, diaId, hoje())?.[`${item.id}:${serie}`]);
+      marcarLinha(linha, peso != null || reps != null, continuaPendente);
+      desenharProgresso();
+      desenharPendencias();
+      if (!continuaPendente) {
+        avisar("Série registrada.");
+      } else if (erro) {
+        avisar(`Série guardada, mas ainda não enviada: ${erro.message}`);
+      } else {
+        avisar("Sem internet. Série guardada no aparelho — mando sozinho quando a rede voltar.");
+      }
+    } catch (err) {
+      registrarErro(err, { contexto: { acao: "registrarSerie", diaId, itemId: item.id, serie } });
+      avisar(err.message);
+    } finally {
+      salvamentosEmCurso -= 1;
     }
   }
 
@@ -420,9 +410,11 @@ export async function render(alvo, { params }) {
   // Cronômetro de descanso: um botão que conta para trás no próprio rótulo.
   // Sem som e sem notificação — o celular está no bolso ou no chão, e o aluno
   // olha quando quiser.
+  const descansos = new Set();
+  const pararDescanso = (timer) => { clearInterval(timer); descansos.delete(timer); };
   function contarDescanso(botao) {
     if (botao.dataset.rodando === "1") {
-      clearInterval(Number(botao.dataset.timer));
+      pararDescanso(Number(botao.dataset.timer));
       botao.dataset.rodando = "0";
       botao.textContent = `Descansar ${botao.dataset.descanso}s`;
       return;
@@ -438,11 +430,12 @@ export async function render(alvo, { params }) {
         botao.textContent = `${restam}s — toque para parar`;
         return;
       }
-      clearInterval(timer);
+      pararDescanso(timer);
       botao.dataset.rodando = "0";
       botao.textContent = "Descanso acabou — próxima série";
     }, 1000);
 
+    descansos.add(timer);
     botao.dataset.timer = String(timer);
   }
 
@@ -490,11 +483,19 @@ export async function render(alvo, { params }) {
 
   // A fila também é enviada pelo temporizador de `sync.js`, fora desta tela.
   // Quando isso acontece, a tela precisa deixar de mostrar "guardado".
+  let atualizacaoDaFila = null;
   const aoMudarFila = () => {
-    if (!alvo.isConnected) return;
-    recarregarDoBanco();
+    if (!alvo.isConnected || salvamentosEmCurso) return;
+    clearTimeout(atualizacaoDaFila);
+    atualizacaoDaFila = setTimeout(recarregarDoBanco, 50);
   };
   window.addEventListener("lpt:fila", aoMudarFila);
+  return () => {
+    clearTimeout(atualizacaoDaFila);
+    descansos.forEach(clearInterval);
+    descansos.clear();
+    window.removeEventListener("lpt:fila", aoMudarFila);
+  };
 }
 
 /* ---------- números ---------- */

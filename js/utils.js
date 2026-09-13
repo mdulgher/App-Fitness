@@ -278,7 +278,7 @@ export function uid() {
 // Compatível com Safari PWA (atalho na tela inicial do iPhone).
 // aoRefrescar: função async chamada quando o usuário solta após o limiar.
 export function ligarPullToRefresh(aoRefrescar) {
-  if (!("ontouchstart" in window)) return; // desktop: sai sem fazer nada
+  if (!("ontouchstart" in window)) return () => {}; // desktop: sai sem fazer nada
 
   const LIMIAR = 65;   // px de arrasto para acionar
   const LIMITE = 90;   // px máximo de deslocamento visual
@@ -321,21 +321,21 @@ export function ligarPullToRefresh(aoRefrescar) {
     setTimeout(() => { indicador.style.transition = ""; }, 250);
   }
 
-  document.addEventListener("touchstart", (e) => {
+  const aoIniciar = (e) => {
     if (scrollTopo() > 2) return; // pequena tolerância para iOS
     inicioY = e.touches[0].clientY;
     deltaAtual = 0;
     ativo = true;
-  }, { passive: true });
+  };
 
-  document.addEventListener("touchmove", (e) => {
+  const aoMover = (e) => {
     if (!ativo) return;
     const delta = e.touches[0].clientY - inicioY;
     if (delta <= 0) { ativo = false; return; }
     mostrar(delta);
-  }, { passive: true });
+  };
 
-  document.addEventListener("touchend", async () => {
+  const aoTerminar = async () => {
     if (!ativo) return;
     ativo = false;
     const h = deltaAtual;
@@ -346,5 +346,17 @@ export function ligarPullToRefresh(aoRefrescar) {
       indicador.querySelector(".ptr-icone").textContent = "↻";
       try { await aoRefrescar(); } finally { esconder(); }
     }
-  });
+  };
+
+  document.addEventListener("touchstart", aoIniciar, { passive: true });
+  document.addEventListener("touchmove", aoMover, { passive: true });
+  document.addEventListener("touchend", aoTerminar);
+
+  return () => {
+    ativo = false;
+    document.removeEventListener("touchstart", aoIniciar);
+    document.removeEventListener("touchmove", aoMover);
+    document.removeEventListener("touchend", aoTerminar);
+    indicador.remove();
+  };
 }

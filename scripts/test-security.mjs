@@ -1,0 +1,94 @@
+// Testes de segurança contra o Supabase real. Não imprime senhas, tokens nem
+// dados pessoais e não altera dados de negócio. A única tentativa de escrita é
+// uma promoção de papel que deve ser recusada antes de chegar ao banco.
+import fs from "node:fs/promises";
+import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
+import { SUPABASE } from "../js/config.js";
+
+const texto = await fs.readFile(new URL("../CREDENCIAIS.local.md", import.meta.url), "utf8");
+const linhas = [...texto.matchAll(/\|\s*`([^`\s]+@[^`\s]+)`\s*\|\s*`([^`]+)`\s*\|/g)]
+  .map((m) => ({ email: m[1], senha: m[2] }));
+assert.ok(linhas.length >= 3, "São necessárias as credenciais do professor e de dois alunos.");
+
+const cabecalhoAnon = { apikey: SUPABASE.anonKey, "Content-Type": "application/json" };
+
+async function requisitar(caminho, { token, ...opcoes } = {}) {
+  const headers = { ...cabecalhoAnon, ...(opcoes.headers ?? {}) };
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const resposta = await fetch(`${SUPABASE.url}${caminho}`, { ...opcoes, headers });
+  const textoResposta = await resposta.text();
+  let corpo = null;
+  try { corpo = textoResposta ? JSON.parse(textoResposta) : null; } catch { corpo = textoResposta; }
+  return { status: resposta.status, ok: resposta.ok, corpo };
+}
+
+async function entrar({ email, senha }) {
+  const r = await requisitar("/auth/v1/token?grant_type=password", {
+    method: "POST",
+    body: JSON.stringify({ email, password: senha }),
+  });
+  assert.equal(r.ok, true, `Falha no login de uma conta de teste: HTTP ${r.status}`);
+  return { token: r.corpo.access_token, id: r.corpo.user.id };
+}
+
+for (const tabela of [
+  "profiles", "students", "workout_plans", "workout_days",
+  "workout_day_exercises", "attendance", "exercise_logs", "payments",
+  "notes", "trainer_settings", "app_errors",
+]) {
+  const r = await requisitar(`/rest/v1/${tabela}?select=*&limit=1`);
+  assert.ok([401, 403].includes(r.status), `${tabela} ainda está acessível anonimamente (HTTP ${r.status}).`);
+}
+
+const rpcAnon = await requisitar("/rest/v1/rpc/ativar_ficha", {
+  method: "POST",
+  body: JSON.stringify({ p_ficha_id: crypto.randomUUID() }),
+});
+assert.ok([401, 403, 404].includes(rpcAnon.status), `RPC ativar_ficha aceitou acesso anônimo: HTTP ${rpcAnon.status}.`);
+
+const [alunoA, alunoB] = await Promise.all([entrar(linhas[1]), entrar(linhas[2])]);
+
+for (const [tabela, filtro] of [
+  ["profiles", `id=eq.${alunoB.id}`],
+  ["students", `id=eq.${alunoB.id}`],
+  ["workout_plans", `student_id=eq.${alunoB.id}`],
+  ["attendance", `student_id=eq.${alunoB.id}`],
+  ["exercise_logs", `student_id=eq.${alunoB.id}`],
+  ["payments", `student_id=eq.${alunoB.id}`],
+  ["notes", `student_id=eq.${alunoB.id}`],
+  ["student_exercises", `student_id=eq.${alunoB.id}`],
+]) {
+  const r = await requisitar(`/rest/v1/${tabela}?select=*&${filtro}&limit=1`, { token: alunoA.token });
+  assert.equal(r.ok, true, `${tabela}: consulta do aluno falhou com HTTP ${r.status}.`);
+  assert.deepEqual(r.corpo, [], `${tabela}: um aluno conseguiu ler dados de outro aluno.`);
+}
+
+const proprio = await requisitar(`/rest/v1/profiles?select=id,role&id=eq.${alunoA.id}`, { token: alunoA.token });
+assert.equal(proprio.ok, true);
+assert.equal(proprio.corpo?.[0]?.id, alunoA.id, "O aluno não consegue ler o próprio perfil.");
+assert.equal(proprio.corpo?.[0]?.role, "student", "A conta de teste deixou de ser aluno.");
+
+const pixAutenticado = await requisitar("/rest/v1/trainer_settings?select=id&limit=1", { token: alunoA.token });
+assert.equal(pixAutenticado.ok, true, `Aluno não consegue ler a configuração PIX: HTTP ${pixAutenticado.status}.`);
+
+const promover = await requisitar(`/rest/v1/profiles?id=eq.${alunoA.id}`, {
+  token: alunoA.token,
+  method: "PATCH",
+  headers: { Prefer: "return=representation" },
+  body: JSON.stringify({ role: "trainer" }),
+});
+assert.ok([401, 403].includes(promover.status), `CRÍTICO: aluno conseguiu alterar a própria role (HTTP ${promover.status}).`);
+
+const continuaAluno = await requisitar(`/rest/v1/profiles?select=role&id=eq.${alunoA.id}`, { token: alunoA.token });
+assert.equal(continuaAluno.corpo?.[0]?.role, "student", "A tentativa de promoção alterou a conta.");
+
+const senhasAtuaisNoHistorico = linhas.filter(({ senha }) => {
+  const busca = spawnSync("git", ["log", "--all", "--format=%H", `-S${senha}`, "--", "."], {
+    cwd: new URL("..", import.meta.url), encoding: "utf8",
+  });
+  return busca.status === 0 && busca.stdout.trim();
+}).length;
+
+console.log("OK: acesso anônimo bloqueado, isolamento entre alunos e promoção de papel recusada.");
+console.log(`INFO: ${senhasAtuaisNoHistorico} senha(s) atual(is) de contas de teste aparecem no histórico Git.`);

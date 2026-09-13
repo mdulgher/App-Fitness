@@ -3,6 +3,7 @@ import { esc, capaDoVideo, urlDeEmbed } from '../utils.js';
 import { CATALOGO_PEITO, normalizarNome, referenciaDaFoto } from '../catalogo-peito.js';
 import { referenciaDaIlustracao } from '../catalogo-ilustracoes.js';
 import { urlDeImagemSegura, videoSeguro, validarExercicio } from '../exercise-validation.js';
+import { registrarErro } from '../log.js';
 
 // Duas fontes de mídia com licenças diferentes: ilustração vetorial (RepDB) e
 // foto (Free Exercise DB). Cada referência carrega o próprio crédito, para a
@@ -78,6 +79,7 @@ export async function render(alvo) {
       desenhar();
     } catch (err) {
       if (!alvo.contains(grade)) return;
+      registrarErro(err, { contexto: { tela: 'exercicios', acao: 'carregar' } });
       grade.innerHTML = '<div class="empty"><p>Não foi possível carregar a biblioteca.</p><button class="btn" id="tentar-biblioteca">Tentar novamente</button></div>';
       avisar(err.message, true);
       grade.querySelector('#tentar-biblioteca').addEventListener('click', carregar);
@@ -196,7 +198,10 @@ export async function render(alvo) {
         dialog.close();
         avisar(e.archived ? 'Exercício restaurado.' : 'Exercício arquivado. Histórico preservado.');
         await carregar();
-      } catch (err) { erroDialog(err.message); }
+      } catch (err) {
+        registrarErro(err, { contexto: { tela: 'exercicios', acao: e.archived ? 'restaurar' : 'arquivar', exercicioId: e.id } });
+        erroDialog(err.message);
+      }
       finally { salvando = false; conteudo.querySelectorAll('button').forEach(b => b.disabled = false); }
     });
     conteudo.querySelector('#voltar-detalhe').focus();
@@ -256,7 +261,10 @@ export async function render(alvo) {
         atualizarGrupos();
         avisar(e ? 'Alterações salvas.' : 'Exercício adicionado à biblioteca.');
         await carregar();
-      } catch (err) { erroDialog(err.message); }
+      } catch (err) {
+        registrarErro(err, { contexto: { tela: 'exercicios', acao: e ? 'editar' : 'criar', exercicioId: e?.id ?? null } });
+        erroDialog(err.message);
+      }
       finally {
         salvando = false;
         form.querySelectorAll('button,input,select,textarea').forEach(el => el.disabled = false);
@@ -301,7 +309,11 @@ export async function render(alvo) {
       const r = await db.importarCatalogoPeito();
       avisar(`${r.criados} exercícios adicionados; ${r.ilustrados} receberam fotos. Os cadastros existentes foram preservados.`);
       await carregar();
-    } catch (err) { avisar(`A importação foi interrompida: ${err.message}. Tente novamente; os itens já adicionados serão preservados.`, true); await carregar(); }
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: 'exercicios', acao: 'importarCatalogo' } });
+      avisar(`A importação foi interrompida: ${err.message}. Tente novamente; os itens já adicionados serão preservados.`, true);
+      await carregar();
+    }
     finally { importar.disabled = false; importar.textContent = 'Adicionar coleção de peito'; }
   });
   await carregar();

@@ -10,6 +10,7 @@
 import { db, statusPagamento, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import { PROFESSOR } from "../config.js";
 import { pixCopiaECola, linkDoWhatsapp } from "../pix.js";
+import { registrarErro } from "../log.js";
 import {
   esc, moeda, formatarData, nomeDoMes, mesDeReferencia, somarDias, plural, hoje, diasEntre,
 } from "../utils.js";
@@ -27,6 +28,7 @@ export async function render(alvo) {
   let alunos = [];
   let config = null;
   let filtro = "todos";
+  let versaoCarregamento = 0;
 
   alvo.innerHTML = `
     <div class="wrap">
@@ -50,7 +52,10 @@ export async function render(alvo) {
             .map(([v, r]) => `<button class="movement-tab" data-filtro="${v}" aria-pressed="${v === "todos"}">${r}</button>`)
             .join("")}
         </div>
-        <a class="btn" href="#/professor/perfil">Dados de cobrança</a>
+        <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+          <a class="btn" href="#/professor/perfil">Dados de cobrança</a>
+          <button class="btn btn-primary" id="gerar" disabled>Lançar cobranças do mês</button>
+        </div>
       </div>
 
       <div id="feedback" role="status" class="library-feedback hidden"></div>
@@ -69,16 +74,27 @@ export async function render(alvo) {
   };
 
   async function carregar() {
+    const versao = ++versaoCarregamento;
+    const mesPedido = mes;
+    const gerar = alvo.querySelector("#gerar");
+    gerar.disabled = true;
     alvo.querySelector("#titulo-mes").textContent =
       `${nomeDoMes(mes)[0].toUpperCase()}${nomeDoMes(mes).slice(1)} de ${mes.slice(0, 4)}`;
     try {
-      [pagamentos, alunos, config] = await Promise.all([
-        db.listarPagamentosDoMes(mes),
+      const [novosPagamentos, novosAlunos, novaConfig] = await Promise.all([
+        db.listarPagamentosDoMes(mesPedido),
         db.listarAlunos(),
         db.buscarConfiguracaoDeCobranca(),
       ]);
+      if (versao !== versaoCarregamento || !alvo.isConnected) return;
+      pagamentos = novosPagamentos;
+      alunos = novosAlunos;
+      config = novaConfig;
       desenhar();
+      gerar.disabled = false;
     } catch (err) {
+      if (versao !== versaoCarregamento || !alvo.isConnected) return;
+      registrarErro(err, { contexto: { tela: "financeiro", acao: "carregar", mes: mesPedido } });
       lista.innerHTML = `<div class="empty"><p>Não foi possível carregar o financeiro.</p><p class="small">${esc(err.message)}</p></div>`;
     }
   }
@@ -101,7 +117,7 @@ export async function render(alvo) {
       ? visiveis.map(linha).join("")
       : `<div class="empty">${comStatus.length
           ? "Nenhuma cobrança nesta situação."
-          : "Nenhuma cobrança lançada neste mês. Use “Lançar cobranças do mês”."}</div>`;
+          : "Nenhuma cobrança lançada neste mês. Use “Lançar cobranças do mês” para preparar os registros."}</div>`;
 
     lista.querySelectorAll("[data-baixa]").forEach((b) =>
       b.addEventListener("click", () => alternarBaixa(b.dataset.baixa, b.dataset.acao))
@@ -117,8 +133,83 @@ export async function render(alvo) {
       else await db.reabrirPagamento(id);
       await carregar();
       avisar(acao === "pagar" ? "Pagamento registrado." : "Pagamento reaberto.");
-    } catch (err) { avisar(esc(err.message)); }
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "financeiro", acao: acao === "pagar" ? "darBaixa" : "reabrir", id } });
+      avisar(esc(err.message));
+    }
   }
+
+  /* ---------- lançar as cobranças do mês ---------- */
+
+  alvo.querySelector("#gerar").addEventListener("click", () => {
+    const mesDaPrevia = mes;
+    const existentes = new Set(pagamentos.map((p) => p.student_id));
+    const semValor = alunos.filter((a) => !(Number(a.monthly_fee) > 0));
+    const novos = alunos.filter((a) => Number(a.monthly_fee) > 0 && !existentes.has(a.id));
+    const total = novos.reduce((soma, aluno) => soma + Number(aluno.monthly_fee), 0);
+    const tituloMes = `${nomeDoMes(mesDaPrevia)[0].toUpperCase()}${nomeDoMes(mesDaPrevia).slice(1)} de ${mesDaPrevia.slice(0, 4)}`;
+
+    conteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Prévia do lançamento</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <h2>${esc(tituloMes)}</h2>
+      <p class="muted small">Isto cria os registros no controle financeiro. Nenhuma mensagem será enviada.</p>
+
+      <div class="grid grid-3" style="margin:var(--sp-4) 0">
+        ${cartao("Já lançadas", String(pagamentos.length), "não serão duplicadas")}
+        ${cartao("Novas", String(novos.length), moeda(total))}
+        ${cartao("Fora", String(semValor.length), "sem mensalidade válida")}
+      </div>
+
+      ${novos.length ? `
+        <div class="list" style="max-height:34vh;overflow:auto">
+          ${novos.map((aluno) => `
+            <div class="list-item">
+              <span class="list-item-main">
+                <span class="list-item-title">${esc(aluno.full_name)}</span>
+                <span class="muted small">vence dia ${esc(aluno.due_day ?? 5)}</span>
+              </span>
+              <strong>${esc(moeda(aluno.monthly_fee))}</strong>
+            </div>`).join("")}
+        </div>` : `<div class="empty">Todos os alunos com mensalidade já possuem cobrança neste mês.</div>`}
+
+      ${semValor.length ? `
+        <p class="muted small" style="margin-top:var(--sp-3)">
+          Fora por mensalidade vazia ou igual a zero: ${semValor.map((a) => esc(a.full_name)).join(", ")}.
+        </p>` : ""}
+
+      <div data-erro class="alert hidden" role="alert"></div>
+      <div class="dialog-actions">
+        <button type="button" class="btn" data-fechar>${novos.length ? "Cancelar" : "Fechar"}</button>
+        ${novos.length ? `<button type="button" class="btn btn-primary" id="confirmar-lancamento">Confirmar ${plural(novos.length, "lançamento", "lançamentos")}</button>` : ""}
+      </div>`;
+
+    dialogo.showModal();
+    conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+    conteudo.querySelector("#confirmar-lancamento")?.addEventListener("click", async (ev) => {
+      const botao = ev.currentTarget;
+      const erro = conteudo.querySelector("[data-erro]");
+      botao.disabled = true;
+      botao.textContent = "Lançando…";
+      try {
+        const criados = await db.gerarCobrancasDoMes(mesDaPrevia);
+        dialogo.close();
+        await carregar();
+        avisar(
+          `<strong>${plural(criados.length, "cobrança lançada", "cobranças lançadas")}.</strong> ` +
+          `Nenhuma mensagem foi enviada. Use “Cobrar no WhatsApp” quando quiser avisar cada aluno.`
+        );
+      } catch (err) {
+        registrarErro(err, { contexto: { tela: "financeiro", acao: "lancarCobrancas", mes: mesDaPrevia } });
+        erro.textContent = err.message;
+        erro.classList.remove("hidden");
+        botao.disabled = false;
+        botao.textContent = `Confirmar ${plural(novos.length, "lançamento", "lançamentos")}`;
+      }
+    });
+  });
 
   /* ---------- cobrar pelo WhatsApp ---------- */
 
@@ -137,7 +228,8 @@ export async function render(alvo) {
             identificador: `LPT${String(pagamento.reference_month).slice(0, 7).replace("-", "")}`,
           })
         : "";
-    } catch {
+    } catch (err) {
+      registrarErro(err, { contexto: { tela: "financeiro", acao: "gerarPix", pagamentoId: pagamento.id } });
       copiaECola = "";
     }
 

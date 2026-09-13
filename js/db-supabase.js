@@ -344,11 +344,12 @@ export async function atualizarFicha(id, patch) {
 // Ativar uma ficha desativa as outras do mesmo aluno: `fichaAtiva()` usa
 // `maybeSingle()` e duas ativas quebrariam a tela do aluno com erro de
 // "múltiplas linhas" em vez de simplesmente mostrar a mais nova.
+//
+// Desativar e ativar em duas requisições deixava o aluno sem ficha nenhuma se a
+// segunda falhasse. O RPC faz a troca dentro de uma transação e roda com as
+// permissões de quem chamou (`security invoker`), então o RLS continua valendo.
 export async function ativarFicha(id) {
-  const ficha = ok(await sb.from("workout_plans").select("student_id").eq("id", id).maybeSingle());
-  if (!ficha) throw new Error("Ficha não encontrada.");
-  ok(await sb.from("workout_plans").update({ active: false }).eq("student_id", ficha.student_id));
-  return ok(await sb.from("workout_plans").update({ active: true }).eq("id", id).select().single());
+  return ok(await sb.rpc("ativar_ficha", { p_ficha_id: id }));
 }
 
 export async function removerFicha(id) {

@@ -43,6 +43,8 @@ function casar(caminho) {
 }
 
 let aoTrocar = () => {};
+let limparView = () => {};
+let versaoDaRota = 0;
 
 export function navegar(hash) {
   if (location.hash === hash) resolver();
@@ -54,6 +56,7 @@ export function definirCallbackDeTroca(fn) {
 }
 
 export async function resolver() {
+  const minhaVersao = ++versaoDaRota;
   const caminho = caminhoAtual();
   const achado = casar(caminho);
   const usuario = usuarioAtual();
@@ -85,10 +88,19 @@ export async function resolver() {
   }
 
   const modulo = await rota.view();
+  if (minhaVersao !== versaoDaRota) return;
   const alvo = document.getElementById("view");
-  alvo.innerHTML = "";
+  limparView();
+  limparView = () => {};
+  const recipiente = document.createElement("div");
+  alvo.replaceChildren(recipiente);
   aoTrocar(caminho);
-  await modulo.render(alvo, { params, fase: rota.fase });
+  const limpar = await modulo.render(recipiente, { params, fase: rota.fase });
+  if (minhaVersao !== versaoDaRota) {
+    if (typeof limpar === "function") limpar();
+    return;
+  }
+  limparView = typeof limpar === "function" ? limpar : () => {};
   window.scrollTo(0, 0);
 }
 

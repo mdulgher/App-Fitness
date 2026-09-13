@@ -27,6 +27,8 @@ const ultimos = new Map();
 
 let sb = null;
 let usuario = () => null;
+let enviando = false;
+const novoIdLocal = () => crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
 
 // Injetado pelo app.js. Este módulo não importa db.js nem auth.js de propósito:
 // ele precisa funcionar mesmo quando é justamente um deles que está quebrado.
@@ -39,9 +41,18 @@ function guardarLocalmente(linha) {
   try {
     const anteriores = JSON.parse(localStorage.getItem(CHAVE_LOCAL) ?? "[]");
     // Só os 50 mais recentes: isto é rede de segurança, não arquivo morto.
-    localStorage.setItem(CHAVE_LOCAL, JSON.stringify([...anteriores, linha].slice(-50)));
+    const identificada = linha._local_id ? linha : { ...linha, _local_id: novoIdLocal() };
+    localStorage.setItem(CHAVE_LOCAL, JSON.stringify([...anteriores, identificada].slice(-50)));
   } catch {
     /* sem espaço: paciência */
+  }
+}
+
+function substituirErrosGuardados(linhas) {
+  try {
+    localStorage.setItem(CHAVE_LOCAL, JSON.stringify(linhas.slice(-50)));
+  } catch {
+    /* registrar o erro continua sem poder derrubar o app */
   }
 }
 
@@ -58,6 +69,36 @@ export function limparErrosGuardados() {
     localStorage.removeItem(CHAVE_LOCAL);
   } catch {
     /* idem */
+  }
+}
+
+// Drena sem esperar outro erro acontecer. Linhas de outra conta permanecem no
+// aparelho até aquela conta voltar, para respeitar a política de acesso.
+export async function enviarErrosGuardados() {
+  if (enviando || DATA_SOURCE !== "supabase" || !sb || !navigator.onLine) return;
+  enviando = true;
+  try {
+    const todos = errosGuardados().map((linha) =>
+      linha._local_id ? linha : { ...linha, _local_id: novoIdLocal() }
+    );
+    substituirErrosGuardados(todos);
+    const idAtual = usuario()?.id ?? null;
+    const enviados = new Set();
+    for (const linha of todos) {
+      if (linha.user_id != null && linha.user_id !== idAtual) {
+        continue;
+      }
+      const { _local_id, ...linhaDoBanco } = linha;
+      const { error } = await sb.from("app_errors").insert(linhaDoBanco);
+      if (!error) enviados.add(_local_id);
+    }
+    // Relê antes de remover confirmações: erros que chegaram durante a rede
+    // não faziam parte do lote e precisam continuar guardados.
+    substituirErrosGuardados(errosGuardados().filter((linha) => !enviados.has(linha._local_id)));
+  } catch {
+    /* a falha do log permanece silenciosa */
+  } finally {
+    enviando = false;
   }
 }
 
@@ -84,17 +125,8 @@ export async function registrarErro(erro, { origem = "tela", contexto = null } =
       online: navigator.onLine,
     };
 
-    // Sem banco (modo local) ou sem rede: fica no aparelho. A próxima chamada
-    // com rede leva o que está guardado junto.
-    if (DATA_SOURCE !== "supabase" || !sb || !navigator.onLine) {
-      guardarLocalmente({ ...linha, created_at: new Date().toISOString() });
-      return;
-    }
-
-    const pendentes = errosGuardados();
-    const { error } = await sb.from("app_errors").insert(pendentes.length ? [...pendentes, linha] : linha);
-    if (error) guardarLocalmente({ ...linha, created_at: new Date().toISOString() });
-    else if (pendentes.length) limparErrosGuardados();
+    guardarLocalmente({ ...linha, created_at: new Date().toISOString() });
+    await enviarErrosGuardados();
   } catch {
     // Log que derruba a tela seria pior que não ter log.
   }
@@ -113,4 +145,10 @@ export function ligarCapturaGlobal() {
   window.addEventListener("unhandledrejection", (ev) => {
     registrarErro(ev.reason, { origem: "promessa" });
   });
+  window.addEventListener("online", enviarErrosGuardados);
+  window.addEventListener("lpt:sessao", enviarErrosGuardados);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") enviarErrosGuardados();
+  });
+  enviarErrosGuardados();
 }

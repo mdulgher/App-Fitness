@@ -44,9 +44,9 @@ agenda semanal, lista pessoal do aluno, financeiro com cobrança por WhatsApp +
 Pix, perfil editável pelos dois papéis e a biblioteca de 53 exercícios.
 
 **O que ainda não existe:** nenhuma tela aponta mais para
-`views/em-construcao.js`. O que falta é acabamento (Fase 7) e os itens da
-seção 9 — fila offline, ilustrações dos exercícios e a aba de progressão do
-professor (Fase 5).
+`views/em-construcao.js`. A fila offline e toda a área do aluno estão prontas.
+Faltam as ilustrações completas, a aba de progressão do professor (Fase 5) e
+parte do acabamento/PWA (Fase 7).
 
 ### Log de erros e o fim do "Cannot coerce the result…" — 12/09/2026
 
@@ -61,15 +61,18 @@ estava online.
   construir e manter sem ninguém olhar. A tabela chega sozinha e o Claude Code
   lê direto pelo MCP do Supabase — `select * from app_errors order by created_at
   desc` — sem login novo e sem exportar nada à mão.
-- **RLS:** qualquer sessão insere o próprio erro, **inclusive deslogada**
-  (`user_id` nulo) — senão o erro que impede de entrar nunca seria visto. Ler e
-  apagar, só o professor.
+- **RLS:** só **sessão autenticada** insere erro (`user_id` nulo ou o próprio).
+  Ler e apagar, só o professor. Antes qualquer um inseria, inclusive deslogado,
+  para não perder o erro que impede de entrar; a chave publicável é pública e
+  isso deixava a tabela aberta a inundação por qualquer pessoa. O erro de quem
+  ainda não entrou **não se perde**: fica no aparelho e sobe no primeiro login
+  (ver `enviarErrosGuardados`).
 - Três regras dentro do `log.js`: registrar erro **nunca** pode causar erro (tudo
   dentro de try/catch que engole); a mesma mensagem na mesma rota só vai **uma
   vez por minuto** (erro dentro de laço encheria a tabela em segundos); **nada
   sensível** — vai mensagem, rota e o contexto que o chamador escolhe.
 - Sem rede ou no modo local, os erros ficam em `localStorage` (`lpt:erros`, os 50
-  últimos) e sobem junto com o próximo erro que conseguir subir.
+  últimos) e sobem ao reconectar, voltar ao app ou trocar de sessão.
 - `configurarLog` recebe o cliente do Supabase **injetado** pelo `app.js`. O log
   não importa `db.js` de propósito: precisa funcionar quando é a camada de dados
   que está quebrada.
@@ -232,9 +235,9 @@ Entregue e testado no navegador contra o banco real:
   do financeiro abre o `wa.me` com a mensagem pronta. A chave, o nome, a cidade
   e o modelo da mensagem ficam em "Dados de cobrança" (tabela
   `trainer_settings`), editáveis pelo professor dentro do app.
-- O botão de cobranças virou **"Lançar cobranças do mês"** e agora explica o que
-  fez, inclusive quem ficou de fora por não ter mensalidade cadastrada. Antes
-  ele dizia só "todos já têm cobrança" e parecia quebrado.
+- **"Lançar cobranças do mês"** mostra uma prévia antes de gravar: quantas já
+  existem, quais serão criadas, o total e quem ficará fora por mensalidade
+  vazia ou zero. Confirmar cria somente os registros; não envia WhatsApp.
 
 Privacidade reverificada com duas contas de aluno reais: um aluno não enxerga a
 mensalidade, a ficha, as divisões, os exercícios prescritos nem a lista pessoal
@@ -275,7 +278,7 @@ As fases estão descritas em [`PLANO.md`](PLANO.md) seção 13. Situação real:
 | 1 | Cadastro e edição de aluno | **pronta** (Edge Function `criar-aluno`) |
 | 2 | Biblioteca de exercícios | **pronta** — 53 exercícios com how-to |
 | 3 | Editor de ficha | **pronta** — com agenda semanal |
-| 4 | Treino do dia, carga, evolução, frequência, recados | **falta** (financeiro do aluno já existe) |
+| 4 | Treino do dia, carga, evolução, frequência, recados | **pronta** — inclui fila offline |
 | 5 | Aba de progressão do professor | **falta** |
 | 6 | Financeiro do professor | **pronta** — com cobrança por WhatsApp + Pix |
 | 7 | Acabamento e PWA | parcial — redesign feito, PWA não |
@@ -373,7 +376,24 @@ pode estar no navegador**. A função:
   HaveIBeenPwned em Authentication → Policies. Vale ligar; ainda não foi feito.
 
 **Como aplicar mudanças de schema:** por migration (`apply_migration`), nunca
-por SQL solto, para o histórico ficar no projeto.
+por SQL solto, para o histórico ficar no projeto. O `.sql` correspondente fica
+em `supabase/migrations/`, com o mesmo nome e a mesma versão que aparecem em
+`list_migrations` — se os dois divergirem, o repositório deixa de descrever o
+banco. Já aconteceu: as duas migrations de 13/09/2026 foram primeiro aplicadas
+por SQL solto e ficaram fora do histórico, com o arquivo no repositório
+parecendo aplicado sem estar registrado.
+
+**Aplicadas em 13/09/2026:**
+
+- `ativar_ficha_atomica` — função `ativar_ficha(uuid)`, `security invoker`, que
+  desativa as outras fichas do aluno e ativa a escolhida **numa transação só**.
+  Em duas requisições, falhar na segunda deixava o aluno sem ficha nenhuma.
+  `db-supabase.ativarFicha` chama esse RPC — **não volte aos dois UPDATEs.**
+- `hardening_pre_producao` — tira o `update` da coluna `role` de `profiles`
+  (um aluno podia se promover a professor, e `is_trainer()` lê essa coluna),
+  restringe a leitura da chave Pix e o insert em `app_errors` a sessões
+  autenticadas, e retira todos os privilégios do papel `anon` no schema
+  `public`. O app não tem cadastro público nem lê nada antes do login.
 
 ---
 
@@ -542,7 +562,9 @@ listarTemplates()        buscarDiaDeTreino(diaId)
 
 **Edição da ficha** — só o professor (garantido por RLS, não pela interface).
 `ativarFicha` desativa as outras do mesmo aluno: duas ativas quebrariam
-`fichaAtiva()`, que usa `maybeSingle()`.
+`fichaAtiva()`, que usa `maybeSingle()`. No Supabase isso é **uma transação só**
+(RPC `ativar_ficha`); em duas requisições, falhar na segunda deixava o aluno sem
+ficha nenhuma.
 ```
 criarFicha({ alunoId, titulo, descricao, inicio, fim })
 atualizarFicha(id, patch)      ativarFicha(id)      removerFicha(id)
@@ -724,20 +746,31 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 ## 9. Onde paramos e o que fazer a seguir
 
-**Atualizado em 12/09/2026, fim da sessão.** A **Fase 4 (área do aluno) está
+**Atualizado em 12/09/2026.** A **Fase 4 (área do aluno) está
 pronta**: treino do dia com registro de carga, evolução, frequência e recados —
 com **fila offline** e com o **professor podendo escrever recado**.
 O app segue publicado com 12 alunos fictícios para o Leo (o dono) avaliar.
 
+Uma auditoria corrigiu concorrência e isolamento da fila offline, persistência
+antes do envio, eventos de tela, contagem de domingo, calendário histórico,
+reenvio dos logs e ativação atômica de ficha. O roteiro permanente de validação
+está em [`TESTES.md`](TESTES.md); a análise original está em
+[`AUDITORIA.md`](AUDITORIA.md).
+
 ### O estado exato
 
-- Tudo commitado e enviado para o `main`; nada solto na árvore de trabalho.
+- Antes de publicar, rode o roteiro de `TESTES.md` e confira `git status`.
 - Site no ar e verificado contra o banco real.
 - Senha do professor **rotacionada** em 12/09/2026, porque a anterior vazou no
   commit público `ed1c875`. A nova está em `CREDENCIAIS.local.md`. A antiga
   segue no histórico do git e não serve mais para nada.
 - Chave Pix **propositalmente vazia**: falta o Leo colar a dele em
   `#/professor/perfil`. Nome, cidade e modelo da mensagem já preenchidos.
+- **As senhas atuais das 12 contas de teste estão no histórico público do git**
+  — `node scripts/test-security.mjs` avisa a cada execução. Não é urgente
+  enquanto as contas forem fictícias, e some junto se elas forem apagadas
+  depois da avaliação do Leo (decisão em aberto, abaixo). Se alguma virar conta
+  de aluno de verdade, rotacione antes.
 
 ### O que fazer a seguir, em ordem de valor
 
