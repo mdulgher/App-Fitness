@@ -165,7 +165,7 @@ function resumoDoAluno(aluno) {
     ultimoTreino,
     diasSemTreinar: ultimoTreino ? diasEntre(ultimoTreino, H) : null,
     treinosNaSemana,
-    metaSemanal: aluno.weekly_target,
+    metaSemanal: fichaAtiva?.weekly_target ?? null,
     temFichaAtiva: Boolean(fichaAtiva),
     fichaAtivaId: fichaAtiva?.id ?? null,
     fichaVenceEm: fichaAtiva?.end_date ?? null,
@@ -334,7 +334,7 @@ export async function listarTemplates() {
 
 /* ---------- edição da ficha ---------- */
 
-export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null }) {
+export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null, metaSemanal = null }) {
   const nova = {
     id: uid(),
     student_id: alunoId,
@@ -343,6 +343,7 @@ export async function criarFicha({ alunoId, titulo, descricao = null, inicio = h
     description: descricao,
     start_date: inicio,
     end_date: fim,
+    weekly_target: metaSemanal,
     active: false,
     created_at: hoje(),
     updated_at: hoje(),
@@ -507,7 +508,7 @@ export async function removerSessao(sessaoId) {
 export async function resumoDaSemana(alunoId, referencia = hoje()) {
   const segunda = inicioDaSemana(referencia);
   const domingo = somarDias(segunda, 6);
-  const aluno = tabela("students").find((a) => a.id === alunoId);
+  const ficha = tabela("workout_plans").find((p) => p.student_id === alunoId && p.active);
   const feitos = tabela("attendance").filter(
     (a) =>
       a.student_id === alunoId &&
@@ -515,14 +516,15 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
       a.date >= segunda &&
       a.date <= domingo
   );
-  const meta = aluno?.weekly_target ?? 0;
+  const datas = [...new Set(feitos.map((f) => f.date))].sort();
+  const meta = ficha?.weekly_target ?? 0;
   return {
     inicio: segunda,
     fim: domingo,
-    feitos: feitos.length,
+    feitos: datas.length,
     meta,
-    aderencia: meta ? Math.min(1, feitos.length / meta) : 0,
-    datas: feitos.map((f) => f.date).sort(),
+    aderencia: meta ? Math.min(1, datas.length / meta) : 0,
+    datas,
   };
 }
 
@@ -859,7 +861,7 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
   );
   const criados = [];
   for (const aluno of tabela("students").filter((a) => a.active)) {
-    if (existentes.has(aluno.id) || !aluno.monthly_fee) continue;
+    if (existentes.has(aluno.id) || !(Number(aluno.monthly_fee) > 0)) continue;
     criados.push(
       await criarPagamento({
         alunoId: aluno.id,

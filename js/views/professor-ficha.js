@@ -236,7 +236,12 @@ export async function render(alvo, { params }) {
     corpo.querySelectorAll("[data-remover-dia]").forEach((b) =>
       b.addEventListener("click", async () => {
         const dia = ficha.dias.find((d) => d.id === b.dataset.removerDia);
-        if (!confirm(`Excluir ${dia.label} e seus exercícios?`)) return;
+        if (b.dataset.confirmando !== "1") {
+          b.dataset.confirmando = "1";
+          b.textContent = `Confirmar exclusão de ${dia.label}`;
+          b.classList.add("btn-perigo");
+          return;
+        }
         if (await proteger(() => db.removerDia(dia.id))) await carregar(ficha.id);
       })
     );
@@ -302,6 +307,10 @@ export async function render(alvo, { params }) {
                    placeholder="dd/mm/aaaa" value="${esc(isoParaDataBR(existente?.end_date ?? padraoFim))}" />
             <div class="field-hint">Padrão: 3 meses. Deixe em branco para ficha sem prazo.</div></div>
         </div>
+        <div class="field"><label for="ff-meta">Treinos por semana</label>
+          <input id="ff-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14"
+                 value="${esc(existente?.weekly_target ?? aluno.weekly_target ?? 3)}" />
+          <div class="field-hint">Meta de frequência desta ficha.</div></div>
         <div data-erro class="alert hidden" role="alert"></div>
         <div class="dialog-actions">
           ${existente ? `<button type="button" class="btn" id="excluir">Excluir ficha</button>` : ""}
@@ -319,7 +328,13 @@ export async function render(alvo, { params }) {
     const erro = dialogoConteudo.querySelector("[data-erro]");
 
     dialogoConteudo.querySelector("#excluir")?.addEventListener("click", async () => {
-      if (!confirm("Excluir a ficha inteira, com divisões e exercícios?")) return;
+      const botao = dialogoConteudo.querySelector("#excluir");
+      if (botao.dataset.confirmando !== "1") {
+        botao.dataset.confirmando = "1";
+        botao.textContent = "Confirmar exclusão da ficha";
+        botao.classList.add("btn-perigo");
+        return;
+      }
       if (await proteger(() => db.removerFicha(existente.id))) {
         ficha = null;
         fechar();
@@ -350,6 +365,7 @@ export async function render(alvo, { params }) {
         description: dados.description.trim() || null,
         start_date: inicio,
         end_date: fim,
+        weekly_target: Number(dados.weekly_target) || null,
       };
       try {
         if (existente) {
@@ -360,6 +376,7 @@ export async function render(alvo, { params }) {
           const nova = await db.criarFicha({
             alunoId, titulo: patch.title, descricao: patch.description,
             inicio: patch.start_date, fim: patch.end_date,
+            metaSemanal: patch.weekly_target,
           });
           fechar();
           await carregar(nova.id);
