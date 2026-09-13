@@ -4,7 +4,7 @@
 // então o controle de acesso fica num lugar só em vez de repetido em dez
 // arquivos HTML — e não há "pisca" de conteúdo antes da verificação.
 
-import { usuarioAtual, ehProfessor, rotaInicial } from "./auth.js";
+import { usuarioAtual, ehProfessor, rotaInicial, cumprePapel } from "./auth.js";
 
 const rotas = [
   { padrao: /^\/login$/, papel: null, view: () => import("./views/login.js") },
@@ -76,7 +76,7 @@ export async function resolver() {
   }
 
   // Papel errado: manda para a própria área em vez de mostrar erro
-  if (rota.papel && rota.papel !== usuario.role) {
+  if (rota.papel && !cumprePapel(rota.papel, usuario.role)) {
     navegar(rotaInicial());
     return;
   }

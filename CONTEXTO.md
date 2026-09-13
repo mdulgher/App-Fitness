@@ -397,6 +397,18 @@ antiga nunca era removida e sobrava órfã. Coberto por `scripts/test-security.m
   desativa as outras fichas do aluno e ativa a escolhida **numa transação só**.
   Em duas requisições, falhar na segunda deixava o aluno sem ficha nenhuma.
   `db-supabase.ativarFicha` chama esse RPC — **não volte aos dois UPDATEs.**
+- `papel_admin` — papel `admin`, com os mesmos poderes do professor. **Toda
+  política de RLS chama `is_trainer()`** (29 delas), então o papel novo foi
+  acrescentado **dentro da função**, não em políticas próprias: uma mudança em
+  vez de 29 e nenhuma lista duplicada para manter em sincronia. A função ainda
+  se chama `is_trainer()` — leia como "tem poderes de professor". No app,
+  `ehProfessor()` e o guard do roteador seguem a mesma regra por
+  `cumprePapel()`. Criar admin continua sendo manual, por SQL: `handle_new_user()`
+  cria todo mundo como aluno e não há caminho pelo app para se promover.
+  **Criar usuário por SQL exige zerar as colunas de token do GoTrue**
+  (`confirmation_token`, `recovery_token`, `email_change*`, `phone_change*`,
+  `reauthentication_token`): criadas nulas, o login devolve 500 "Database error
+  querying schema". A API oficial as cria como string vazia.
 - `banner_da_divisao` — `workout_days.banner`, o slug da arte do cabeçalho.
 - `bucket_de_avatares` + `avatar_leitura_autenticada` — ver "Storage" acima.
 - `hardening_pre_producao` — tira o `update` da coluna `role` de `profiles`

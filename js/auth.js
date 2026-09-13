@@ -24,8 +24,19 @@ export function usuarioAtual() {
   return usuario;
 }
 
+// 'admin' tem os mesmos poderes do professor e vê as mesmas telas — é assim
+// que o banco também enxerga (`is_trainer()` responde sim para os dois). O que
+// muda é só o rótulo: o dono do sistema não é "o professor".
+export const PAPEIS_DE_PROFESSOR = ["trainer", "admin"];
+
 export function ehProfessor() {
-  return usuario?.role === "trainer";
+  return PAPEIS_DE_PROFESSOR.includes(usuario?.role);
+}
+
+// O papel declarado na rota é o poder exigido, não a string exata do perfil:
+// uma rota que pede "trainer" também aceita quem é admin.
+export function cumprePapel(exigido, papel) {
+  return exigido === "trainer" ? PAPEIS_DE_PROFESSOR.includes(papel) : exigido === papel;
 }
 
 export async function entrar(email, senha) {

@@ -153,7 +153,7 @@ async function desenharAtalhos(alvo) {
         <span class="avatar">${esc(iniciais(p.full_name))}</span>
         <span class="list-item-main">
           <span class="list-item-title" style="display:block">${esc(p.full_name)}</span>
-          <span class="muted small">${p.role === "trainer" ? "Professor" : "Aluno"}</span>
+          <span class="muted small">${p.role === "student" ? "Aluno" : p.role === "admin" ? "Administrador" : "Professor"}</span>
         </span>
       </button>`
     )

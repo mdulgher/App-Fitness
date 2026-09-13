@@ -7,9 +7,21 @@ import { spawnSync } from "node:child_process";
 import { SUPABASE } from "../js/config.js";
 
 const texto = await fs.readFile(new URL("../CREDENCIAIS.local.md", import.meta.url), "utf8");
-const linhas = [...texto.matchAll(/\|\s*`([^`\s]+@[^`\s]+)`\s*\|\s*`([^`]+)`\s*\|/g)]
-  .map((m) => ({ email: m[1], senha: m[2] }));
-assert.ok(linhas.length >= 3, "São necessárias as credenciais do professor e de dois alunos.");
+
+// As contas vêm da seção, não da posição no arquivo. Ler "a segunda linha da
+// tabela" já deu falso positivo: uma seção nova de administrador entrou antes
+// dos alunos, o "aluno A" do teste virou o admin, e o teste acusou vazamento
+// onde havia só um admin fazendo o trabalho dele. Pior seria o contrário —
+// passar verde testando a conta errada.
+function contasDaSecao(titulo) {
+  const corpo = texto.split(new RegExp(`^##\\s+${titulo}\\s*$`, "m"))[1]?.split(/^## /m)[0] ?? "";
+  return [...corpo.matchAll(/\|\s*`([^`\s]+@[^`\s]+)`\s*\|\s*`([^`]+)`\s*\|/g)]
+    .map((m) => ({ email: m[1], senha: m[2] }));
+}
+
+const alunosDeTeste = contasDaSecao("Alunos de teste");
+const linhas = [...contasDaSecao("Professor"), ...alunosDeTeste];
+assert.ok(alunosDeTeste.length >= 2, "São necessárias as credenciais de pelo menos dois alunos de teste.");
 
 const cabecalhoAnon = { apikey: SUPABASE.anonKey, "Content-Type": "application/json" };
 
@@ -47,7 +59,7 @@ const rpcAnon = await requisitar("/rest/v1/rpc/ativar_ficha", {
 });
 assert.ok([401, 403, 404].includes(rpcAnon.status), `RPC ativar_ficha aceitou acesso anônimo: HTTP ${rpcAnon.status}.`);
 
-const [alunoA, alunoB] = await Promise.all([entrar(linhas[1]), entrar(linhas[2])]);
+const [alunoA, alunoB] = await Promise.all([entrar(alunosDeTeste[0]), entrar(alunosDeTeste[1])]);
 
 for (const [tabela, filtro] of [
   ["profiles", `id=eq.${alunoB.id}`],
