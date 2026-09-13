@@ -50,10 +50,7 @@ export async function render(alvo) {
             .map(([v, r]) => `<button class="movement-tab" data-filtro="${v}" aria-pressed="${v === "todos"}">${r}</button>`)
             .join("")}
         </div>
-        <div class="row" style="gap:var(--sp-2)">
-          <a class="btn" href="#/professor/perfil">Dados de cobrança</a>
-          <button class="btn btn-primary" id="gerar">Lançar cobranças do mês</button>
-        </div>
+        <a class="btn" href="#/professor/perfil">Dados de cobrança</a>
       </div>
 
       <div id="feedback" role="status" class="library-feedback hidden"></div>
@@ -122,36 +119,6 @@ export async function render(alvo) {
       avisar(acao === "pagar" ? "Pagamento registrado." : "Pagamento reaberto.");
     } catch (err) { avisar(esc(err.message)); }
   }
-
-  /* ---------- lançar as cobranças do mês ---------- */
-
-  alvo.querySelector("#gerar").addEventListener("click", async (ev) => {
-    ev.target.disabled = true;
-    ev.target.textContent = "Lançando…";
-    try {
-      const criados = await db.gerarCobrancasDoMes(mes);
-      await carregar();
-
-      // Sem mensalidade cadastrada o aluno é pulado em silêncio pelo banco.
-      // Dizer quem ficou de fora evita o professor achar que cobrou todo mundo.
-      const semValor = alunos.filter((a) => a.monthly_fee == null);
-      const jaTinham = alunos.length - criados.length - semValor.length;
-
-      const partes = [];
-      if (criados.length) partes.push(`<strong>${plural(criados.length, "cobrança lançada", "cobranças lançadas")}</strong>`);
-      if (jaTinham > 0) partes.push(`${plural(jaTinham, "aluno já tinha", "alunos já tinham")} cobrança neste mês`);
-      if (semValor.length) partes.push(`${plural(semValor.length, "aluno ficou de fora", "alunos ficaram de fora")} por não ter mensalidade cadastrada (${semValor.map((a) => esc(a.full_name)).join(", ")})`);
-
-      avisar(
-        `${partes.join(" · ") || "Nada a lançar."}<br>` +
-        `<span class="muted small">Lançar só registra a cobrança aqui. Para avisar o aluno, use “Cobrar no WhatsApp” na linha dele.</span>`
-      );
-    } catch (err) { avisar(esc(err.message)); }
-    finally {
-      ev.target.disabled = false;
-      ev.target.textContent = "Lançar cobranças do mês";
-    }
-  });
 
   /* ---------- cobrar pelo WhatsApp ---------- */
 
