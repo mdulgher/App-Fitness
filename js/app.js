@@ -8,7 +8,7 @@ import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
 import { ligarSincronizacaoAutomatica } from "./sync.js";
 import { configurarLog, ligarCapturaGlobal } from "./log.js";
-import { ligarCapturaDoConvite, deveConvidar, podeInstalarDireto, instalar, dispensar, ehIOS } from "./instalar.js";
+import { ligarCapturaDoConvite, deveConvidar, podeInstalarDireto, instalar, dispensar, reabrirConvite, podeOferecerInstalacao } from "./instalar.js";
 
 const NAV_PROFESSOR = [
   ["#/professor", "Painel"],
@@ -41,6 +41,10 @@ function desenharCabecalho(caminhoAtual) {
   const cadastro = document.getElementById("meu-cadastro");
   cadastro.href = ehProfessor() ? "#/professor/perfil" : "#/aluno/perfil";
   cadastro.setAttribute("aria-current", caminhoAtual.endsWith("/perfil") ? "page" : "false");
+
+  // Só aparece quando há o que fazer: some sozinho depois que o app é instalado.
+  document.getElementById("instalar-app")
+    .classList.toggle("hidden", !podeOferecerInstalacao());
 
   // A conta vira nome + avatar. O menu fecha a cada troca de tela: ele é
   // absoluto sobre o conteúdo e ficaria aberto por cima da tela nova.
@@ -118,6 +122,16 @@ document.addEventListener("keydown", (ev) => {
   fecharMenuDaConta();
 });
 
+// Sem este item, dispensar a faixa trancava a porta: o app não tinha mais
+// nenhum lugar que ensinasse a instalar.
+document.getElementById("instalar-app").addEventListener("click", () => {
+  fecharMenuDaConta();
+  reabrirConvite();
+  conviteDesenhado = null;
+  desenharConviteDeInstalar();
+  document.getElementById("convite-instalar").scrollIntoView({ block: "nearest" });
+});
+
 document.getElementById("sair").addEventListener("click", async () => {
   fecharMenuDaConta();
   await sair();
@@ -126,56 +140,65 @@ document.getElementById("sair").addEventListener("click", async () => {
 });
 
 // O convite aparece inclusive na tela de login, e isso é de propósito: quem
-// entra pelo Safari e só depois instala abre o app recém-instalado sem sessão e
-// precisa logar de novo. Instalando antes, loga uma vez só — dentro do app.
+// entra pelo navegador e só depois instala abre o app recém-instalado sem sessão
+// e precisa logar de novo. Instalando antes, loga uma vez só — dentro do app.
+//
+// iPhone e Android recebem coisas diferentes, e não é detalhe: o Android tem
+// diálogo nativo, o iPhone não tem API nenhuma. Na primeira versão os dois
+// viam o mesmo botão e o do iPhone abria uma instrução — que o CSS do celular
+// escondia, porque a instrução mora num `.small` e `.small` estava com
+// `display:none` abaixo de 700px. No aparelho, tocar o botão não fazia nada
+// visível. Agora o iPhone recebe a instrução já escrita, sem intermediário.
+let conviteDesenhado = null;
+
 function desenharConviteDeInstalar() {
   const caixa = document.getElementById("convite-instalar");
   if (!deveConvidar()) {
     caixa.classList.add("hidden");
     caixa.innerHTML = "";
+    conviteDesenhado = null;
     return;
   }
-  if (caixa.dataset.desenhado === "1") return;
-  caixa.dataset.desenhado = "1";
 
-  caixa.innerHTML = `
-    <img class="convite-icone" src="assets/icons/icone-192.png" alt="" aria-hidden="true" />
-    <div class="convite-texto">
-      <strong>Deixe o treino a um toque</strong>
-      <span class="small">Instale na tela inicial e abra sem o navegador.</span>
-    </div>
-    <button class="btn btn-sm" id="convite-instalar-botao">${ehIOS() ? "Como instalar" : "Instalar"}</button>
-    <button class="convite-fechar" id="convite-fechar" aria-label="Agora não">&times;</button>`;
+  const modo = podeInstalarDireto() ? "botao" : "ios";
+  if (conviteDesenhado === modo) return;
+  conviteDesenhado = modo;
+
+  const fechar = `<button class="convite-fechar" id="convite-fechar" aria-label="Agora não">&times;</button>`;
+
+  caixa.innerHTML = modo === "botao"
+    ? `<img class="convite-icone" src="assets/icons/icone-192.png" alt="" aria-hidden="true" />
+       <div class="convite-texto">
+         <strong>Deixe o treino a um toque</strong>
+         <span class="convite-detalhe">Instale na tela inicial e abra sem o navegador.</span>
+       </div>
+       <button class="btn btn-sm" id="convite-instalar-botao">Instalar</button>
+       ${fechar}`
+    : `<img class="convite-icone" src="assets/icons/icone-192.png" alt="" aria-hidden="true" />
+       <div class="convite-texto">
+         <strong>Deixe o treino a um toque</strong>
+         <span class="convite-detalhe">
+           Toque em <b>Compartilhar</b> ${icone("compartilhar")} aqui embaixo
+           e escolha <b>Adicionar à Tela de Início</b>.
+         </span>
+       </div>
+       ${fechar}`;
 
   caixa.classList.remove("hidden");
 
   caixa.querySelector("#convite-fechar").addEventListener("click", () => {
     dispensar();
     caixa.classList.add("hidden");
+    conviteDesenhado = null;
   });
 
-  caixa.querySelector("#convite-instalar-botao").addEventListener("click", async () => {
-    if (podeInstalarDireto()) {
-      const desfecho = await instalar();
-      if (desfecho === "instalado") caixa.classList.add("hidden");
-      if (desfecho === "recusado") return; // deixa o convite, ele pode mudar de ideia
-      if (desfecho !== "instrucao") return;
-    }
-    // iOS, ou o evento se perdeu: só resta ensinar o caminho.
-    caixa.innerHTML = `
-      <img class="convite-icone" src="assets/icons/icone-192.png" alt="" aria-hidden="true" />
-      <div class="convite-texto">
-        <strong>No iPhone, são dois toques</strong>
-        <span class="small">
-          Toque em <b>Compartilhar</b> na barra do Safari e escolha
-          <b>Adicionar à Tela de Início</b>.
-        </span>
-      </div>
-      <button class="convite-fechar" id="convite-fechar" aria-label="Fechar">&times;</button>`;
-    caixa.querySelector("#convite-fechar").addEventListener("click", () => {
-      dispensar();
+  caixa.querySelector("#convite-instalar-botao")?.addEventListener("click", async () => {
+    const desfecho = await instalar();
+    // "recusado" deixa a faixa no lugar: ele pode mudar de ideia.
+    if (desfecho !== "recusado") {
       caixa.classList.add("hidden");
-    });
+      conviteDesenhado = null;
+    }
   });
 }
 

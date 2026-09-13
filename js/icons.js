@@ -8,6 +8,10 @@ const paths = {
   frequencia: '<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M7 3v4m10-4v4M3 11h18m-14 5 3 2 6-4"/>',
   lista: '<path d="M8 6h13M8 12h13M8 18h13M3.5 6h.01M3.5 12h.01M3.5 18h.01"/>',
   recados: '<path d="M21 11a8 8 0 0 1-8 8H6l-3 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4zM7 8h10M7 12h7"/>',
+  // O botão Compartilhar do iOS — caixa com a seta saindo por cima. Desenhar o
+  // ícone certo é o que faz a instrução ser seguível: o aluno procura o
+  // símbolo na barra do Safari, não a palavra.
+  compartilhar: '<path d="M12 3v12M12 3 8 7m4-4 4 4M5 13v5a3 3 0 0 0 3 3h8a3 3 0 0 0 3-3v-5"/>',
 };
 export function icone(nome) {
   return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[nome] || paths.treino}</svg>`;

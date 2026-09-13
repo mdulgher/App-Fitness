@@ -306,8 +306,13 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
 }
 .convite-icone { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 40px; background: #fff; }
 .convite-texto { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.convite-texto .small { color: #a3a3a3; }
+.convite-detalhe { color: #a3a3a3; font-size: 12px; line-height: 1.5; }
 .convite-texto b { color: #fff; }
+/* O ícone de Compartilhar aparece no meio da frase: precisa da altura da letra,
+   não dos 19px do ícone de navegação. */
+.convite-detalhe .icon {
+  width: 14px; height: 14px; vertical-align: -2px; display: inline-block; color: #fff;
+}
 .convite-instalar .btn { flex: 0 0 auto; min-height: 40px; }
 .convite-fechar {
   flex: 0 0 auto; width: 32px; height: 32px; padding: 0;
@@ -319,6 +324,17 @@ input, select, textarea { border-radius: 10px; background: #fafafa; padding: 12p
 @media (max-width: 700px) {
   /* O texto secundário some: no celular o que importa é o botão, e a barra
      não pode empurrar o conteúdo da tela para fora da primeira dobra. */
-  .convite-instalar { padding: 10px 12px; gap: 10px; }
-  .convite-texto .small { display: none; }
+  /* O detalhe NÃO some no celular. Ele já sumiu uma vez, e no iPhone é ele que
+     carrega a instrução de como instalar — a única forma que existe lá. O
+     resultado foi um botão que, no aparelho, não fazia nada visível.
+     No celular a faixa empilha em vez de esconder texto. */
+  .convite-instalar {
+    position: relative; padding: 10px 40px 10px 12px; gap: 10px;
+    flex-wrap: wrap; align-items: flex-start;
+  }
+  .convite-texto { flex-basis: calc(100% - 50px); }
+  .convite-instalar .btn { margin-left: 50px; }
+  /* Fora do fluxo: em duas linhas de texto ele descia sozinho para uma terceira
+     linha, no canto errado. */
+  .convite-fechar { position: absolute; top: 6px; right: 6px; }
 }

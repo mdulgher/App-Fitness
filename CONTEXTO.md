@@ -791,6 +791,30 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 22. **Calendário responsivo: nunca use `max-width` fixo na grade.** `max-width: 220px` (ou qualquer valor fixo) faz o calendário ficar pequeno em qualquer tela onde o card é mais largo. O correto é deixar `.calendario-mes` sem `max-width` e sem `margin: 0 auto` — ele ocupa 100% do card e as células se ajustam pelo grid. No mobile, se o card tiver padding, compensar zerando o padding do card e não com margem negativa (que depende de valores externos que mudam com breakpoints).
 
+23. **Nunca esconda texto por breakpoint sem olhar o que mora dentro dele.** O
+    convite de instalar o app tinha `.convite-texto .small { display: none }`
+    abaixo de 700px, para a faixa não crescer no celular. Só que a instrução do
+    iPhone — "toque em Compartilhar e escolha Adicionar à Tela de Início", a
+    **única** forma de instalar no iOS, já que lá não existe API — era
+    justamente um `.small`. No aparelho, tocar o botão trocava o título e
+    escondia a explicação: parecia que o botão não fazia nada. Esconder por
+    tamanho de tela só vale para o que é realmente supérfluo; se o conteúdo é a
+    razão do componente existir, reorganize o layout em vez de ocultar.
+
+24. **iPhone e Android não cabem no mesmo botão de instalar.** O Android dispara
+    `beforeinstallprompt` e abre diálogo nativo; o iOS não tem nada — só o menu
+    Compartilhar do Safari. Por isso o convite tem dois modos (`js/app.js`,
+    `desenharConviteDeInstalar`), e o do iOS mostra a instrução **já escrita**,
+    sem passo intermediário. E o manifest precisa de ícones de 192 e 512: sem
+    eles o Chrome nunca considera o site instalável e o evento não dispara, sem
+    erro nenhum no console.
+
+25. **Dispensar não pode ser para sempre.** O × da faixa gravava "dispensado"
+    sem data e o convite nunca mais voltava — um toque acidental trancava a
+    única porta para instalar o app. Agora o silêncio dura 14 dias e existe
+    "Instalar na tela inicial" no menu da conta, que traz de volta na hora.
+    Qualquer coisa que o usuário possa fechar precisa de um caminho de volta.
+
 ---
 
 ## 9. Onde paramos e o que fazer a seguir

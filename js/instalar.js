@@ -17,6 +17,11 @@
 
 const CHAVE_DISPENSADO = "lpt:instalar-dispensado";
 
+// Dispensar não é "nunca mais": o convite volta depois de duas semanas.
+// Um toque no × não pode apagar para sempre a única porta para instalar o app —
+// e foi o que aconteceu na primeira versão, sem caminho de volta.
+const DIAS_DE_SILENCIO = 14;
+
 let eventoAdiado = null;
 
 export function jaInstalado() {
@@ -34,7 +39,12 @@ export function ehIOS() {
 
 export function foiDispensado() {
   try {
-    return localStorage.getItem(CHAVE_DISPENSADO) === "1";
+    const guardado = localStorage.getItem(CHAVE_DISPENSADO);
+    if (!guardado) return false;
+    // "1" é do formato antigo, que não tinha data e valia para sempre. Quem
+    // dispensou naquela versão perdeu o convite definitivamente; aqui ele volta.
+    if (guardado === "1") return false;
+    return Date.now() - Number(guardado) < DIAS_DE_SILENCIO * 86400000;
   } catch {
     return false;
   }
@@ -42,11 +52,26 @@ export function foiDispensado() {
 
 export function dispensar() {
   try {
-    localStorage.setItem(CHAVE_DISPENSADO, "1");
+    localStorage.setItem(CHAVE_DISPENSADO, String(Date.now()));
   } catch {
     /* navegação privada: o convite volta na próxima visita, e tudo bem */
   }
 }
+
+// Para o item do menu da conta: traz o convite de volta na hora, mesmo dentro
+// das duas semanas de silêncio.
+export function reabrirConvite() {
+  try {
+    localStorage.removeItem(CHAVE_DISPENSADO);
+  } catch {
+    /* sem localStorage o convite já aparece de qualquer jeito */
+  }
+}
+
+// O menu da conta só oferece "instalar" quando há o que fazer: no Android
+// quando o navegador deixa, no iPhone sempre que ainda não estiver instalado.
+export const podeOferecerInstalacao = () =>
+  !jaInstalado() && (podeInstalarDireto() || ehIOS());
 
 // Precisa ser registrado o quanto antes: o navegador dispara o evento uma vez
 // só, e quem não estiver escutando na hora perde.
