@@ -268,7 +268,7 @@ function blocoDoAluno(aluno) {
       <div class="eyebrow" style="margin-bottom:var(--sp-3)">Definido pelo seu professor</div>
       <div class="list">
         ${item("Objetivo", aluno.goal ?? "Sem objetivo definido")}
-        ${item("Meta semanal", plural(aluno.weekly_target ?? 0, "treino", "treinos") + " por semana")}
+        ${aluno.resumo?.metaSemanal ? item("Meta semanal", plural(aluno.resumo.metaSemanal, "treino", "treinos") + " por semana") : ""}
         ${item("Mensalidade", aluno.monthly_fee != null
           ? `${moeda(aluno.monthly_fee)} · vence dia ${aluno.due_day ?? "—"}`
           : "Sem mensalidade cadastrada")}

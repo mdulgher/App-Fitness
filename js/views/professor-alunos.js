@@ -82,15 +82,11 @@ export async function render(alvo) {
             <input id="f-telefone" name="phone" placeholder="(11) 90000-0000" /></div>
         </div>
 
-        <div class="exercise-form-grid">
-          <div class="field"><label for="f-objetivo">Objetivo</label>
-            <select id="f-objetivo" name="goal">
-              <option>Hipertrofia</option><option>Emagrecimento</option>
-              <option>Condicionamento</option><option>Reabilitação</option><option>Saúde geral</option>
-            </select></div>
-          <div class="field"><label for="f-meta">Treinos por semana</label>
-            <input id="f-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14" value="3" /></div>
-        </div>
+        <div class="field"><label for="f-objetivo">Objetivo</label>
+          <select id="f-objetivo" name="goal">
+            <option>Hipertrofia</option><option>Emagrecimento</option>
+            <option>Condicionamento</option><option>Reabilitação</option><option>Saúde geral</option>
+          </select></div>
 
         <div class="field"><label for="f-restricoes">Restrições e lesões</label>
           <textarea id="f-restricoes" name="health_restrictions" rows="3"

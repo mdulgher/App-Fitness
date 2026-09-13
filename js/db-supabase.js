@@ -148,7 +148,7 @@ async function montarResumos(alunos) {
 
   const [sessoes, fichas, pagamentos] = await Promise.all([
     ok(await sb.from("attendance").select("student_id,date,completed_at").in("student_id", ids).not("completed_at", "is", null)),
-    ok(await sb.from("workout_plans").select("id,student_id,end_date").in("student_id", ids).eq("active", true)),
+    ok(await sb.from("workout_plans").select("id,student_id,end_date,weekly_target").in("student_id", ids).eq("active", true)),
     ok(await sb.from("payments").select("student_id,due_date,paid_date").in("student_id", ids).is("paid_date", null)),
   ]);
 
@@ -165,7 +165,7 @@ async function montarResumos(alunos) {
       ultimoTreino,
       diasSemTreinar: ultimoTreino ? diasEntre(ultimoTreino, H) : null,
       treinosNaSemana: minhas.filter((s) => s.date >= segunda).length,
-      metaSemanal: aluno.weekly_target,
+      metaSemanal: ficha?.weekly_target ?? null,
       temFichaAtiva: Boolean(ficha),
       fichaAtivaId: ficha?.id ?? null,
       fichaVenceEm: ficha?.end_date ?? null,
@@ -327,11 +327,12 @@ export async function listarTemplates() {
 
 /* ---------- edição da ficha (só o professor; garantido por RLS) ---------- */
 
-export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null }) {
+export async function criarFicha({ alunoId, titulo, descricao = null, inicio = hoje(), fim = null, metaSemanal = null }) {
   return ok(
     await sb.from("workout_plans").insert({
       student_id: alunoId, title: titulo, description: descricao,
       start_date: inicio, end_date: fim, active: false,
+      weekly_target: metaSemanal,
     }).select().single()
   );
 }
@@ -447,13 +448,13 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
   const segunda = inicioDaSemana(referencia);
   const domingo = somarDias(segunda, 6);
 
-  const [aluno, feitos] = await Promise.all([
-    ok(await sb.from("students").select("weekly_target").eq("id", alunoId).maybeSingle()),
+  const [ficha, feitos] = await Promise.all([
+    ok(await sb.from("workout_plans").select("weekly_target").eq("student_id", alunoId).eq("active", true).maybeSingle()),
     ok(await sb.from("attendance").select("date").eq("student_id", alunoId)
       .not("completed_at", "is", null).gte("date", segunda).lte("date", domingo)),
   ]);
 
-  const meta = aluno?.weekly_target ?? 0;
+  const meta = ficha?.weekly_target ?? 0;
   return {
     inicio: segunda,
     fim: domingo,
