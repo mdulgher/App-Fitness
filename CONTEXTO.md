@@ -714,6 +714,12 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 19. **Atenção: esta armadilha já não vale.** Ela dizia que os dados viviam no `localStorage` e não eram compartilhados. Com `DATA_SOURCE = "supabase"` os dados são reais, compartilhados e persistentes — o professor vê o que o aluno salvou. A limitação só volta a valer se alguém trocar de volta para o modo `local`.
 
+20. **Safari PWA tem cache agressivo.** O app instalado na tela inicial do iPhone (via Safari → "Adicionar à tela de início") guarda os arquivos JS e CSS localmente. Uma mudança pode parecer não ter efeito até o usuário fechar o app pelo app switcher (swipe up) e reabrir. Não confunda "não funcionou" com "não deployou" — verificar o commit no GitHub antes de depurar.
+
+21. **Pull to refresh no Safari PWA: escutar no `document`, não no `<main>`.** O scroll no Safari PWA vive no `document`/`body`, não num elemento filho. Escutar `touchstart/move/end` no `<main>` não funciona. Use `document.addEventListener` e verifique o topo com `Math.max(document.documentElement.scrollTop, document.body.scrollTop, window.scrollY)` — as três fontes, porque o Safari varia entre versões. A implementação correta está em `ligarPullToRefresh()` em `js/utils.js`.
+
+22. **Calendário responsivo: nunca use `max-width` fixo na grade.** `max-width: 220px` (ou qualquer valor fixo) faz o calendário ficar pequeno em qualquer tela onde o card é mais largo. O correto é deixar `.calendario-mes` sem `max-width` e sem `margin: 0 auto` — ele ocupa 100% do card e as células se ajustam pelo grid. No mobile, se o card tiver padding, compensar zerando o padding do card e não com margem negativa (que depende de valores externos que mudam com breakpoints).
+
 ---
 
 ## 9. Onde paramos e o que fazer a seguir
