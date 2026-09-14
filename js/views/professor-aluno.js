@@ -26,6 +26,7 @@ import {
   dataBRParaIso,
   ligarMascaraDeData,
 } from "../utils.js";
+import { caminhoDoBanner } from "../catalogo-banners.js";
 import { renderizarCalendario } from "../calendar-grid.js";
 import { registrarErro } from "../log.js";
 
@@ -720,15 +721,25 @@ function blocoFicha(ficha) {
     </div>`;
 }
 
+// Mesmo banner preto do editor de ficha, e com a mesma arte: aqui o professor
+// confere o que o aluno vai ver, então as duas telas têm que mostrar a divisão
+// do mesmo jeito. Sem os botões — esta tela é de consulta, quem edita é o
+// editor.
 function blocoDia(dia) {
+  const arte = caminhoDoBanner(dia.banner);
   return `
-    <div class="card">
-      <div class="row-between" style="margin-bottom:var(--sp-3)">
-        <h3>${esc(dia.label)}</h3>
-        <span class="muted small">${esc(rotuloDiasSemana(dia.weekdays))}</span>
+    <div class="card card-com-banner">
+      <div class="dia-banner">
+        <div class="dia-banner-texto">
+          <h3>${esc(dia.label)}</h3>
+          <div class="small">${esc(rotuloDiasSemana(dia.weekdays))} · ${plural(dia.exercicios.length, "exercício", "exercícios")}</div>
+        </div>
+        ${arte ? `<img class="dia-banner-arte" src="${esc(arte)}" alt="" aria-hidden="true" />` : ""}
       </div>
-      <div class="list">
-        ${dia.exercicios.map(linhaExercicio).join("")}
+      <div class="dia-corpo">
+        <div class="list">
+          ${dia.exercicios.map(linhaExercicio).join("")}
+        </div>
       </div>
     </div>`;
 }

@@ -21,6 +21,7 @@ import {
   esc, plural, hoje, formatarData, textoTempoRelativo, capaDoVideo, urlDeEmbed,
 } from "../utils.js";
 import { urlDeImagemSegura, videoSeguro } from "../exercise-validation.js";
+import { caminhoDoBanner } from "../catalogo-banners.js";
 import {
   enfileirarSerie, enfileirarConclusao, seriesNaFila, conclusaoNaFila,
   sincronizar, pendentes,
@@ -69,14 +70,7 @@ export async function render(alvo, { params }) {
     <div class="wrap treino-do-dia">
       <a class="muted small" href="#/aluno">&larr; Meu treino</a>
 
-      <div class="page-head" style="margin-top:var(--sp-4)">
-        <div class="eyebrow">Treino de ${formatarData(hoje())}</div>
-        <h1>${esc(dia.label)}</h1>
-        <p class="muted page-description">
-          ${plural(dia.exercicios.length, "exercício", "exercícios")} ·
-          ${plural(totalDeSeries(dia), "série", "séries")} no total
-        </p>
-      </div>
+      ${bannerDoDia(dia)}
 
       <div id="feedback" role="status" class="library-feedback hidden"></div>
       <div id="pendencias" class="aviso-fila hidden" role="status"></div>
@@ -499,6 +493,31 @@ export async function render(alvo, { params }) {
 }
 
 /* ---------- números ---------- */
+
+// O mesmo banner preto que o professor vê no editor, com a arte que ele
+// escolheu para esta divisão. O aluno abre o treino e reconhece a divisão pela
+// figura antes de ler o nome — que é o motivo de a arte existir.
+//
+// Sem arte escolhida o banner continua preto, só sem figura: virar um cabeçalho
+// branco quando falta a imagem faria a tela mudar de cara sem motivo aparente
+// para o aluno.
+function bannerDoDia(dia) {
+  const arte = caminhoDoBanner(dia.banner);
+  return `
+    <div class="card card-com-banner" style="margin-top:var(--sp-4)">
+      <div class="dia-banner">
+        <div class="dia-banner-texto">
+          <div class="eyebrow" style="color:#a3a3a3">Treino de ${formatarData(hoje())}</div>
+          <h3 style="font-size:26px;letter-spacing:-.03em">${esc(dia.label)}</h3>
+          <div class="small">
+            ${plural(dia.exercicios.length, "exercício", "exercícios")} ·
+            ${plural(totalDeSeries(dia), "série", "séries")} no total
+          </div>
+        </div>
+        ${arte ? `<img class="dia-banner-arte" src="${esc(arte)}" alt="" aria-hidden="true" />` : ""}
+      </div>
+    </div>`;
+}
 
 function totalDeSeries(dia) {
   return dia.exercicios.reduce((t, e) => t + (e.sets ?? 0), 0);
