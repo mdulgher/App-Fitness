@@ -142,12 +142,20 @@ export async function render(alvo) {
 
   /* ---------- lançar as cobranças do mês ---------- */
 
-  alvo.querySelector("#gerar").addEventListener("click", () => {
+  alvo.querySelector("#gerar").addEventListener("click", async () => {
     const mesDaPrevia = mes;
-    const existentes = new Set(pagamentos.map((p) => p.student_id));
-    const semValor = alunos.filter((a) => !(Number(a.monthly_fee) > 0));
-    const novos = alunos.filter((a) => Number(a.monthly_fee) > 0 && !existentes.has(a.id));
-    const total = novos.reduce((soma, aluno) => soma + Number(aluno.monthly_fee), 0);
+
+    // A prévia pergunta ao banco quem entra, em vez de recalcular por conta
+    // própria: era essa segunda regra, escrita aqui, que discordava da que
+    // lançava de verdade — e o professor via um número e recebia outro.
+    const previa = await db.previaDeMensalidades(mesDaPrevia);
+    const nome = (id) => alunos.find((a) => a.id === id)?.full_name ?? "(aluno)";
+    const novos = previa.filter((l) => l.situacao === "nova")
+      .map((l) => ({ ...l, full_name: nome(l.student_id) }));
+    const jaLancadas = previa.filter((l) => l.situacao === "ja_tem").length;
+    const semValor = previa.filter((l) => l.situacao === "fora")
+      .map((l) => ({ ...l, full_name: nome(l.student_id) }));
+    const total = novos.reduce((soma, l) => soma + Number(l.amount), 0);
     const tituloMes = `${nomeDoMes(mesDaPrevia)[0].toUpperCase()}${nomeDoMes(mesDaPrevia).slice(1)} de ${mesDaPrevia.slice(0, 4)}`;
 
     conteudo.innerHTML = `
@@ -159,20 +167,20 @@ export async function render(alvo) {
       <p class="muted small">Isto cria os registros no controle financeiro. Nenhuma mensagem será enviada.</p>
 
       <div class="grid grid-3" style="margin:var(--sp-4) 0">
-        ${cartao("Já lançadas", String(pagamentos.length), "não serão duplicadas")}
+        ${cartao("Já lançadas", String(jaLancadas), "não serão duplicadas")}
         ${cartao("Novas", String(novos.length), moeda(total))}
         ${cartao("Fora", String(semValor.length), "sem mensalidade válida")}
       </div>
 
       ${novos.length ? `
         <div class="list" style="max-height:34vh;overflow:auto">
-          ${novos.map((aluno) => `
+          ${novos.map((linha) => `
             <div class="list-item">
               <span class="list-item-main">
-                <span class="list-item-title">${esc(aluno.full_name)}</span>
-                <span class="muted small">vence dia ${esc(aluno.due_day ?? 5)}</span>
+                <span class="list-item-title">${esc(linha.full_name)}</span>
+                <span class="muted small">vence ${esc(formatarData(linha.due_date))}</span>
               </span>
-              <strong>${esc(moeda(aluno.monthly_fee))}</strong>
+              <strong>${esc(moeda(linha.amount))}</strong>
             </div>`).join("")}
         </div>` : `<div class="empty">Todos os alunos com mensalidade já possuem cobrança neste mês.</div>`}
 
@@ -195,11 +203,17 @@ export async function render(alvo) {
       botao.disabled = true;
       botao.textContent = "Lançando…";
       try {
-        const criados = await db.gerarCobrancasDoMes(mesDaPrevia);
+        const { criadas, jaExistiam } = await db.gerarCobrancasDoMes(mesDaPrevia);
         dialogo.close();
         await carregar();
+        // Diferença entre o que a prévia prometeu e o que o banco fez aparece
+        // aqui: outro dispositivo pode ter lançado no meio do caminho.
+        const divergiu = criadas !== novos.length;
         avisar(
-          `<strong>${plural(criados.length, "cobrança lançada", "cobranças lançadas")}.</strong> ` +
+          `<strong>${plural(criadas, "cobrança lançada", "cobranças lançadas")}.</strong> ` +
+          (divergiu
+            ? `A prévia mostrava ${novos.length} — ${plural(jaExistiam, "aluno já tinha", "alunos já tinham")} cobrança no mês. `
+            : "") +
           `Nenhuma mensagem foi enviada. Use “Cobrar no WhatsApp” quando quiser avisar cada aluno.`
         );
       } catch (err) {

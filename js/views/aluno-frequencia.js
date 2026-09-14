@@ -31,8 +31,9 @@ export async function render(alvo) {
 
   const concluidas = sessoes.filter((s) => s.completed_at);
   const diasTreinados = new Map(concluidas.map((s) => [s.date, s]));
-  const faltam = Math.max(0, semana.meta - semana.feitos);
+  const faltam = semana.meta ? Math.max(0, semana.meta - semana.feitos) : null;
   const pct = semana.meta ? Math.min(100, (semana.feitos / semana.meta) * 100) : 0;
+  const alvoDaSemana = semana.meta ? `/${semana.meta}` : "";
 
   const [ano, mes] = hoje().split("-").map(Number);
   let mesSelecionado = mes;
@@ -44,7 +45,9 @@ export async function render(alvo) {
         <div class="eyebrow">Seu compromisso</div>
         <h1>Frequência.</h1>
         <p class="muted page-description">
-          Sua meta com o professor é ${plural(semana.meta, "treino", "treinos")} por semana.
+          ${semana.meta
+            ? `Sua meta com o professor é ${plural(semana.meta, "dia", "dias")} de treino por semana.`
+            : "Você ainda não tem meta semanal combinada com o professor."}
         </p>
       </div>
 
@@ -53,12 +56,15 @@ export async function render(alvo) {
           <div>
             <div class="eyebrow">Esta semana</div>
             <div class="numeric" style="font-size:32px;font-weight:800;letter-spacing:-.03em">
-              ${semana.feitos}<span style="color:var(--gray-400)">/${semana.meta}</span>
+              ${semana.feitos}<span style="color:var(--gray-400)">${alvoDaSemana}</span>
             </div>
             <div class="muted small">
-              ${faltam === 0
-                ? "meta da semana batida"
-                : `${plural(faltam, "treino", "treinos")} até bater a meta`}
+              ${faltam === null
+                ? `${plural(semana.feitos, "dia treinado", "dias treinados")}`
+                : faltam === 0
+                  ? "meta da semana batida"
+                  : `${plural(faltam, "dia", "dias")} até bater a meta`}
+              ${semana.comPersonal ? ` · ${semana.comPersonal} com o professor` : ""}
             </div>
           </div>
           <div class="muted small" style="text-align:right">
@@ -97,7 +103,7 @@ export async function render(alvo) {
       <!-- SEMANA A SEMANA -->
       <div class="row-between" style="margin-bottom:var(--sp-3)">
         <h2>Semana a semana</h2>
-        <span class="muted small">meta de ${semana.meta}</span>
+        <span class="muted small">${semana.meta ? `meta de ${semana.meta}` : "sem meta definida"}</span>
       </div>
       <div class="list" style="margin-bottom:var(--sp-5)">
         ${semanas(diasTreinados, semana.meta)}

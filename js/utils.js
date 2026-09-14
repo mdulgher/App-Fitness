@@ -361,6 +361,28 @@ export function ligarPullToRefresh(aoRefrescar) {
   };
 }
 
+// REL-07 — as duas regras de frequência, num lugar só.
+//
+// A meta mede DIAS TREINADOS, não sessões. Quem treina de manhã e ainda tem
+// aula com o professor à tarde treinou num dia, não em dois: contando sessões,
+// o cartão dizia 2 e a lista "semana a semana" dizia 1, para o mesmo aluno na
+// mesma semana.
+export function diasDistintos(sessoes) {
+  return new Set(sessoes.map((s) => s.date)).size;
+}
+
+// Existem duas metas no banco: a da ficha (`workout_plans.weekly_target`, que
+// pode ser nula) e a do cadastro do aluno (`students.weekly_target`, com padrão
+// 3). A ficha manda, porque a meta é o combinado daquele ciclo de treino; o
+// cadastro é o padrão de quem ainda não teve meta definida na ficha.
+//
+// Devolve null quando não há meta nenhuma — e null aqui é resposta, não falha:
+// quem exibe precisa escrever "sem meta", nunca dividir por ele. Era daí que
+// saía o "0/null na semana" na lista do professor.
+export function metaEfetiva(ficha, aluno) {
+  return ficha?.weekly_target ?? aluno?.weekly_target ?? null;
+}
+
 // Foto de perfil: aceita HTTPS (o Storage do Supabase) e imagem embutida
 // (`data:`), que é como o modo local guarda a foto sem servidor nenhum.
 //
@@ -423,14 +445,37 @@ export function linkDoApp(hash = "") {
 // aula errada, apaga, e o contador fica um a menos para sempre sem ninguém
 // saber qual dos dois números é o verdadeiro. Mesma razão do status de
 // pagamento ser derivado (armadilha 2).
-export function resumoDoSaldo(pacotes = [], aulasUsadas = []) {
+// Depois de quantos dias uma venda sem pagamento vira assunto. Não bloqueia
+// nada: o professor decidiu que pode esperar alguns dias pelo dinheiro, e o
+// aluno não fica sem treinar por isso. O número só existe para o pacote não
+// ficar em aberto para sempre sem ninguém reparar.
+export const DIAS_DE_ESPERA_DO_PACOTE = 7;
+
+export function resumoDoSaldo(pacotes = [], aulasUsadas = [], referencia = hoje()) {
   const compradas = pacotes.reduce((total, p) => total + Number(p.classes_total ?? 0), 0);
-  const usadas = aulasUsadas.length;
+  // Aula sem conclusão não foi dada, então não consome saldo. Hoje toda aula
+  // presencial já nasce concluída; a checagem é para não passar a consumir
+  // sozinha se algum dia isso mudar.
+  const consumidas = aulasUsadas.filter((a) => a.completed_at !== null);
+  const usadas = consumidas.length;
+
+  // O crédito vale a partir da venda, pago ou não — decisão do negócio. O que o
+  // sistema não pode é deixar de saber a diferença: antes, pacote vendido e
+  // pacote quitado eram a mesma coisa e ninguém conseguia distinguir crédito
+  // autorizado de cobrança esquecida.
+  const emAberto = pacotes.filter((p) => !p.pago);
+  const desde = emAberto.map((p) => p.purchased_on).filter(Boolean).sort()[0] ?? null;
+  const diasEsperando = desde ? diasEntre(desde, referencia) : null;
+
   return {
     compradas,
     usadas,
     saldo: compradas - usadas,
+    aulasNaoPagas: emAberto.reduce((t, p) => t + Number(p.classes_total ?? 0), 0),
+    esperandoPagamentoDesde: desde,
+    diasEsperandoPagamento: diasEsperando,
+    pagamentoAtrasado: diasEsperando !== null && diasEsperando > DIAS_DE_ESPERA_DO_PACOTE,
     ultimaCompra: pacotes[0]?.purchased_on ?? null,
-    ultimaAula: aulasUsadas[0]?.date ?? null,
+    ultimaAula: consumidas[0]?.date ?? null,
   };
 }

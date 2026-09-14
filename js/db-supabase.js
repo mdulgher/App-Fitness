@@ -11,7 +11,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { SUPABASE } from "./config.js";
 import { validarExercicio } from "./exercise-validation.js";
-import { hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo } from "./utils.js";
+import {
+  hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo,
+  diasDistintos, metaEfetiva,
+} from "./utils.js";
 
 export const sb = createClient(SUPABASE.url, SUPABASE.anonKey);
 
@@ -110,7 +113,8 @@ export async function listarPerfis() {
 }
 
 export async function buscarPerfil(id) {
-  return ok(await sb.from("profiles").select("*").eq("id", id).maybeSingle());
+  const perfil = ok(await sb.from("profiles").select("*").eq("id", id).maybeSingle());
+  return perfil ? await comAvatarAssinado(perfil) : perfil;
 }
 
 // Edição do próprio cadastro, por qualquer papel.
@@ -128,7 +132,11 @@ export async function atualizarMeuPerfil(patch) {
   for (const c of CAMPOS_DO_PROPRIO_PERFIL) if (c in patch) campos[c] = patch[c];
   if (!Object.keys(campos).length) return buscarPerfil(user.id);
 
-  return ok(await sb.from("profiles").update(campos).eq("id", user.id).select().single());
+  // Passa pelo mesmo tratamento da leitura: o que volta daqui vai direto para a
+  // tela, e `avatar_url` gravado é caminho, não URL que o <img> saiba abrir.
+  return comAvatarAssinado(
+    ok(await sb.from("profiles").update(campos).eq("id", user.id).select().single())
+  );
 }
 
 export async function alterarMinhaSenha(nova) {
@@ -137,35 +145,56 @@ export async function alterarMinhaSenha(nova) {
 }
 
 const BUCKET_AVATAR = "avatars";
+const VALIDADE_DO_AVATAR = 3600;
 
-// O caminho do arquivo dentro do bucket, a partir da URL pública guardada em
-// `profiles`. Devolve null para URL de fora — assim apagar a foto anterior
-// nunca tenta mexer em algo que o app não subiu.
-function caminhoDoAvatar(url) {
+// `profiles.avatar_url` guarda o CAMINHO dentro do bucket (`<uid>/<uuid>.jpg`),
+// não uma URL. O bucket é privado: URL pública não abre mais, e uma URL assinada
+// gravada no banco venceria sozinha e ainda vazaria para quem lesse a linha.
+//
+// Tolera a URL completa que a versão anterior gravava, para o caso de ter
+// sobrado alguma: dela sai o mesmo caminho. URL de fora devolve null, e assim
+// apagar a foto anterior nunca tenta mexer em algo que o app não subiu.
+function caminhoDoAvatar(valor) {
+  const texto = String(valor ?? "").trim();
+  if (!texto) return null;
+
   const marca = `/${BUCKET_AVATAR}/`;
-  const i = String(url ?? "").indexOf(marca);
-  return i < 0 ? null : decodeURIComponent(url.slice(i + marca.length));
+  const i = texto.indexOf(marca);
+  if (i >= 0) return decodeURIComponent(texto.slice(i + marca.length).split("?")[0]);
+
+  // Caminho puro: `<uid>/<arquivo>`, sem protocolo.
+  return /^[^:]+\/[^/]+$/.test(texto) ? texto : null;
 }
 
-// O nome do arquivo é aleatório, e não `<uid>/avatar.jpg`, por dois motivos:
-// a URL pública deixa de ser adivinhável a partir do id do usuário, e o
-// navegador não serve a foto velha de cache depois da troca.
+// A tela pede `avatar_url` e recebe uma URL que funciona — a assinatura fica
+// aqui, na fronteira do banco, e vive só em memória pelo tempo da sessão.
+async function comAvatarAssinado(perfil) {
+  const caminho = caminhoDoAvatar(perfil.avatar_url);
+  if (!caminho) return { ...perfil, avatar_url: null, avatar_path: null };
+
+  const { data, error } = await sb.storage.from(BUCKET_AVATAR)
+    .createSignedUrl(caminho, VALIDADE_DO_AVATAR);
+
+  // Foto que não abre não é motivo para a tela inteira falhar: cai nas iniciais.
+  return { ...perfil, avatar_url: error ? null : data.signedUrl, avatar_path: caminho };
+}
+
+// O nome do arquivo é aleatório, e não `<uid>/avatar.jpg`, para o navegador não
+// servir a foto velha de cache depois da troca.
 export async function enviarMeuAvatar(arquivo) {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error("Sua sessão expirou. Entre de novo.");
 
-  const anterior = caminhoDoAvatar((await buscarPerfil(user.id))?.avatar_url);
+  const anterior = (await buscarPerfil(user.id))?.avatar_path ?? null;
   const caminho = `${user.id}/${crypto.randomUUID()}.jpg`;
 
   const envio = await sb.storage.from(BUCKET_AVATAR)
     .upload(caminho, arquivo, { contentType: "image/jpeg" });
   if (envio.error) throw new Error(envio.error.message);
 
-  const { data: publica } = sb.storage.from(BUCKET_AVATAR).getPublicUrl(caminho);
-
   let perfil;
   try {
-    perfil = await atualizarMeuPerfil({ avatar_url: publica.publicUrl });
+    perfil = await atualizarMeuPerfil({ avatar_url: caminho });
   } catch (err) {
     // O perfil continua apontando para a foto antiga: o arquivo novo que
     // ninguém referencia é lixo, e deixá-lo seria cobrar armazenamento por ele.
@@ -183,7 +212,7 @@ export async function removerMeuAvatar() {
   const { data: { user } } = await sb.auth.getUser();
   if (!user) throw new Error("Sua sessão expirou. Entre de novo.");
 
-  const anterior = caminhoDoAvatar((await buscarPerfil(user.id))?.avatar_url);
+  const anterior = (await buscarPerfil(user.id))?.avatar_path ?? null;
   const perfil = await atualizarMeuPerfil({ avatar_url: null });
   if (anterior) await sb.storage.from(BUCKET_AVATAR).remove([anterior]);
   return perfil;
@@ -200,12 +229,13 @@ async function montarResumos(alunos) {
   const H = hoje();
 
   const [sessoes, fichas, pagamentos] = await Promise.all([
-    ok(await sb.from("attendance").select("student_id,date,completed_at").in("student_id", ids).not("completed_at", "is", null)),
+    ok(await sb.from("attendance").select("student_id,date,completed_at,in_person").in("student_id", ids).not("completed_at", "is", null)),
     ok(await sb.from("workout_plans").select("id,student_id,end_date,weekly_target").in("student_id", ids).eq("active", true)),
     ok(await sb.from("payments").select("student_id,due_date,paid_date").in("student_id", ids).is("paid_date", null)),
   ]);
 
   const segunda = inicioDaSemana(H);
+  const domingo = somarDias(segunda, 6);
   const mapa = new Map();
 
   for (const aluno of alunos) {
@@ -213,12 +243,18 @@ async function montarResumos(alunos) {
     const ultimoTreino = minhas[0]?.date ?? null;
     const ficha = fichas.find((f) => f.student_id === aluno.id);
     const abertos = pagamentos.filter((p) => p.student_id === aluno.id);
+    // A semana tem fim: sem o `<= domingo`, uma presença lançada com data
+    // futura já entrava na conta da semana atual.
+    const naSemana = minhas.filter((s) => s.date >= segunda && s.date <= domingo);
 
     mapa.set(aluno.id, {
       ultimoTreino,
       diasSemTreinar: ultimoTreino ? diasEntre(ultimoTreino, H) : null,
-      treinosNaSemana: minhas.filter((s) => s.date >= segunda).length,
-      metaSemanal: ficha?.weekly_target ?? null,
+      // Dias, não sessões: treinar de manhã e ter aula à tarde é um dia de
+      // treino, e era o que fazia o cartão e a lista discordarem.
+      treinosNaSemana: diasDistintos(naSemana),
+      comPersonalNaSemana: diasDistintos(naSemana.filter((s) => s.in_person)),
+      metaSemanal: metaEfetiva(ficha, aluno),
       temFichaAtiva: Boolean(ficha),
       fichaAtivaId: ficha?.id ?? null,
       fichaVenceEm: ficha?.end_date ?? null,
@@ -287,8 +323,23 @@ export async function criarAluno(dados) {
   return data;
 }
 
+// Situação COMERCIAL: entra ou não na geração de mensalidade. Não mexe no
+// acesso do aluno ao app — para isso existe `bloquearAcesso`.
 export async function desativarAluno(id, ativo = false) {
   return ok(await sb.from("students").update({ active: ativo }).eq("id", id).select().single());
+}
+
+// Acesso ao app. Quem faz valer é a RLS: as políticas do aluno conferem
+// `acesso_bloqueado()`, então bloquear vale também para um JWT já emitido e
+// para quem chamar a API por fora do app. Cobrança e histórico ficam como estão.
+export async function bloquearAcesso(id, bloqueado = true) {
+  return ok(await sb.from("students").update({ access_blocked: bloqueado }).eq("id", id).select().single());
+}
+
+export async function meuAcessoBloqueado() {
+  const { data, error } = await sb.rpc("acesso_bloqueado");
+  if (error) throw new Error(error.message);
+  return Boolean(data);
 }
 
 export async function atualizarAluno(id, patch) {
@@ -502,20 +553,27 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
   const segunda = inicioDaSemana(referencia);
   const domingo = somarDias(segunda, 6);
 
-  const [ficha, feitos] = await Promise.all([
+  const [ficha, aluno, feitos] = await Promise.all([
     ok(await sb.from("workout_plans").select("weekly_target").eq("student_id", alunoId).eq("active", true).maybeSingle()),
-    ok(await sb.from("attendance").select("date").eq("student_id", alunoId)
+    ok(await sb.from("students").select("weekly_target").eq("id", alunoId).maybeSingle()),
+    ok(await sb.from("attendance").select("date,in_person").eq("student_id", alunoId)
       .not("completed_at", "is", null).gte("date", segunda).lte("date", domingo)),
   ]);
 
-  const meta = ficha?.weekly_target ?? 0;
+  // `meta` pode ser null: significa "não definida", e é diferente de zero.
+  // Quem desenha decide o texto; aqui não se inventa um número.
+  const meta = metaEfetiva(ficha, aluno);
+  const dias = diasDistintos(feitos);
+
   return {
     inicio: segunda,
     fim: domingo,
-    feitos: feitos.length,
+    feitos: dias,
+    comPersonal: diasDistintos(feitos.filter((f) => f.in_person)),
+    sessoes: feitos.length,
     meta,
-    aderencia: meta ? Math.min(1, feitos.length / meta) : 0,
-    datas: feitos.map((f) => f.date).sort(),
+    aderencia: meta ? Math.min(1, dias / meta) : 0,
+    datas: [...new Set(feitos.map((f) => f.date))].sort(),
   };
 }
 
@@ -746,46 +804,23 @@ export async function criarPagamento(dados) {
   );
 }
 
+// Quem decide o conjunto é o banco, não esta função.
+//
+// Antes havia duas regras de elegibilidade escritas em lugares diferentes — uma
+// aqui e outra na tela da prévia — e elas discordavam em três pontos
+// (`billing_type`, mensalidade zero e, o pior, `kind`: um pacote comprado no mês
+// fazia a mensalidade do aluno desaparecer do lote sem aviso). Agora as duas
+// chamam a mesma função SQL, então não têm como divergir.
+export async function previaDeMensalidades(mes = mesDeReferencia()) {
+  return ok(await sb.rpc("previa_de_mensalidades", { p_mes: mes }));
+}
+
 export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
-  const [alunos, existentes] = await Promise.all([
-    // Quem paga por pacote de aulas fica de fora: a cobrança dele nasce da
-    // venda do pacote, não do calendário. Gerar mensalidade para ele criaria
-    // uma dívida que não existe.
-    ok(await sb.from("students").select("id,monthly_fee,due_day")
-      .eq("active", true).eq("billing_type", "monthly").not("monthly_fee", "is", null)),
-    ok(await sb.from("payments").select("student_id").eq("reference_month", mes)),
-  ]);
-
-  const jaTem = new Set(existentes.map((p) => p.student_id));
-  const novos = alunos
-    .filter((a) => !jaTem.has(a.id))
-    .map((a) => ({
-      student_id: a.id,
-      reference_month: mes,
-      amount: a.monthly_fee,
-      due_date: `${mes.slice(0, 7)}-${String(a.due_day ?? 5).padStart(2, "0")}`,
-    }));
-
-  if (!novos.length) return [];
-
-  // O índice único que impede cobrança repetida no mês virou **parcial**
-  // (`where kind = 'monthly'`), para o aluno poder comprar dois pacotes de
-  // aulas no mesmo mês. Índice parcial não serve para inferência de
-  // `ON CONFLICT`: o upsert que havia aqui passou a responder 400 "no unique or
-  // exclusion constraint matching the ON CONFLICT specification".
-  //
-  // A garantia continua sendo do banco, não da tela: numa corrida entre dois
-  // cliques o segundo INSERT é recusado inteiro pelo índice, e nenhuma cobrança
-  // duplicada nasce. O que se perde é só a gravação parcial, que aqui não faz
-  // falta — quem chamar de novo vê a prévia já sem os que existem.
-  const { data, error } = await sb.from("payments")
-    .insert(novos.map((n) => ({ ...n, kind: "monthly" }))).select();
-
-  if (error) {
-    if (/duplicate key|cobranca_unica_por_mes/i.test(error.message)) return [];
-    throw new Error(error.message);
-  }
-  return data;
+  const linhas = ok(await sb.rpc("gerar_mensalidades", { p_mes: mes }));
+  // A RPC devolve contagem, não as linhas: `[]` não distingue mais "nada a
+  // fazer" de "o lote inteiro falhou por conflito numa linha só".
+  const { criadas = 0, ja_existiam = 0 } = linhas?.[0] ?? {};
+  return { criadas, jaExistiam: ja_existiam };
 }
 
 /* ==================== pacote de aulas avulsas ====================
@@ -795,48 +830,48 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
    aula lançada errado, e não haveria como saber qual dos dois está certo.
    É a mesma razão do status de pagamento (armadilha 2).                    */
 
+// Traz a cobrança junto: sem ela não dá para dizer se o pacote foi pago, e o
+// saldo não sabia distinguir aula comprada de aula fiada (REL-04).
 export async function listarPacotes(alunoId) {
-  return ok(
-    await sb.from("class_packages").select("*")
+  const linhas = ok(
+    await sb.from("class_packages").select("*, pagamento:payments(id,paid_date,due_date)")
       .eq("student_id", alunoId).order("purchased_on", { ascending: false })
   );
+  return linhas.map((p) => ({ ...p, pago: Boolean(p.pagamento?.paid_date) }));
 }
 
 // A venda cria o pacote e a cobrança correspondente, ligados: dar baixa na
 // cobrança é o que diz que o pacote foi pago, e não existe um segundo lugar
 // para registrar o mesmo dinheiro.
-export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = null }) {
-  const cobranca = await criarPagamento({
-    alunoId,
-    mes: mesDeReferencia(),
-    valor,
-    vencimento: vencimento ?? hoje(),
-    notas: notas ?? `Pacote de ${aulas} ${aulas === 1 ? "aula" : "aulas"}`,
-    tipo: "package",
-  });
-
-  try {
-    return ok(
-      await sb.from("class_packages").insert({
-        student_id: alunoId,
-        classes_total: aulas,
-        price: valor,
-        payment_id: cobranca.id,
-        notes: notas,
-      }).select().single()
-    );
-  } catch (err) {
-    // Sem o pacote, a cobrança é uma dívida sem contrapartida: o aluno pagaria
-    // por aulas que o sistema não daria a ele.
-    await sb.from("payments").delete().eq("id", cobranca.id);
-    throw err;
-  }
+// Uma transação no banco, com chave de idempotência.
+//
+// Antes eram duas requisições e uma compensação cega: se o pacote gravava e só a
+// resposta se perdia, o `catch` apagava a cobrança boa e a FK `on delete set
+// null` deixava o pacote órfão. Agora o par nasce junto ou não nasce.
+//
+// `requestId` é a INTENÇÃO, não a tentativa: um retry do mesmo clique repete a
+// chave e recebe de volta a mesma venda. Gerar chave nova a cada tentativa
+// venderia duas vezes — por isso ela é parâmetro, e não criada aqui dentro.
+export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = null, requestId }) {
+  const linhas = ok(
+    await sb.rpc("vender_pacote", {
+      p_request_id: requestId ?? crypto.randomUUID(),
+      p_student_id: alunoId,
+      p_classes: aulas,
+      p_amount: valor,
+      p_due_date: vencimento ?? hoje(),
+      p_notes: notas,
+    })
+  );
+  const venda = linhas?.[0];
+  if (!venda) throw new Error("A venda não retornou confirmação. Confira o financeiro do aluno.");
+  return { id: venda.package_id, payment_id: venda.payment_id, criada: venda.criada };
 }
 
 export async function removerPacote(id) {
-  const pacote = ok(await sb.from("class_packages").select("payment_id").eq("id", id).maybeSingle());
-  ok(await sb.from("class_packages").delete().eq("id", id));
-  if (pacote?.payment_id) ok(await sb.from("payments").delete().eq("id", pacote.payment_id));
+  // O banco recusa se a cobrança já foi paga ou se já houve aula presencial:
+  // apagar nesses casos produziria saldo negativo e sumiria com o histórico.
+  ok(await sb.rpc("cancelar_pacote", { p_package_id: id }));
 }
 
 // Aula presencial é uma linha de frequência com `workout_day_id` nulo e

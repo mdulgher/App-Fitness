@@ -138,7 +138,11 @@ export async function render(alvo, { params }) {
         ${blocoRestricoes(aluno)}
 
         <div class="grid grid-3" style="margin-bottom:var(--sp-5)">
-          ${cartao("Semana", `${semana.feitos}/${semana.meta}`, "treinos concluídos")}
+          ${cartao("Semana",
+            semana.meta ? `${semana.feitos}/${semana.meta}` : `${semana.feitos}`,
+            semana.comPersonal
+              ? `dias treinados · ${semana.comPersonal} com você`
+              : semana.meta ? "dias treinados" : "dias treinados · sem meta")}
           ${cartao("Último treino", aluno.resumo.ultimoTreino ? textoTempoRelativo(aluno.resumo.ultimoTreino) : "—", `${concluidas.length} no total`)}
           ${cartao("Ficha", ficha ? "Ativa" : "Sem ficha",
             ficha ? `até ${ficha.end_date ? formatarData(ficha.end_date) : "sem prazo"}` : "aguardando treino")}
@@ -213,6 +217,31 @@ export async function render(alvo, { params }) {
         await recarregar();
       } catch (err) {
         registrarErro(err, { contexto: { tela: "aluno", acao: pacote ? "removerPacote" : "removerAula" } });
+        b.disabled = false;
+        b.textContent = err.message;
+      }
+    })
+  );
+
+  // Bloquear acesso tira o aluno do app na hora; parar de cobrar mexe só no
+  // dinheiro. Os dois pedem confirmação no próprio botão, como as exclusões.
+  alvo.querySelectorAll("[data-cobranca], [data-acesso]").forEach((b) =>
+    b.addEventListener("click", async () => {
+      const acesso = b.dataset.acesso;
+      if (b.dataset.confirmando !== "1") {
+        b.dataset.confirmando = "1";
+        b.textContent = "Confirmar";
+        return;
+      }
+      b.disabled = true;
+      try {
+        if (acesso) await db.bloquearAcesso(aluno.id, acesso === "bloquear");
+        else await db.desativarAluno(aluno.id, b.dataset.cobranca === "voltar");
+        await recarregar();
+      } catch (err) {
+        registrarErro(err, {
+          contexto: { tela: "aluno", acao: acesso ? "bloquearAcesso" : "situacaoDeCobranca", alunoId: aluno.id },
+        });
         b.disabled = false;
         b.textContent = err.message;
       }
@@ -303,6 +332,12 @@ function formularioDePacote(alvo, aluno, aoSalvar) {
   const form = conteudo.querySelector("#form-pacote");
   const erro = conteudo.querySelector("[data-erro]");
 
+  // A chave nasce com o formulário, não com o clique: se o professor apertar
+  // "Vender" de novo depois de um erro de rede, é a MESMA venda sendo
+  // retransmitida. Gerar uma chave por tentativa venderia duas vezes quando a
+  // primeira resposta se perdesse no caminho.
+  const requestId = crypto.randomUUID();
+
   form.addEventListener("submit", async (ev) => {
     ev.preventDefault();
     erro.classList.add("hidden");
@@ -325,7 +360,7 @@ function formularioDePacote(alvo, aluno, aoSalvar) {
     botao.disabled = true;
     botao.textContent = "Vendendo…";
     try {
-      await db.venderPacote({ alunoId: aluno.id, aulas, valor, vencimento });
+      await db.venderPacote({ alunoId: aluno.id, aulas, valor, vencimento, requestId });
       dialogo.close();
       await aoSalvar();
     } catch (err) {
@@ -596,7 +631,8 @@ function blocoCadastro(aluno) {
   const linhas = [
     ["Objetivo", aluno.goal ?? "—"],
     ["Telefone", aluno.phone ?? "—"],
-    ["Situação", aluno.active ? "Ativo" : "Inativo"],
+    ["Cobrança", aluno.active ? "Ativa" : "Parada"],
+    ["Acesso ao app", aluno.access_blocked ? "Bloqueado" : "Liberado"],
   ];
   return `
     <div class="row-between" style="margin-bottom:var(--sp-3)"><h2>Cadastro</h2></div>
@@ -611,6 +647,19 @@ function blocoCadastro(aluno) {
               </span>
             </span>
           </div>`).join("")}
+      </div>
+      <div class="dialog-actions" style="margin-top:var(--sp-3)">
+        <button type="button" class="btn btn-sm" data-cobranca="${aluno.active ? "parar" : "voltar"}">
+          ${aluno.active ? "Parar de cobrar" : "Voltar a cobrar"}
+        </button>
+        <button type="button" class="btn btn-sm" data-acesso="${aluno.access_blocked ? "liberar" : "bloquear"}">
+          ${aluno.access_blocked ? "Liberar acesso" : "Bloquear acesso"}
+        </button>
+      </div>
+      <div class="muted small" style="margin-top:var(--sp-2)">
+        Parar de cobrar tira o aluno da geração de mensalidade e não mexe no
+        acesso. Bloquear o acesso impede ele de entrar no app e não cancela
+        cobrança nenhuma — o histórico dele continua aqui para você.
       </div>
     </div>`;
 }

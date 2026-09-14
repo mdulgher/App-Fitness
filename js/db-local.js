@@ -15,6 +15,8 @@ import {
   mesDeReferencia,
   uid,
   resumoDoSaldo,
+  diasDistintos,
+  metaEfetiva,
 } from "./utils.js";
 
 const CHAVE = "lpt.db.v1";
@@ -96,8 +98,20 @@ export async function alunoVinculado(id) {
   return tabela("students").some((a) => a.id === id);
 }
 
+// Situação comercial e acesso são coisas separadas — igual ao Supabase.
 export async function desativarAluno(id, ativo = false) {
   return atualizarAluno(id, { active: ativo });
+}
+
+export async function bloquearAcesso(id, bloqueado = true) {
+  return atualizarAluno(id, { access_blocked: bloqueado });
+}
+
+// Aqui não há RLS para fazer valer: o modo local é demonstração, e a checagem
+// vive no login como no Supabase. A resposta é a mesma.
+export async function meuAcessoBloqueado() {
+  const id = localStorage.getItem(CHAVE_SESSAO);
+  return Boolean(tabela("students").find((a) => a.id === id)?.access_blocked);
 }
 
 export async function sairDaConta() {
@@ -157,7 +171,10 @@ export async function removerMeuAvatar() {
 }
 
 export async function buscarPerfil(id) {
-  return clone(tabela("profiles").find((p) => p.id === id) ?? null);
+  const perfil = clone(tabela("profiles").find((p) => p.id === id) ?? null);
+  // `avatar_path` existe só para a assinatura bater com a do Supabase, onde ele
+  // é o caminho no Storage. Aqui a foto é `data:` e não tem caminho nenhum.
+  return perfil ? { ...perfil, avatar_path: null } : null;
 }
 
 /* ==================== alunos ==================== */
@@ -170,7 +187,9 @@ function resumoDoAluno(aluno) {
 
   const ultimoTreino = sessoes[0]?.date ?? null;
   const segunda = inicioDaSemana(H);
-  const treinosNaSemana = sessoes.filter((s) => s.date >= segunda).length;
+  const domingo = somarDias(segunda, 6);
+  // Mesma regra do Supabase: a semana tem fim, e o que se conta é dia treinado.
+  const naSemana = sessoes.filter((s) => s.date >= segunda && s.date <= domingo);
 
   const fichaAtiva = tabela("workout_plans").find(
     (p) => p.student_id === aluno.id && p.active
@@ -183,8 +202,9 @@ function resumoDoAluno(aluno) {
   return {
     ultimoTreino,
     diasSemTreinar: ultimoTreino ? diasEntre(ultimoTreino, H) : null,
-    treinosNaSemana,
-    metaSemanal: fichaAtiva?.weekly_target ?? null,
+    treinosNaSemana: diasDistintos(naSemana),
+    comPersonalNaSemana: diasDistintos(naSemana.filter((s) => s.in_person)),
+    metaSemanal: metaEfetiva(fichaAtiva, aluno),
     temFichaAtiva: Boolean(fichaAtiva),
     fichaAtivaId: fichaAtiva?.id ?? null,
     fichaVenceEm: fichaAtiva?.end_date ?? null,
@@ -535,14 +555,19 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
       a.date >= segunda &&
       a.date <= domingo
   );
-  const meta = ficha?.weekly_target ?? 0;
+  const aluno = tabela("students").find((s) => s.id === alunoId);
+  const meta = metaEfetiva(ficha, aluno);
+  const dias = diasDistintos(feitos);
+
   return {
     inicio: segunda,
     fim: domingo,
-    feitos: feitos.length,
+    feitos: dias,
+    comPersonal: diasDistintos(feitos.filter((f) => f.in_person)),
+    sessoes: feitos.length,
     meta,
-    aderencia: meta ? Math.min(1, feitos.length / meta) : 0,
-    datas: feitos.map((f) => f.date).sort(),
+    aderencia: meta ? Math.min(1, dias / meta) : 0,
+    datas: [...new Set(feitos.map((f) => f.date))].sort(),
   };
 }
 
@@ -872,28 +897,42 @@ export async function criarPagamento(dados) {
 
 // Gera a cobrança de todos os alunos ativos de uma vez. Rodar duas vezes não
 // duplica nada — é o equivalente à restrição de unicidade do banco.
+// Regra única de elegibilidade, como a função SQL do Supabase: a prévia e a
+// execução leem daqui, e por isso não têm como discordar.
+export async function previaDeMensalidades(mes = mesDeReferencia()) {
+  return tabela("students")
+    .filter((a) => a.active)
+    .map((aluno) => {
+      const fora = aluno.billing_type !== "monthly"
+        || aluno.monthly_fee == null
+        || Number(aluno.monthly_fee) <= 0;
+      // `kind === 'monthly'` é o conserto: um pacote comprado no mês não é
+      // mensalidade e não pode bloquear a geração dela.
+      const jaTem = tabela("payments").some(
+        (p) => p.student_id === aluno.id && p.reference_month === mes && p.kind === "monthly"
+      );
+      return {
+        student_id: aluno.id,
+        amount: aluno.monthly_fee,
+        due_date: `${mes.slice(0, 7)}-${String(aluno.due_day ?? 5).padStart(2, "0")}`,
+        situacao: fora ? "fora" : jaTem ? "ja_tem" : "nova",
+      };
+    });
+}
+
 export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
-  const existentes = new Set(
-    tabela("payments")
-      .filter((p) => p.reference_month === mes)
-      .map((p) => p.student_id)
-  );
-  const criados = [];
-  for (const aluno of tabela("students").filter((a) => a.active)) {
-    // Quem paga por pacote fica de fora: a cobrança dele nasce da venda do
-    // pacote, não do calendário.
-    if (aluno.billing_type === "package") continue;
-    if (existentes.has(aluno.id) || !aluno.monthly_fee) continue;
-    criados.push(
-      await criarPagamento({
-        alunoId: aluno.id,
-        mes,
-        valor: aluno.monthly_fee,
-        vencimento: `${mes.slice(0, 7)}-${String(aluno.due_day ?? 5).padStart(2, "0")}`,
-      })
-    );
+  const previa = await previaDeMensalidades(mes);
+  let criadas = 0;
+  for (const linha of previa.filter((l) => l.situacao === "nova")) {
+    await criarPagamento({
+      alunoId: linha.student_id,
+      mes,
+      valor: linha.amount,
+      vencimento: linha.due_date,
+    });
+    criadas += 1;
   }
-  return criados;
+  return { criadas, jaExistiam: previa.filter((l) => l.situacao === "ja_tem").length };
 }
 
 /* ==================== pacote de aulas avulsas ====================
@@ -905,10 +944,28 @@ export async function listarPacotes(alunoId) {
     tabela("class_packages")
       .filter((p) => p.student_id === alunoId)
       .sort((a, b) => String(b.purchased_on).localeCompare(String(a.purchased_on)))
-  );
+  ).map((p) => {
+    const pagamento = tabela("payments").find((x) => x.id === p.payment_id) ?? null;
+    return { ...p, pagamento, pago: Boolean(pagamento?.paid_date) };
+  });
 }
 
-export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = null }) {
+// Sem transação de verdade aqui, mas com o mesmo contrato: a mesma `requestId`
+// devolve a mesma venda em vez de vender duas vezes, e valores diferentes na
+// mesma chave são erro.
+export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = null, requestId }) {
+  const chave = requestId ?? uid();
+  const anterior = tabela("sale_requests").find((v) => v.request_id === chave);
+  if (anterior) {
+    if (anterior.student_id !== alunoId || anterior.classes !== aulas || anterior.amount !== valor) {
+      throw new Error("Esta operação já foi registrada com outros valores.");
+    }
+    return { id: anterior.package_id, payment_id: anterior.payment_id, criada: false };
+  }
+
+  if (!(aulas > 0)) throw new Error("A quantidade de aulas precisa ser maior que zero.");
+  if (!(valor >= 0)) throw new Error("Valor inválido.");
+
   const cobranca = await criarPagamento({
     alunoId,
     mes: mesDeReferencia(),
@@ -929,15 +986,36 @@ export async function venderPacote({ alunoId, aulas, valor, vencimento, notas = 
     created_at: hoje(),
   };
   tabela("class_packages").push(novo);
+  tabela("sale_requests").push({
+    request_id: chave,
+    student_id: alunoId,
+    classes: aulas,
+    amount: valor,
+    package_id: novo.id,
+    payment_id: cobranca.id,
+  });
   salvar();
-  return clone(novo);
+  return { id: novo.id, payment_id: cobranca.id, criada: true };
 }
 
 export async function removerPacote(id) {
   const dados = carregar();
   const pacote = tabela("class_packages").find((p) => p.id === id);
+  if (!pacote) throw new Error("Pacote não encontrado.");
+
+  // As mesmas recusas do banco: cancelar pacote pago ou já consumido apagaria
+  // dinheiro que entrou e histórico de aula que aconteceu.
+  const cobranca = tabela("payments").find((p) => p.id === pacote.payment_id);
+  if (cobranca?.paid_date) {
+    throw new Error("Este pacote já foi pago. Reabra a cobrança antes de cancelar.");
+  }
+  if (tabela("attendance").some((a) => a.student_id === pacote.student_id && a.in_person)) {
+    throw new Error("Este aluno já teve aula presencial lançada. Cancelar apagaria o histórico dele.");
+  }
+
+  dados.sale_requests = tabela("sale_requests").filter((v) => v.package_id !== id);
   dados.class_packages = tabela("class_packages").filter((p) => p.id !== id);
-  if (pacote?.payment_id) {
+  if (pacote.payment_id) {
     dados.payments = tabela("payments").filter((p) => p.id !== pacote.payment_id);
   }
   salvar();

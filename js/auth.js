@@ -9,10 +9,31 @@ import { registrarErro } from "./log.js";
 
 let usuario = null;
 
+// Aluno bloqueado não fica com o app pela metade: sem isso ele entraria e veria
+// todas as telas vazias, porque a RLS recusa os dados dele — parecendo bug, e
+// não a decisão que o professor tomou. A trava de verdade continua no banco;
+// isto aqui é só o recado.
+const ACESSO_BLOQUEADO = "Seu acesso está bloqueado. Fale com o professor.";
+
+async function bloqueado() {
+  if (!usuario || ehProfessor()) return false;
+  try {
+    return await db.meuAcessoBloqueado();
+  } catch {
+    // Falha de rede não vira bloqueio: quem recusa o dado é o banco, e se ele
+    // não respondeu as telas vão tratar o erro delas.
+    return false;
+  }
+}
+
 export async function restaurarSessao() {
   try {
     const conta = await db.usuarioDaSessao();
     usuario = conta ? await db.buscarPerfil(conta.id) : null;
+    if (await bloqueado()) {
+      await db.sairDaConta();
+      usuario = null;
+    }
   } catch (err) {
     registrarErro(err, { origem: "sessao", contexto: { acao: "restaurarSessao" } });
     usuario = null;
@@ -48,6 +69,11 @@ export async function entrar(email, senha) {
     // app rodar com um usuário sem papel.
     await db.sairDaConta();
     throw new Error("Sua conta existe mas está sem perfil. Avise o professor.");
+  }
+  if (await bloqueado()) {
+    await db.sairDaConta();
+    usuario = null;
+    throw new Error(ACESSO_BLOQUEADO);
   }
   return usuario;
 }

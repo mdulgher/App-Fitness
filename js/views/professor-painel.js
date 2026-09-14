@@ -153,6 +153,22 @@ function cartao(rotulo, valor, apoio) {
     </div>`;
 }
 
+// Aluno sem meta definida mostrava "0/null na semana", e a barra ao lado ficava
+// vazia como se ele estivesse devendo treino. Sem meta não há o que comparar: o
+// número de dias treinados se sustenta sozinho.
+//
+// Os dias com o professor aparecem à parte porque o aluno treina sozinho também
+// — e é justamente essa diferença que o professor quer enxergar na lista.
+function frequenciaDaSemana(r) {
+  const dias = r.treinosNaSemana === 1 ? "1 dia" : `${r.treinosNaSemana} dias`;
+  const comPersonal = r.comPersonalNaSemana
+    ? ` · ${r.comPersonalNaSemana} com você`
+    : "";
+  return r.metaSemanal
+    ? `${r.treinosNaSemana}/${r.metaSemanal} na semana${comPersonal}`
+    : `${dias} na semana · sem meta${comPersonal}`;
+}
+
 function linhaAluno(a) {
   const r = a.resumo;
   const pct = r.metaSemanal ? Math.min(100, (r.treinosNaSemana / r.metaSemanal) * 100) : 0;
@@ -172,7 +188,7 @@ function linhaAluno(a) {
         </span>
         <span class="row" style="gap:var(--sp-2)">
           <span class="meter" style="flex:1;max-width:140px"><span style="width:${pct}%"></span></span>
-          <span class="muted small numeric">${r.treinosNaSemana}/${r.metaSemanal} na semana</span>
+          <span class="muted small numeric">${frequenciaDaSemana(r)}</span>
         </span>
       </span>
     </a>`;

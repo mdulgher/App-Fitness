@@ -26,6 +26,9 @@ export async function render(alvo) {
 
   const fixadas = anotacoes.filter((n) => n.pinned);
   const pct = semana.meta ? Math.min(100, (semana.feitos / semana.meta) * 100) : 0;
+  // Sem meta combinada não existe denominador: mostrar "/0" ou "/null" faria o
+  // aluno achar que está devendo treino que ninguém pediu.
+  const alvoDaSemana = semana.meta ? ` / ${semana.meta}` : "";
 
   alvo.innerHTML = `
     <div class="wrap student-dashboard">
@@ -38,14 +41,16 @@ export async function render(alvo) {
       ${blocoRestricoes(aluno)}
       ${blocoSugerido(sugerido)}
       <div class="card weekly-card" style="margin-bottom:var(--sp-5)">
-        <div class="progress-ring" style="--progress:${pct}%" role="img" aria-label="${semana.feitos} de ${semana.meta} treinos concluídos"><span>${semana.feitos}<small> / ${semana.meta}</small></span></div>
+        <div class="progress-ring" style="--progress:${pct}%" role="img" aria-label="${semana.feitos}${semana.meta ? ` de ${semana.meta}` : ""} dias treinados nesta semana"><span>${semana.feitos}<small>${alvoDaSemana}</small></span></div>
         <div class="weekly-content">
         <div class="eyebrow">Esta semana</div>
         <div class="row" style="margin:var(--sp-2) 0">
           <span class="numeric" style="font-size:32px;font-weight:800;letter-spacing:-0.03em">
-            ${semana.feitos}<span style="color:var(--gray-400)">/${semana.meta}</span>
+            ${semana.feitos}<span style="color:var(--gray-400)">${alvoDaSemana}</span>
           </span>
-          <span class="muted small">treinos concluídos</span>
+          <span class="muted small">${semana.comPersonal
+            ? `dias treinados · ${semana.comPersonal} com o professor`
+            : "dias treinados"}</span>
         </div>
         <div class="meter">
           <span style="width:${pct}%"></span>
