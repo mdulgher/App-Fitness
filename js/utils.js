@@ -2,6 +2,25 @@
 
 import { TIMEZONE } from "./config.js";
 
+/* ---------- senha ---------- */
+
+// Espelha a política ligada em 14/09/2026 no painel do Supabase (Authentication
+// → Sign In/Providers → Email): mínimo 8, com minúscula, maiúscula e número.
+// Symbol NÃO é exigido lá — o dropdown escolhido foi "Lowercase, uppercase
+// letters and digits", sem "Symbols". Se o painel mudar, mudar aqui também: são
+// duas superfícies (troca de senha do aluno/professor e criar-aluno) e não há
+// como o servidor de Auth avisar o front quando a regra muda.
+export const SENHA_MINIMA = 8;
+
+export function senhaFraca(senha) {
+  const texto = String(senha ?? "");
+  if (texto.length < SENHA_MINIMA) return `A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`;
+  if (!/[a-z]/.test(texto)) return "A senha precisa ter ao menos uma letra minúscula.";
+  if (!/[A-Z]/.test(texto)) return "A senha precisa ter ao menos uma letra maiúscula.";
+  if (!/[0-9]/.test(texto)) return "A senha precisa ter ao menos um número.";
+  return null;
+}
+
 /* ---------- datas ---------- */
 
 // "Hoje" no fuso de São Paulo, como 'AAAA-MM-DD'.

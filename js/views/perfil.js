@@ -12,7 +12,7 @@ import { db } from "../db.js";
 import { usuarioAtual, ehProfessor, recarregarPerfil } from "../auth.js";
 import { PROFESSOR, DATA_SOURCE } from "../config.js";
 import { pixCopiaECola } from "../pix.js";
-import { esc, iniciais, moeda, plural, urlDeAvatarSeguro, reduzirImagem } from "../utils.js";
+import { esc, iniciais, moeda, plural, urlDeAvatarSeguro, reduzirImagem, senhaFraca } from "../utils.js";
 import { registrarErro } from "../log.js";
 
 const avatarInterno = (usuario) => {
@@ -85,7 +85,8 @@ export async function render(alvo) {
         <form id="form-senha">
           <div class="exercise-form-grid">
             <div class="field"><label for="p-senha">Nova senha</label>
-              <input id="p-senha" name="senha" type="password" autocomplete="new-password" placeholder="••••••••" /></div>
+              <input id="p-senha" name="senha" type="password" autocomplete="new-password" placeholder="••••••••" />
+              <div class="field-hint">Pelo menos 8 caracteres, com maiúscula, minúscula e número.</div></div>
             <div class="field"><label for="p-senha2">Repita a nova senha</label>
               <input id="p-senha2" name="senha2" type="password" autocomplete="new-password" placeholder="••••••••" /></div>
           </div>
@@ -210,7 +211,8 @@ export async function render(alvo) {
     };
 
     if (DATA_SOURCE === "local") return mostrarErro("Trocar senha só funciona com o banco conectado.");
-    if (senha.length < 6) return mostrarErro("A senha precisa ter pelo menos 6 caracteres.");
+    const fraca = senhaFraca(senha);
+    if (fraca) return mostrarErro(fraca);
     if (senha !== formSenha.senha2.value) return mostrarErro("As duas senhas não são iguais.");
 
     botao.disabled = true;

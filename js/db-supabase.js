@@ -95,7 +95,14 @@ function traduzErro(msg) {
   if (/invalid login credentials/i.test(msg)) return "Email ou senha incorretos.";
   if (/email not confirmed/i.test(msg)) return "Confirme seu email antes de entrar.";
   if (/already registered|already been registered/i.test(msg)) return "Esse email já tem conta.";
-  if (/password should be at least/i.test(msg)) return "A senha precisa ter pelo menos 6 caracteres.";
+  if (/password should be at least/i.test(msg)) return "A senha precisa ter pelo menos 8 caracteres.";
+  // Mensagem real do Supabase quando falta minúscula/maiúscula/número; o texto
+  // varia ("Password should contain at least one character of each..."), então
+  // o padrão é frouxo de propósito. `senhaFraca()` no cliente já evita isso na
+  // maioria dos casos — esta é a rede de segurança para quem chamar a API direto.
+  if (/character of each|lowercase|uppercase/i.test(msg)) {
+    return "A senha precisa ter maiúscula, minúscula e número.";
+  }
   if (/different from the old password/i.test(msg)) return "A nova senha precisa ser diferente da atual.";
   if (/weak.?password|pwned|compromised/i.test(msg)) return "Essa senha é muito fácil de adivinhar. Escolha outra.";
   return msg;

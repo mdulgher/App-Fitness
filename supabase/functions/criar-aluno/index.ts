@@ -1,0 +1,158 @@
+// Cria a conta de um aluno em nome do professor.
+//
+// Por que existe: criar usuario para outra pessoa exige a chave service_role,
+// que ignora todas as regras de acesso do banco. Ela nunca pode ir para o
+// navegador — quem abrisse o DevTools viraria administrador. Aqui ela fica no
+// servidor, como variavel de ambiente, e o navegador so chama esta funcao.
+//
+// A funcao confere, com a propria sessao de quem chamou, se o solicitante e o
+// professor. Sem essa checagem, qualquer aluno logado criaria contas.
+
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const URL_PROJETO = Deno.env.get("SUPABASE_URL")!;
+const CHAVE_ANON = Deno.env.get("SUPABASE_ANON_KEY")!;
+const CHAVE_ADMIN = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+
+const CORS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+const responder = (corpo: unknown, status = 200) =>
+  new Response(JSON.stringify(corpo), {
+    status,
+    headers: { ...CORS, "Content-Type": "application/json" },
+  });
+
+// Espelha a política ligada em 14/09/2026 no painel do Supabase (Authentication
+// → Sign In/Providers → Email): mínimo 8, com minúscula, maiúscula e número.
+// Repetido aqui (e em js/utils.js, do lado do cliente) porque o servidor de
+// Auth não expõe essa regra para quem chama — se o painel mudar, mudar as duas
+// pontas junto.
+const SENHA_MINIMA = 8;
+
+function senhaFraca(senha: string): string | null {
+  if (senha.length < SENHA_MINIMA) return `A senha precisa ter pelo menos ${SENHA_MINIMA} caracteres.`;
+  if (!/[a-z]/.test(senha)) return "A senha precisa ter ao menos uma letra minúscula.";
+  if (!/[A-Z]/.test(senha)) return "A senha precisa ter ao menos uma letra maiúscula.";
+  if (!/[0-9]/.test(senha)) return "A senha precisa ter ao menos um número.";
+  return null;
+}
+
+// Senha temporaria legivel ao telefone: sem I, O, 0 e 1, que se confundem.
+// Garante minuscula+maiuscula+numero por CONSTRUCAO (um de cada, sorteados
+// primeiro), e nao por sorte: sortear 12 caracteres de um alfabeto misto quase
+// sempre cai nos três tipos, mas "quase sempre" falharia a validação acima em
+// algum cadastro raro, sem que o professor tivesse feito nada de errado.
+function senhaTemporaria() {
+  const minusculas = "abcdefghijkmnpqrstuvwxyz";
+  const maiusculas = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+  const digitos = "23456789";
+  const alfabeto = minusculas + maiusculas + digitos;
+
+  const sorteia = (fonte: string) => fonte[crypto.getRandomValues(new Uint32Array(1))[0] % fonte.length];
+
+  const obrigatorios = [sorteia(minusculas), sorteia(maiusculas), sorteia(digitos)];
+  const resto = Array.from({ length: 9 }, () => sorteia(alfabeto));
+
+  // Embaralha para os três primeiros caracteres não seguirem sempre o mesmo
+  // padrão minúscula-maiúscula-número.
+  const todos = [...obrigatorios, ...resto];
+  for (let i = todos.length - 1; i > 0; i--) {
+    const j = crypto.getRandomValues(new Uint32Array(1))[0] % (i + 1);
+    [todos[i], todos[j]] = [todos[j], todos[i]];
+  }
+  return todos.join("");
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response("ok", { headers: CORS });
+  if (req.method !== "POST") return responder({ error: "Método não permitido." }, 405);
+
+  const autorizacao = req.headers.get("Authorization") ?? "";
+  if (!autorizacao) return responder({ error: "Sessão ausente." }, 401);
+
+  // Cliente com a sessao de quem chamou: serve para descobrir quem e, sem
+  // qualquer privilegio extra.
+  const comoUsuario = createClient(URL_PROJETO, CHAVE_ANON, {
+    global: { headers: { Authorization: autorizacao } },
+  });
+
+  const { data: { user }, error: erroSessao } = await comoUsuario.auth.getUser();
+  if (erroSessao || !user) return responder({ error: "Sessão inválida." }, 401);
+
+  const { data: perfil } = await comoUsuario
+    .from("profiles").select("role").eq("id", user.id).maybeSingle();
+
+  if (perfil?.role !== "trainer") {
+    return responder({ error: "Apenas o professor pode cadastrar alunos." }, 403);
+  }
+
+  let dados;
+  try { dados = await req.json(); }
+  catch { return responder({ error: "Dados inválidos." }, 400); }
+
+  const email = String(dados.email ?? "").trim().toLowerCase();
+  const nome = String(dados.full_name ?? "").trim();
+  if (!email || !nome) return responder({ error: "Informe o nome e o email do aluno." }, 400);
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return responder({ error: "Email inválido." }, 400);
+
+  const senhaInformada = String(dados.senha ?? "").trim();
+  const senha = senhaInformada || senhaTemporaria();
+  // Só valida a senha DIGITADA pelo professor; a gerada aqui já nasce válida
+  // por construção, e rodar a mesma checagem nela seria redundante.
+  if (senhaInformada) {
+    const fraca = senhaFraca(senhaInformada);
+    if (fraca) return responder({ error: fraca }, 400);
+  }
+
+  const admin = createClient(URL_PROJETO, CHAVE_ADMIN, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
+
+  // email_confirm: o professor responde pelo aluno, entao nao ha por que
+  // esperar confirmacao por email para o acesso funcionar.
+  const { data: criado, error: erroCriacao } = await admin.auth.admin.createUser({
+    email,
+    password: senha,
+    email_confirm: true,
+    user_metadata: { full_name: nome },
+  });
+
+  if (erroCriacao) {
+    const jaExiste = /already|registered|exists/i.test(erroCriacao.message);
+    return responder(
+      { error: jaExiste ? "Já existe uma conta com esse email." : erroCriacao.message },
+      jaExiste ? 409 : 400,
+    );
+  }
+
+  const id = criado.user.id;
+
+  // O gatilho ja criou o perfil. Completa o que o professor preencheu.
+  await admin.from("profiles").update({ full_name: nome, phone: dados.phone || null }).eq("id", id);
+
+  const { error: erroAluno } = await admin.from("students").insert({
+    id,
+    birth_date: dados.birth_date || null,
+    goal: dados.goal || null,
+    height_cm: dados.height_cm ? Number(dados.height_cm) : null,
+    start_weight_kg: dados.start_weight_kg ? Number(dados.start_weight_kg) : null,
+    health_restrictions: dados.health_restrictions || null,
+    weekly_target: Number(dados.weekly_target) || 3,
+    monthly_fee: dados.monthly_fee === "" || dados.monthly_fee == null ? null : Number(dados.monthly_fee),
+    due_day: Number(dados.due_day) || 5,
+    active: true,
+  });
+
+  if (erroAluno) {
+    // Conta sem registro de aluno seria um fantasma: existe para entrar, mas o
+    // app nao sabe quem e. Desfaz para nao deixar lixo no meio do caminho.
+    await admin.auth.admin.deleteUser(id);
+    return responder({ error: `Não foi possível concluir o cadastro: ${erroAluno.message}` }, 400);
+  }
+
+  return responder({ id, email, senha, full_name: nome }, 201);
+});
