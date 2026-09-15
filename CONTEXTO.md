@@ -919,15 +919,19 @@ está em [`TESTES.md`](TESTES.md); a análise original está em
 
 ### O que fazer a seguir, em ordem de valor
 
-1. **Testar no celular de verdade, com o banco real.** Tudo foi testado no
-   navegador (inclusive em 375 px) e contra a camada local; o registro de carga
-   contra o Supabase ainda não passou por um treino inteiro. **O teste que mais
-   importa é o do modo avião:** registrar série sem rede, sair do app, voltar e
-   ver a fila esvaziar sozinha.
-2. **Validar a PWA em aparelhos reais**: instalar e reabrir no iPhone e no
-   Android, conferir a atualização de versão e repetir o roteiro de modo avião.
-   A implementação e os testes automatizados estão prontos; esta validação
-   física depende dos aparelhos.
+1. **Criar uma visualização clara de “Treinos realizados”.** O teste físico no
+   iPhone mostrou que, depois de concluir e sincronizar, o painel sugere a
+   próxima divisão vazia e parece ter apagado o treino anterior. Os registros
+   chegaram corretamente ao banco, mas hoje ficam espalhados entre Frequência
+   e Progressão. Amanhã, adicionar à tela de Frequência uma lista de sessões
+   concluídas com data, nome da divisão, horário, exercícios e todas as séries
+   (carga e repetições). Após concluir, oferecer **“Ver treino realizado”**. O
+   professor deve ter a mesma leitura dentro do perfil do aluno.
+2. **Validar a PWA no Android.** No iPhone, instalação pela tela inicial,
+   reabertura sem rede, persistência da fila após fechar o app e sincronização
+   ao reconectar foram validadas com o Supabase real em 14/09/2026. A fila
+   enviou as séries e concluiu a sessão corretamente. Falta repetir o roteiro
+   em um Android e conferir a atualização de versão.
 3. **Mídia dos exercícios**: não gerar ilustrações. O professor fornece e anexa
    as fotos ou vídeos conforme preparar o conteúdo.
 

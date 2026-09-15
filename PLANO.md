@@ -483,6 +483,13 @@ escrita explicitamente. O padrão é negar.
 
 **7. Financeiro** — situação atual (em dia / a vencer / vencido), histórico e datas. Somente leitura.
 
+**8. Treinos realizados** — histórico explícito de sessões concluídas na tela
+de Frequência. Cada sessão mostra data, divisão, horário, exercícios e séries
+com carga e repetições. Após concluir um treino, o aluno recebe a ação **“Ver
+treino realizado”**, para a rotação automática ao próximo treino não parecer
+que apagou o anterior. O professor acessa a mesma leitura dentro do perfil do
+aluno. **Planejado para a próxima sessão; ainda não implementado.**
+
 ---
 
 ## 9. Estrutura Técnica
@@ -677,7 +684,10 @@ As fases 0 a 7 rodam **inteiras na camada local**, sem Supabase (seção 9.1).
 de que o app pulou direto para o Supabase, então as fases rodaram contra o
 banco real e não na camada local. A Fase 7 inclui service worker versionado,
 manifest/ícones, instalação e snapshot mínimo para reabrir o treino offline.
-Falta somente validar instalação e modo avião em aparelhos físicos.
+Instalação, reabertura offline, persistência e sincronização com o banco real
+foram validadas em um iPhone. Falta repetir no Android. O teste revelou a
+próxima melhoria de produto: uma tela clara de treinos realizados (seção 8 da
+área do aluno), planejada para a próxima sessão e ainda não implementada.
 O estado exato vive em
 [`CONTEXTO.md`](CONTEXTO.md) seção 9, que é atualizado a cada sessão.
 
