@@ -32,3 +32,14 @@ js/config.local.js
 
 # Credenciais: o repositorio e publico e o app aponta para o banco de verdade.
 CREDENCIAIS.local.md
+
+# Log de evolucao: registro interno de decisoes, licoes e pontos em aberto.
+#
+# Nao ha passo de build, entao tudo que e versionado tambem e SERVIDO pelo
+# GitHub Pages. O log fala de decisoes de negocio, falhas encontradas e do que
+# ainda esta em aberto — nada disso precisa estar publico na internet.
+#
+# Consequencia a ter em mente: ficando fora do Git, o log existe so nesta
+# maquina e nao acompanha um clone novo. Se trocar de computador, copie a pasta
+# junto (mesma pendencia da pasta arte/).
+log-de-evolucao/
