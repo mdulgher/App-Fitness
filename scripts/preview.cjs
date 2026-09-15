@@ -1,11 +1,14 @@
 // Prévia local isolada. --demo serve os dados fictícios sem editar config.js.
+// Use --lan somente quando precisar abrir o app em outro aparelho da rede local.
 // Uso: node scripts/preview.cjs --demo (http://127.0.0.1:5180)
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const demo = process.argv.includes('--demo');
+const lan = process.argv.includes('--lan');
 const port = demo ? 5180 : 5173;
+const host = lan ? '0.0.0.0' : '127.0.0.1';
 const mime = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.css': 'text/css; charset=utf-8', '.jpg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json' };
 http.createServer((req, res) => {
   let pathname;
@@ -15,7 +18,7 @@ http.createServer((req, res) => {
   // Não servir documentação, arquivos ocultos ou arquivos fora do app.
   // `assets/` inteiro entra: servir menos do que a produção serve faz a prévia
   // mentir — a logo faltava em todo teste local e virava um 404 no console.
-  if (!/^\/(index\.html|manifest\.json|Logo e banner\.jpg|(?:css|js)\/[a-zA-Z0-9/_.-]+|assets\/[a-zA-Z0-9/_-]+\.(?:jpg|png|svg))$/.test(pathname) || pathname.includes('..')) {
+  if (!/^\/(index\.html|manifest\.json|service-worker\.js|Logo e banner\.jpg|(?:css|js)\/[a-zA-Z0-9/_.-]+|assets\/[a-zA-Z0-9/_-]+\.(?:jpg|png|svg))$/.test(pathname) || pathname.includes('..')) {
     res.writeHead(404); return res.end();
   }
   const file = path.resolve(root, '.' + pathname);
@@ -27,4 +30,7 @@ http.createServer((req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.end(data);
   });
-}).listen(port, '127.0.0.1', () => console.log(`Prévia ${demo ? 'com dados fictícios' : 'do app'}: http://127.0.0.1:${port}`));
+}).listen(port, host, () => {
+  const address = lan ? `porta ${port} da rede local` : `http://127.0.0.1:${port}`;
+  console.log(`Prévia ${demo ? 'com dados fictícios' : 'do app'}: ${address}`);
+});

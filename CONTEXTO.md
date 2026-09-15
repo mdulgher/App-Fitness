@@ -34,19 +34,65 @@ Supabase por trás (Auth + Postgres + RLS) e publicado no GitHub Pages.
 | **App publicado** | https://mdulgher.github.io/App-Fitness/ | GitHub Pages, branch `main`, pasta raiz. Atualiza sozinho a cada push. |
 | **Código** | https://github.com/mdulgher/App-Fitness | **Repositório público.** Branch única: `main`. |
 | **Banco** | Supabase, projeto `App Fitness Leo` | ref `azifpaxbeozfooydkzxh`, região `sa-east-1`. Conta do próprio dono. |
-| **Senhas** | `CREDENCIAIS.local.md` | Fora do git (`.gitignore`). Nunca escreva senha em arquivo versionado. |
+| **Senhas** | `CREDENCIAIS.local.md` (professor/admin) e `SENHAS-TESTE.local.md` (alunos fictícios) | Fora do git (`.gitignore`). Nunca escreva senha em arquivo versionado. |
 | **Lovable** | projeto `c2aa8a9f-2818-4c41-bd83-3dad893dc3e2` | **Abandonado.** Ver seção 11 antes de tocar. |
 
-**Estado em 12/09/2026:** o app está no ar, ligado ao banco de verdade, com 12
+**Estado em 14/09/2026:** o app está no ar, ligado ao banco de verdade, com 16
 alunos fictícios semeados para demonstração ao Leo (o dono). O que funciona
 ponta a ponta: login, cadastro de alunos pelo professor, editor de ficha com
 agenda semanal, lista pessoal do aluno, financeiro com cobrança por WhatsApp +
 Pix, perfil editável pelos dois papéis e a biblioteca de 53 exercícios.
 
 **O que ainda não existe:** nenhuma tela aponta mais para
-`views/em-construcao.js`. A fila offline e toda a área do aluno estão prontas.
-Faltam as ilustrações completas, a aba de progressão do professor (Fase 5) e
-parte do acabamento/PWA (Fase 7).
+`views/em-construcao.js`. A fila offline, toda a área do aluno, a progressão
+vista pelo professor e a PWA estão prontas. Não haverá geração de ilustrações:
+o professor fornecerá as imagens ou vídeos que quiser anexar aos exercícios.
+
+### Progressão do professor — 14/09/2026
+
+- O perfil do aluno ganhou a aba **Progressão**, ao lado de Geral, Fichas e
+  Financeiro. Ela lista só exercícios com carga registrada e mostra último
+  treino, recorde, variação desde o início, gráfico e histórico completo.
+- Cada sessão agora traz as cargas e repetições **de cada série**. O resumo por
+  peso máximo continua existindo, mas o professor não precisa adivinhar se o
+  recorde veio de uma série isolada ou do treino inteiro.
+- Aluno e professor usam o mesmo componente (`renderizarProgressao` em
+  `views/aluno-evolucao.js`) e as mesmas funções da camada de dados. O histórico
+  é carregado somente quando o professor abre a aba, para não tornar o perfil
+  mais lento sem necessidade.
+- Validado no modo local com dados fictícios em desktop e 390 px: sete sessões,
+  gráfico e detalhes das séries, sem overflow horizontal ou erros no console.
+
+### Rotação das contas fictícias — 14/09/2026
+
+- As senhas das **16 contas fictícias** foram substituídas por valores aleatórios
+  de 20 caracteres, diferentes por conta. Todas as novas senhas foram validadas
+  por login e as sessões foram encerradas globalmente.
+- As credenciais atuais vivem em `SENHAS-TESTE.local.md`. O arquivo principal
+  ficou apenas com professor/admin e aponta para ele. Os dois estão ignorados
+  pelo Git.
+- As senhas antigas continuam no histórico público por decisão do dono, mas não
+  autenticam mais. `node scripts/test-security.mjs` confirma que nenhuma senha
+  **atual** das contas fictícias aparece no histórico.
+- `scripts/rotacionar-senhas-teste.mjs` faz uma futura rotação de modo retomável:
+  preserva as senhas novas antes da primeira chamada e registra o progresso para
+  sobreviver a interrupção ou limite temporário do Auth.
+
+### PWA, reabertura offline e paginação — 14/09/2026
+
+- `service-worker.js` guarda o app shell completo, assume versões novas sem
+  deixar caches antigos e usa rede primeiro para código. Fotos e banners são
+  guardados sob demanda, sem colocar dados do Supabase no Cache Storage.
+- `js/offline-snapshot.js` mantém somente a cópia mínima da própria ficha e do
+  treino necessária para reabrir sem rede. O snapshot é separado por usuário,
+  só substitui falha de conexão, nunca erro de permissão, e é apagado no logout.
+  As gravações continuam passando exclusivamente pela fila offline existente.
+- O manifest tem ícones `any` e `maskable`, escopo/id estáveis e modo
+  `standalone`; iOS recebe também os metadados e o ícone próprios.
+- `js/supabase-pagination.js` busca as listas em páginas de 500 linhas, sempre
+  com ordem determinística. Alunos, sessões, cargas, evolução, pagamentos,
+  pacotes, notas e demais listas não param silenciosamente no limite do
+  Supabase. O teste cobre inclusive 1.001 e 10.000 registros.
 
 ### Log de erros e o fim do "Cannot coerce the result…" — 12/09/2026
 
@@ -178,7 +224,7 @@ Estilos em **`css/aluno.css`**, ligado no `index.html`.
   `localhost`. Não faça isso.
 - A `anonKey` no `js/config.js` é publicável por natureza (`sb_publishable_…`):
   quem protege os dados é o RLS, não o segredo da chave.
-- Verificado no ar: login do professor, painel com os 12 alunos, ficha e
+- Verificado no ar: login do professor, painel com os 16 alunos, ficha e
   financeiro.
 
 ### Abas no perfil do aluno e datas em dd/mm/aaaa — 12/09/2026
@@ -212,7 +258,7 @@ Estilos em **`css/aluno.css`**, ligado no `index.html`.
 - **Campos de dinheiro com máscara brasileira** (`ligarMascaraDeMoeda` em
   `utils.js`): o campo é texto e trabalha em centavos, como maquininha de
   cartão. `<input type="number">` mostrava "280.5" e aceitava ponto decimal.
-- **12 alunos de teste** no banco, com frequência, mensalidades e cobranças de
+- **16 alunos de teste** no banco, com frequência, mensalidades e cobranças de
   agosto e setembro em situações diferentes. Credenciais na seção 4.
 
 ### Ficha, lista do aluno e cobrança — 12/09/2026
@@ -264,9 +310,10 @@ cinza e a camada de dados existente. A migração React/Lovable citada na seçã
   perfil com ficha, painel do aluno e navegação. Layout inspecionado em desktop
   e 390px, sem overflow horizontal no painel do aluno em 320px e 390px.
 
-As telas anteriormente marcadas como fases futuras **continuam pendentes**.
-Redesign não implementa registro de séries, editor de ficha ou financeiro.
-Referências pesquisadas, sugestões e prioridades em `REDESIGN.md`.
+Na entrega visual de 12/09, as telas então marcadas como fases futuras ficaram
+pendentes: aquele redesign não implementou registro de séries, editor de ficha
+ou financeiro. Essas frentes foram concluídas depois; o estado vigente é o mapa
+de fases abaixo. Referências pesquisadas em `REDESIGN.md`.
 
 ### Mapa das fases — o que está pronto e o que falta
 
@@ -279,9 +326,9 @@ As fases estão descritas em [`PLANO.md`](PLANO.md) seção 13. Situação real:
 | 2 | Biblioteca de exercícios | **pronta** — 53 exercícios com how-to |
 | 3 | Editor de ficha | **pronta** — com agenda semanal |
 | 4 | Treino do dia, carga, evolução, frequência, recados | **pronta** — inclui fila offline |
-| 5 | Aba de progressão do professor | **falta** |
+| 5 | Aba de progressão do professor | **pronta** — gráfico, recorde e séries por sessão |
 | 6 | Financeiro do professor | **pronta** — com cobrança por WhatsApp + Pix |
-| 7 | Acabamento e PWA | parcial — redesign feito, PWA não |
+| 7 | Acabamento e PWA | **pronta** — app shell, versão, instalação e snapshot offline |
 | 8 | Supabase | **pronta** — em produção |
 | 9 | Hospedagem | **pronta** — GitHub Pages |
 
@@ -290,22 +337,31 @@ nenhuma tela foi alterada. É a prova da regra da seção 5.1; mantenha-a viva �
 `db-local.js` ainda existe e precisa continuar espelhando as assinaturas.
 
 Fora das fases, já feito: lista pessoal do aluno, "Meu cadastro" para os dois
-papéis, máscara de Real e de data, e o prompt das ilustrações
-([`PROMPT-ILUSTRACOES.md`](PROMPT-ILUSTRACOES.md)).
+papéis e máscara de Real e de data. `PROMPT-ILUSTRACOES.md` ficou apenas como
+registro histórico; por decisão do dono, não serão geradas ilustrações e o
+professor anexará a mídia dos exercícios.
 
 ---
 
 ## 3. Como rodar
 
 Abrir o `index.html` com dois cliques **não funciona**: em `file://` os módulos
-JS e o `fetch` quebram por CORS. Sempre por servidor HTTP, na pasta do projeto:
+JS e o `fetch` quebram por CORS. Sempre use o servidor protegido do projeto, na
+pasta do app:
 
 ```bash
-npx serve . -l 5173
+node scripts/preview.cjs
 ```
 
-Depois abrir `http://localhost:5173`. Para testar no celular (mesmo Wi-Fi), usar
-o IP da máquina na rede, ex.: `http://192.168.15.45:5173`.
+Depois abra `http://127.0.0.1:5173`. Para testar no celular (mesmo Wi-Fi), use
+`node scripts/preview.cjs --lan` e abra o IP da máquina na rede, por exemplo
+`http://192.168.15.45:5173`. O modo fictício usa `--demo` e a porta 5180; as
+opções podem ser combinadas como `node scripts/preview.cjs --demo --lan`.
+
+O servidor usa uma lista de arquivos públicos e responde 404 para documentação,
+arquivos ocultos e credenciais locais. Não use `npx serve .` nem
+`python -m http.server` na raiz do projeto, especialmente com acesso pela rede
+local: esses servidores genéricos podem expor arquivos ignorados pelo Git.
 
 ### Publicação e git
 
@@ -451,13 +507,14 @@ verdade; o aluno pode trocar a dele em "Meu cadastro".
 
 > **As senhas NÃO ficam neste arquivo.** Este repositório é público e o app
 > aponta para o banco de verdade: a senha do professor aqui é acesso a todos os
-> dados de todos os alunos. Elas vivem em `CREDENCIAIS.local.md`, que está no
-> `.gitignore` e nunca sobe. Se esse arquivo não existir na sua máquina, peça as
-> senhas ao dono do projeto — não as escreva de volta aqui.
+> dados de todos os alunos. Professor/admin vivem em `CREDENCIAIS.local.md`; os
+> alunos fictícios, em `SENHAS-TESTE.local.md`. Ambos estão no `.gitignore` e
+> nunca sobem. Se não existirem na sua máquina, peça as senhas ao dono do
+> projeto — não as escreva de volta aqui.
 
 | Papel | Email | Cenário |
 |---|---|---|
-| **Professor** | `leo@leopersonal.com` | Vê os 12 alunos |
+| **Professor** | `leo@leopersonal.com` | Vê os 16 alunos |
 | Aluna | `carla.mendes@email.com` | Mensalidade vencida, ficha ABC ativa (Seg·Qui / Ter·Sex) |
 | Aluno | `joao.batista@email.com` | Pago, restrição médica (hérnia L5-S1), lista pessoal com 1 exercício |
 | Aluna | `ana.souza@teste.com` | Em dia, treinando bem (3/4 na semana) |
@@ -835,10 +892,10 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 ## 9. Onde paramos e o que fazer a seguir
 
-**Atualizado em 12/09/2026.** A **Fase 4 (área do aluno) está
-pronta**: treino do dia com registro de carga, evolução, frequência e recados —
-com **fila offline** e com o **professor podendo escrever recado**.
-O app segue publicado com 12 alunos fictícios para o Leo (o dono) avaliar.
+**Atualizado em 14/09/2026.** As **Fases 4 e 5 estão prontas**: treino do dia
+com registro de carga, evolução, frequência e recados — com **fila offline** —
+e progressão por exercício no perfil visto pelo professor. O app segue
+publicado com 16 alunos fictícios para o Leo (o dono) avaliar.
 
 Uma auditoria corrigiu concorrência e isolamento da fila offline, persistência
 antes do envio, eventos de tela, contagem de domingo, calendário histórico,
@@ -855,11 +912,10 @@ está em [`TESTES.md`](TESTES.md); a análise original está em
   segue no histórico do git e não serve mais para nada.
 - Chave Pix **propositalmente vazia**: falta o Leo colar a dele em
   `#/professor/perfil`. Nome, cidade e modelo da mensagem já preenchidos.
-- **As senhas atuais das 12 contas de teste estão no histórico público do git**
-  — `node scripts/test-security.mjs` avisa a cada execução. Não é urgente
-  enquanto as contas forem fictícias, e some junto se elas forem apagadas
-  depois da avaliação do Leo (decisão em aberto, abaixo). Se alguma virar conta
-  de aluno de verdade, rotacione antes.
+- As senhas antigas das 16 contas fictícias permanecem no histórico público por
+  decisão do dono, mas foram invalidadas em 14/09/2026. As atuais ficam apenas
+  em `SENHAS-TESTE.local.md`; o teste de segurança confirma zero senhas atuais
+  encontradas no histórico.
 
 ### O que fazer a seguir, em ordem de valor
 
@@ -868,15 +924,12 @@ está em [`TESTES.md`](TESTES.md); a análise original está em
    contra o Supabase ainda não passou por um treino inteiro. **O teste que mais
    importa é o do modo avião:** registrar série sem rede, sair do app, voltar e
    ver a fila esvaziar sozinha.
-2. **Fase 5 — progressão no lado do professor**: a aba de evolução por exercício
-   dentro do aluno, que é onde ele decide a carga da próxima ficha.
-   `progressaoDoExercicio` já entrega tudo; é a mesma leitura da tela do aluno.
-3. **Ilustrações dos exercícios**: o prompt pronto está em
-   [`PROMPT-ILUSTRACOES.md`](PROMPT-ILUSTRACOES.md), para uma IA de imagens
-   gerar 106 arquivos. Ao integrar, **separe o crédito**:
-   `js/catalogo-ilustracoes.js` carimba "Ilustrações: RepDB" em qualquer arquivo
-   que case com o padrão do nome, e ilustração gerada por IA não é deles.
-   `js/exercise-validation.js` também só aceita `.png` — liberar `.svg`.
+2. **Validar a PWA em aparelhos reais**: instalar e reabrir no iPhone e no
+   Android, conferir a atualização de versão e repetir o roteiro de modo avião.
+   A implementação e os testes automatizados estão prontos; esta validação
+   física depende dos aparelhos.
+3. **Mídia dos exercícios**: não gerar ilustrações. O professor fornece e anexa
+   as fotos ou vídeos conforme preparar o conteúdo.
 
 ### Decisões em aberto (perguntar ao dono, não decidir sozinho)
 
@@ -884,14 +937,15 @@ está em [`TESTES.md`](TESTES.md); a análise original está em
   pagamento de todo mundo. O perfil do aluno já foi separado em abas por causa
   disso (armadilha 18), mas a lista não. Esconder os valores lá? Foi levantado
   e ficou sem resposta.
+- **Login com Google está no plano, mas não está autorizado para implementação.**
+  Conversar antes sobre papéis atendidos, vínculo com contas já criadas por
+  email/senha, fallback, redirects e testes de RLS. Não habilitar o provedor nem
+  preencher/salvar Client ID ou Client Secret antes dessa decisão. O roteiro de
+  discussão está em `PLANO.md`, seção 4.
 - Ligar a proteção contra senhas vazadas no Supabase — **só existe no plano
-  Pro** (US$ 25/mês). No plano free dá para exigir senha longa e com dígitos,
-  maiúsculas e símbolos, que é grátis e já ajuda. Entrar com Google é a outra
-  saída: o Supabase não cobra por provedor social e o Google não cobra pelo
-  cliente OAuth; contas com o mesmo email são ligadas automaticamente, então o
-  aluno criado pelo professor continua sendo o mesmo `auth.uid()` — nada de RLS
-  muda. Falta a decisão do dono.
-- Limpar ou manter os 12 alunos fictícios depois da avaliação do Leo.
+  Pro** (US$ 25/mês) e foi recusada por enquanto. A política gratuita já exige
+  pelo menos 8 caracteres, maiúscula, minúscula e número.
+- Limpar ou manter os 16 alunos fictícios depois da avaliação do Leo.
 
 O roteiro completo das fases está em [`PLANO.md`](PLANO.md) seção 13.
 

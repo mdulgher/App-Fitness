@@ -153,6 +153,28 @@ a tela é código aberto rodando no celular do aluno e pode ser contornada.
 - "Esqueci minha senha" pelo fluxo de email padrão do Supabase.
 - A conta do professor é criada por nós, direto no painel do Supabase. Não existe tela pública de "criar conta de professor" — seria convite a intrusos.
 
+### Futuro — login com Google (planejado, ainda não autorizado)
+
+Adicionar **Entrar com Google** ao plano do produto, mas **não implementar nem
+habilitar o provedor antes de uma conversa com o dono**. A tela do Supabase pode
+mostrar o interruptor ligado mesmo com Client ID e Client Secret vazios; isso não
+vale como configuração concluída nem como autorização para salvar.
+
+Antes de implementar, fechar estas decisões:
+
+1. Google será oferecido ao professor, aos alunos ou aos dois papéis?
+2. Como vincular com segurança uma conta Google ao aluno que o professor já
+   criou por email e senha, sem gerar segundo perfil ou perder o `auth.uid()`?
+3. Email e senha continuarão como alternativa e recuperação de acesso?
+4. Quais origens e redirecionamentos serão aceitos no localhost, GitHub Pages e
+   app instalado?
+5. Como testar conta existente, conta nova, email diferente, cancelamento do
+   consentimento, bloqueio de acesso e todo o checklist de RLS?
+
+Na futura configuração, Client Secret fica apenas nos painéis Google/Supabase,
+nunca no repositório. Manter **Skip nonce checks** e **Allow users without an
+email** desligados, salvo nova análise e decisão explícita.
+
 **Ponto de segurança:** o tipo de conta (`role`) é gravado pelo banco na criação
 e não pode ser alterado pelo usuário. Sem isso, um aluno se promoveria a
 professor e abriria os dados e o financeiro de todos os outros.
@@ -531,17 +553,24 @@ detalhe que decide o recurso (seção 6.4).
 ### Como rodar local
 
 Abrir o arquivo direto no navegador **não funciona** (`file://` quebra o login e
-as consultas). Sempre por servidor local — dentro da pasta do projeto:
+as consultas). Sempre use o servidor protegido do projeto, dentro da pasta do
+app:
 
 ```bash
-npx serve .
+node scripts/preview.cjs
 ```
 
-Ou, com Python:
+Ele abre o app em `http://127.0.0.1:5173` e só entrega os arquivos públicos
+necessários. Para a prévia com dados fictícios, use:
 
 ```bash
-python -m http.server 5173
+node scripts/preview.cjs --demo
 ```
+
+Para testar no celular conectado ao mesmo Wi-Fi, acrescente `--lan` e abra no
+celular o IP do computador com a porta correspondente. Não use `npx serve .` ou
+`python -m http.server` na raiz: servidores genéricos podem entregar arquivos
+locais ignorados pelo Git, inclusive credenciais `.local.md`.
 
 ### Sobre as chaves do Supabase (válido a partir da Fase 8)
 
@@ -616,11 +645,12 @@ Todas fechadas. Nada bloqueando o início.
 | 2 | Quem marca a frequência | Os dois. Aluno marca no dia, professor corrige. `marked_by` registra quem foi. |
 | 3 | Uma ficha ativa ou várias | Uma ativa por vez, com histórico. Musculação + cardio cabem como duas divisões da mesma ficha. |
 | 4 | Cobrança mensal | Um clique por mês, usando valor e vencimento de cada aluno. Sem tarefa agendada, sem duplicata. |
-| 5 | Login do aluno | **Email + senha.** Sem link mágico. |
+| 5 | Login do aluno | **Hoje: email + senha, sem link mágico.** Google está planejado para discussão antes de qualquer implementação. |
 | 6 | Registro de carga / progressão | **Dentro do MVP** (seções 6.4, 7.3, 8.3, 8.4). |
 | 7 | Avaliação física (medidas/fotos) | **Fora de escopo.** |
 | 8 | Estrutura do código | **Página única com roteador de hash.** |
 | 9 | Nome do app | **Leo Personal Trainning** — aparece na tela de login, no cabeçalho, no ícone da tela inicial e no título da aba. |
+| 10 | Mídia dos exercícios | **Fornecida pelo professor.** Não gerar ilustrações; ele anexa as fotos ou vídeos que produzir/escolher. |
 
 ---
 
@@ -643,10 +673,12 @@ As fases 0 a 7 rodam **inteiras na camada local**, sem Supabase (seção 9.1).
 | **8 — Supabase** | Tabelas, regras de acesso (RLS), login e convite de verdade, migração dos dados de teste, troca de uma linha em `config.js` | **Checklist da seção 11 passa inteiro** |
 | **9 — Hospedagem** | ~~Subir no Lovable~~ → **GitHub Pages, já no ar** desde a Fase 0 | Acessível por link, chaves fora do código-fonte |
 
-**Onde estamos (12/09/2026):** as fases 0 a 4, 6, 8 e 9 estão entregues — com o
-detalhe de que o app pulou direto para o Supabase, então as fases rodaram
-contra o banco real e não na camada local. Falta a **Fase 5** (progressão no
-lado do professor) e o acabamento da **Fase 7**. O estado exato vive em
+**Onde estamos (14/09/2026):** as fases 0 a 9 estão entregues — com o detalhe
+de que o app pulou direto para o Supabase, então as fases rodaram contra o
+banco real e não na camada local. A Fase 7 inclui service worker versionado,
+manifest/ícones, instalação e snapshot mínimo para reabrir o treino offline.
+Falta somente validar instalação e modo avião em aparelhos físicos.
+O estado exato vive em
 [`CONTEXTO.md`](CONTEXTO.md) seção 9, que é atualizado a cada sessão.
 
 Sobre a hospedagem: a Lovable foi descartada porque não é um hospedeiro de site

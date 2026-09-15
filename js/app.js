@@ -9,6 +9,7 @@ import { icone } from "./icons.js";
 import { ligarSincronizacaoAutomatica } from "./sync.js";
 import { configurarLog, ligarCapturaGlobal } from "./log.js";
 import { ligarCapturaDoConvite, deveConvidar, podeInstalarDireto, instalar, dispensar, reabrirConvite, podeOferecerInstalacao } from "./instalar.js";
+import { registrarPWA } from "./pwa.js";
 
 const NAV_PROFESSOR = [
   ["#/professor", "Painel"],
@@ -210,6 +211,7 @@ configurarLog({
   usuarioAtual,
 });
 ligarCapturaGlobal();
+registrarPWA().catch((err) => registrarErro(err, { origem: "pwa", contexto: { acao: "registrarServiceWorker" } }));
 
 desenharBarraDeModo();
 

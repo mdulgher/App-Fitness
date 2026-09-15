@@ -8,15 +8,31 @@
 // outro são as políticas de RLS no banco, não este código. Um filtro esquecido
 // abaixo devolve menos dados, nunca dados de outra pessoa.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+// `?bundle` reduz o SDK a três arquivos conhecidos. O service worker consegue
+// guardar os três na instalação, em vez de descobrir dependências transitivas
+// somente depois de uma segunda abertura online.
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?bundle";
 import { SUPABASE } from "./config.js";
 import { validarExercicio } from "./exercise-validation.js";
+import { buscarTodasAsPaginas } from "./supabase-pagination.js";
+import { comSnapshot, apagarSnapshots } from "./offline-snapshot.js";
 import {
   hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo,
   diasDistintos, metaEfetiva,
 } from "./utils.js";
 
 export const sb = createClient(SUPABASE.url, SUPABASE.anonKey);
+
+async function idDaSessao() {
+  const { data } = await sb.auth.getSession();
+  return data.session?.user?.id ?? null;
+}
+
+async function snapshotDoProprioAluno(alunoId, nome, buscar) {
+  return (await idDaSessao()) === alunoId
+    ? comSnapshot(alunoId, nome, buscar)
+    : buscar();
+}
 
 // Erro de banco vira exceção com mensagem legível, em vez de `null` silencioso
 // que só explode três telas adiante.
@@ -83,7 +99,10 @@ export async function alunoVinculado(id) {
 }
 
 export async function sairDaConta() {
-  await sb.auth.signOut();
+  const usuarioId = await idDaSessao();
+  const { error } = await sb.auth.signOut();
+  if (error) throw new Error(error.message);
+  apagarSnapshots(usuarioId);
 }
 
 export async function usuarioDaSessao() {
@@ -116,12 +135,16 @@ export async function reiniciarDados() {
 /* ==================== perfis ==================== */
 
 export async function listarPerfis() {
-  return ok(await sb.from("profiles").select("*").order("full_name"));
+  return buscarTodasAsPaginas(() =>
+    sb.from("profiles").select("*").order("full_name").order("id")
+  );
 }
 
 export async function buscarPerfil(id) {
-  const perfil = ok(await sb.from("profiles").select("*").eq("id", id).maybeSingle());
-  return perfil ? await comAvatarAssinado(perfil) : perfil;
+  return snapshotDoProprioAluno(id, "perfil", async () => {
+    const perfil = ok(await sb.from("profiles").select("*").eq("id", id).maybeSingle());
+    return perfil ? await comAvatarAssinado(perfil) : perfil;
+  });
 }
 
 // Edição do próprio cadastro, por qualquer papel.
@@ -236,9 +259,15 @@ async function montarResumos(alunos) {
   const H = hoje();
 
   const [sessoes, fichas, pagamentos] = await Promise.all([
-    ok(await sb.from("attendance").select("student_id,date,completed_at,in_person").in("student_id", ids).not("completed_at", "is", null)),
-    ok(await sb.from("workout_plans").select("id,student_id,end_date,weekly_target").in("student_id", ids).eq("active", true)),
-    ok(await sb.from("payments").select("student_id,due_date,paid_date").in("student_id", ids).is("paid_date", null)),
+    buscarTodasAsPaginas(() => sb.from("attendance")
+      .select("id,student_id,date,completed_at,in_person")
+      .in("student_id", ids).not("completed_at", "is", null).order("id")),
+    buscarTodasAsPaginas(() => sb.from("workout_plans")
+      .select("id,student_id,end_date,weekly_target")
+      .in("student_id", ids).eq("active", true).order("id")),
+    buscarTodasAsPaginas(() => sb.from("payments")
+      .select("id,student_id,due_date,paid_date")
+      .in("student_id", ids).is("paid_date", null).order("id")),
   ]);
 
   const segunda = inicioDaSemana(H);
@@ -287,10 +316,13 @@ function achatar(linha) {
 }
 
 export async function listarAlunos({ incluirInativos = false } = {}) {
-  let q = sb.from("students").select("*, profiles!inner(full_name,email,phone,avatar_url)");
-  if (!incluirInativos) q = q.eq("active", true);
-
-  const alunos = ok(await q).map(achatar);
+  const alunos = (await buscarTodasAsPaginas(() => {
+    let q = sb.from("students")
+      .select("*, profiles!inner(full_name,email,phone,avatar_url)")
+      .order("id");
+    if (!incluirInativos) q = q.eq("active", true);
+    return q;
+  })).map(achatar);
   const resumos = await montarResumos(alunos);
   return alunos
     .map((a) => ({ ...a, resumo: resumos.get(a.id) }))
@@ -298,13 +330,15 @@ export async function listarAlunos({ incluirInativos = false } = {}) {
 }
 
 export async function buscarAluno(id) {
-  const linha = ok(
-    await sb.from("students").select("*, profiles!inner(full_name,email,phone,avatar_url)").eq("id", id).maybeSingle()
-  );
-  if (!linha) return null;
-  const aluno = achatar(linha);
-  const resumos = await montarResumos([aluno]);
-  return { ...aluno, resumo: resumos.get(aluno.id) };
+  return snapshotDoProprioAluno(id, "aluno", async () => {
+    const linha = ok(
+      await sb.from("students").select("*, profiles!inner(full_name,email,phone,avatar_url)").eq("id", id).maybeSingle()
+    );
+    if (!linha) return null;
+    const aluno = achatar(linha);
+    const resumos = await montarResumos([aluno]);
+    return { ...aluno, resumo: resumos.get(aluno.id) };
+  });
 }
 
 // O professor cria a conta do aluno de verdade. A chamada vai para a Edge
@@ -364,9 +398,11 @@ export async function atualizarAluno(id, patch) {
 /* ==================== exercícios ==================== */
 
 export async function listarExercicios({ incluirArquivados = false } = {}) {
-  let q = sb.from("exercises").select("*").order("name");
-  if (!incluirArquivados) q = q.eq("archived", false);
-  return ok(await q);
+  return buscarTodasAsPaginas(() => {
+    let q = sb.from("exercises").select("*").order("name").order("id");
+    if (!incluirArquivados) q = q.eq("archived", false);
+    return q;
+  });
 }
 
 export async function buscarExercicio(id) {
@@ -416,10 +452,12 @@ function normalizar(ficha) {
 }
 
 export async function fichaAtiva(alunoId) {
-  const f = ok(
-    await sb.from("workout_plans").select(FICHA_COMPLETA).eq("student_id", alunoId).eq("active", true).maybeSingle()
-  );
-  return normalizar(f);
+  return snapshotDoProprioAluno(alunoId, "ficha-ativa", async () => {
+    const f = ok(
+      await sb.from("workout_plans").select(FICHA_COMPLETA).eq("student_id", alunoId).eq("active", true).maybeSingle()
+    );
+    return normalizar(f);
+  });
 }
 
 export async function buscarFicha(id) {
@@ -427,13 +465,14 @@ export async function buscarFicha(id) {
 }
 
 export async function listarFichas(alunoId) {
-  return ok(
-    await sb.from("workout_plans").select("*").eq("student_id", alunoId).order("start_date", { ascending: false })
-  );
+  return buscarTodasAsPaginas(() => sb.from("workout_plans").select("*")
+    .eq("student_id", alunoId)
+    .order("start_date", { ascending: false }).order("id", { ascending: false }));
 }
 
 export async function listarTemplates() {
-  return ok(await sb.from("workout_plans").select("*").eq("is_template", true).order("title"));
+  return buscarTodasAsPaginas(() => sb.from("workout_plans").select("*")
+    .eq("is_template", true).order("title").order("id"));
 }
 
 /* ---------- edição da ficha (só o professor; garantido por RLS) ---------- */
@@ -484,8 +523,9 @@ export async function removerDia(id) {
 }
 
 export async function adicionarExercicioNoDia({ diaId, exercicioId, ...resto }) {
-  const existentes = ok(await sb.from("workout_day_exercises").select("order_index").eq("workout_day_id", diaId));
-  const ordem = existentes.reduce((max, e) => Math.max(max, e.order_index + 1), 0);
+  const ultimo = ok(await sb.from("workout_day_exercises").select("order_index")
+    .eq("workout_day_id", diaId).order("order_index", { ascending: false }).limit(1));
+  const ordem = (ultimo[0]?.order_index ?? -1) + 1;
   return ok(
     await sb.from("workout_day_exercises").insert({
       workout_day_id: diaId,
@@ -510,19 +550,26 @@ export async function removerItemDoDia(id) {
 }
 
 export async function buscarDiaDeTreino(diaId) {
-  const dia = ok(await sb.from("workout_days").select("workout_plan_id").eq("id", diaId).maybeSingle());
-  if (!dia) return null;
-  const ficha = await buscarFicha(dia.workout_plan_id);
-  return ficha?.dias.find((d) => d.id === diaId) ?? null;
+  const alunoId = await idDaSessao();
+  const buscar = async () => {
+    const dia = ok(await sb.from("workout_days").select("workout_plan_id").eq("id", diaId).maybeSingle());
+    if (!dia) return null;
+    const ficha = await buscarFicha(dia.workout_plan_id);
+    return ficha?.dias.find((d) => d.id === diaId) ?? null;
+  };
+  return alunoId ? comSnapshot(alunoId, `dia:${diaId}`, buscar) : buscar();
 }
 
 /* ==================== sessões de treino ==================== */
 
 export async function listarSessoes(alunoId, { de = null, ate = null } = {}) {
-  let q = sb.from("attendance").select("*").eq("student_id", alunoId).order("date", { ascending: false });
-  if (de) q = q.gte("date", de);
-  if (ate) q = q.lte("date", ate);
-  return ok(await q);
+  return snapshotDoProprioAluno(alunoId, `sessoes:${de ?? "inicio"}:${ate ?? "fim"}`, () => buscarTodasAsPaginas(() => {
+    let q = sb.from("attendance").select("*").eq("student_id", alunoId)
+      .order("date", { ascending: false }).order("id", { ascending: false });
+    if (de) q = q.gte("date", de);
+    if (ate) q = q.lte("date", ate);
+    return q;
+  }));
 }
 
 export async function abrirSessao(alunoId, diaId, data = hoje()) {
@@ -557,52 +604,57 @@ export async function removerSessao(sessaoId) {
 }
 
 export async function resumoDaSemana(alunoId, referencia = hoje()) {
-  const segunda = inicioDaSemana(referencia);
-  const domingo = somarDias(segunda, 6);
+  return snapshotDoProprioAluno(alunoId, `semana:${inicioDaSemana(referencia)}`, async () => {
+    const segunda = inicioDaSemana(referencia);
+    const domingo = somarDias(segunda, 6);
 
-  const [ficha, aluno, feitos] = await Promise.all([
-    ok(await sb.from("workout_plans").select("weekly_target").eq("student_id", alunoId).eq("active", true).maybeSingle()),
-    ok(await sb.from("students").select("weekly_target").eq("id", alunoId).maybeSingle()),
-    ok(await sb.from("attendance").select("date,in_person").eq("student_id", alunoId)
-      .not("completed_at", "is", null).gte("date", segunda).lte("date", domingo)),
-  ]);
+    const [ficha, aluno, feitos] = await Promise.all([
+      ok(await sb.from("workout_plans").select("weekly_target").eq("student_id", alunoId).eq("active", true).maybeSingle()),
+      ok(await sb.from("students").select("weekly_target").eq("id", alunoId).maybeSingle()),
+      ok(await sb.from("attendance").select("date,in_person").eq("student_id", alunoId)
+        .not("completed_at", "is", null).gte("date", segunda).lte("date", domingo)),
+    ]);
 
-  // `meta` pode ser null: significa "não definida", e é diferente de zero.
-  // Quem desenha decide o texto; aqui não se inventa um número.
-  const meta = metaEfetiva(ficha, aluno);
-  const dias = diasDistintos(feitos);
+    const meta = metaEfetiva(ficha, aluno);
+    const dias = diasDistintos(feitos);
 
-  return {
-    inicio: segunda,
-    fim: domingo,
-    feitos: dias,
-    comPersonal: diasDistintos(feitos.filter((f) => f.in_person)),
-    sessoes: feitos.length,
-    meta,
-    aderencia: meta ? Math.min(1, dias / meta) : 0,
-    datas: [...new Set(feitos.map((f) => f.date))].sort(),
-  };
+    return {
+      inicio: segunda,
+      fim: domingo,
+      feitos: dias,
+      comPersonal: diasDistintos(feitos.filter((f) => f.in_person)),
+      sessoes: feitos.length,
+      meta,
+      aderencia: meta ? Math.min(1, dias / meta) : 0,
+      datas: [...new Set(feitos.map((f) => f.date))].sort(),
+    };
+  });
 }
 
 export async function proximoTreinoSugerido(alunoId) {
-  const ficha = await fichaAtiva(alunoId);
-  if (!ficha?.dias.length) return null;
+  return snapshotDoProprioAluno(alunoId, "proximo-treino", async () => {
+    const ficha = await fichaAtiva(alunoId);
+    if (!ficha?.dias.length) return null;
 
-  const ultimas = ok(
-    await sb.from("attendance").select("workout_day_id,date").eq("student_id", alunoId)
-      .not("completed_at", "is", null).not("workout_day_id", "is", null)
-      .order("date", { ascending: false }).limit(1)
-  );
-  if (!ultimas.length) return ficha.dias[0];
+    const ultimas = ok(
+      await sb.from("attendance").select("workout_day_id,date").eq("student_id", alunoId)
+        .not("completed_at", "is", null).not("workout_day_id", "is", null)
+        .order("date", { ascending: false }).limit(1)
+    );
+    if (!ultimas.length) return ficha.dias[0];
 
-  const idx = ficha.dias.findIndex((d) => d.id === ultimas[0].workout_day_id);
-  return ficha.dias[(idx + 1) % ficha.dias.length];
+    const idx = ficha.dias.findIndex((d) => d.id === ultimas[0].workout_day_id);
+    return ficha.dias[(idx + 1) % ficha.dias.length];
+  });
 }
 
 /* ==================== cargas e progressão ==================== */
 
 export async function listarCargasDaSessao(sessaoId) {
-  return ok(await sb.from("exercise_logs").select("*").eq("attendance_id", sessaoId).order("set_number"));
+  const alunoId = await idDaSessao();
+  const buscar = () => buscarTodasAsPaginas(() => sb.from("exercise_logs").select("*")
+    .eq("attendance_id", sessaoId).order("set_number").order("id"));
+  return alunoId ? comSnapshot(alunoId, `cargas:${sessaoId}`, buscar) : buscar();
 }
 
 export async function registrarSerie({
@@ -629,26 +681,28 @@ export async function registrarSerie({
 }
 
 async function logsComData(alunoId, exercicioId) {
-  const logs = ok(
-    await sb.from("exercise_logs")
+  const logs = await buscarTodasAsPaginas(() =>
+    sb.from("exercise_logs")
       .select("*, attendance!inner(date)")
-      .eq("student_id", alunoId).eq("exercise_id", exercicioId)
+      .eq("student_id", alunoId).eq("exercise_id", exercicioId).order("id")
   );
   return logs.map(({ attendance, ...l }) => ({ ...l, data: attendance?.date ?? "" }));
 }
 
 export async function ultimaVezNoExercicio(alunoId, exercicioId, ignorarSessaoId = null) {
-  const logs = (await logsComData(alunoId, exercicioId)).filter((l) => l.attendance_id !== ignorarSessaoId);
-  if (!logs.length) return null;
+  return snapshotDoProprioAluno(alunoId, `ultima:${exercicioId}:${ignorarSessaoId ?? "nenhuma"}`, async () => {
+    const logs = (await logsComData(alunoId, exercicioId)).filter((l) => l.attendance_id !== ignorarSessaoId);
+    if (!logs.length) return null;
 
-  const ultimaData = logs.map((l) => l.data).sort().at(-1);
-  const series = logs.filter((l) => l.data === ultimaData).sort((a, b) => a.set_number - b.set_number);
+    const ultimaData = logs.map((l) => l.data).sort().at(-1);
+    const series = logs.filter((l) => l.data === ultimaData).sort((a, b) => a.set_number - b.set_number);
 
-  return {
-    data: ultimaData,
-    series,
-    pesoMaximo: Math.max(...series.map((s) => s.weight_kg ?? 0)) || null,
-  };
+    return {
+      data: ultimaData,
+      series,
+      pesoMaximo: Math.max(...series.map((s) => s.weight_kg ?? 0)) || null,
+    };
+  });
 }
 
 export async function progressaoDoExercicio(alunoId, exercicioId) {
@@ -663,12 +717,22 @@ export async function progressaoDoExercicio(alunoId, exercicioId) {
 
   const pontos = [...porData.entries()]
     .sort((a, b) => a[0].localeCompare(b[0]))
-    .map(([data, series]) => ({
-      data,
-      pesoMaximo: Math.max(...series.map((s) => s.weight_kg ?? 0)) || null,
-      volume: series.reduce((t, s) => t + (s.weight_kg ?? 0) * (s.reps_done ?? 0), 0) || null,
-      series: series.length,
-    }));
+    .map(([data, series]) => {
+      const detalhes = [...series]
+        .sort((a, b) => a.set_number - b.set_number)
+        .map((s) => ({
+          numero: s.set_number,
+          peso: s.weight_kg,
+          repeticoes: s.reps_done,
+        }));
+      return {
+        data,
+        pesoMaximo: Math.max(...series.map((s) => s.weight_kg ?? 0)) || null,
+        volume: series.reduce((t, s) => t + (s.weight_kg ?? 0) * (s.reps_done ?? 0), 0) || null,
+        series: series.length,
+        detalhes,
+      };
+    });
 
   return {
     pontos,
@@ -677,10 +741,9 @@ export async function progressaoDoExercicio(alunoId, exercicioId) {
 }
 
 export async function exerciciosComHistorico(alunoId) {
-  const logs = ok(
-    await sb.from("exercise_logs").select("exercise_id, exercises(*)")
-      .eq("student_id", alunoId).not("weight_kg", "is", null)
-  );
+  const logs = await buscarTodasAsPaginas(() => sb.from("exercise_logs")
+    .select("id,exercise_id, exercises(*)")
+    .eq("student_id", alunoId).not("weight_kg", "is", null).order("id"));
   const vistos = new Map();
   for (const l of logs) if (l.exercises) vistos.set(l.exercise_id, l.exercises);
   return [...vistos.values()].sort((a, b) => a.name.localeCompare(b.name, "pt-BR"));
@@ -692,16 +755,16 @@ export async function exerciciosComHistorico(alunoId) {
    enxerga, mas não mexe. */
 
 export async function listarListaPessoal(alunoId) {
-  const linhas = ok(
-    await sb.from("student_exercises").select("*, exercises(*)")
-      .eq("student_id", alunoId).order("order_index")
-  );
+  const linhas = await buscarTodasAsPaginas(() => sb.from("student_exercises")
+    .select("*, exercises(*)").eq("student_id", alunoId)
+    .order("order_index").order("id"));
   return linhas.map(({ exercises, ...item }) => ({ ...item, exercicio: exercises ?? null }));
 }
 
 export async function adicionarNaListaPessoal({ alunoId, exercicioId, notas = null }) {
-  const atuais = ok(await sb.from("student_exercises").select("order_index").eq("student_id", alunoId));
-  const ordem = atuais.reduce((max, i) => Math.max(max, i.order_index + 1), 0);
+  const ultimo = ok(await sb.from("student_exercises").select("order_index")
+    .eq("student_id", alunoId).order("order_index", { ascending: false }).limit(1));
+  const ordem = (ultimo[0]?.order_index ?? -1) + 1;
   return ok(
     await sb.from("student_exercises")
       .insert({ student_id: alunoId, exercise_id: exercicioId, notes: notas, order_index: ordem })
@@ -720,10 +783,9 @@ export async function removerDaListaPessoal(id) {
 /* ==================== anotações ==================== */
 
 export async function listarAnotacoes(alunoId) {
-  return ok(
-    await sb.from("notes").select("*").eq("student_id", alunoId)
-      .order("pinned", { ascending: false }).order("created_at", { ascending: false })
-  );
+  return snapshotDoProprioAluno(alunoId, "anotacoes", () => buscarTodasAsPaginas(() => sb.from("notes").select("*").eq("student_id", alunoId)
+    .order("pinned", { ascending: false })
+    .order("created_at", { ascending: false }).order("id", { ascending: false })));
 }
 
 export async function criarAnotacao({ alunoId, conteudo, fixada = false }) {
@@ -749,17 +811,16 @@ export async function removerAnotacao(id) {
 // direto devolveria pagamentos sem status e o app teria que recalcular — com
 // risco de divergir da regra do banco.
 export async function listarPagamentos(alunoId) {
-  return ok(
-    await sb.from("payments_view").select("*").eq("student_id", alunoId)
-      .order("reference_month", { ascending: false })
-  );
+  return buscarTodasAsPaginas(() => sb.from("payments_view").select("*")
+    .eq("student_id", alunoId)
+    .order("reference_month", { ascending: false }).order("id", { ascending: false }));
 }
 
 export async function listarPagamentosDoMes(mes = mesDeReferencia()) {
-  const linhas = ok(
-    await sb.from("payments_view")
+  const linhas = await buscarTodasAsPaginas(() =>
+    sb.from("payments_view")
       .select("*, students!inner(profiles!inner(full_name,phone))")
-      .eq("reference_month", mes)
+      .eq("reference_month", mes).order("id")
   );
   return linhas
     .map(({ students, ...p }) => ({
@@ -840,10 +901,10 @@ export async function gerarCobrancasDoMes(mes = mesDeReferencia()) {
 // Traz a cobrança junto: sem ela não dá para dizer se o pacote foi pago, e o
 // saldo não sabia distinguir aula comprada de aula fiada (REL-04).
 export async function listarPacotes(alunoId) {
-  const linhas = ok(
-    await sb.from("class_packages").select("*, pagamento:payments(id,paid_date,due_date)")
-      .eq("student_id", alunoId).order("purchased_on", { ascending: false })
-  );
+  const linhas = await buscarTodasAsPaginas(() => sb.from("class_packages")
+    .select("*, pagamento:payments(id,paid_date,due_date)")
+    .eq("student_id", alunoId)
+    .order("purchased_on", { ascending: false }).order("id", { ascending: false }));
   return linhas.map((p) => ({ ...p, pago: Boolean(p.pagamento?.paid_date) }));
 }
 
@@ -897,10 +958,9 @@ export async function marcarAulaPresencial(alunoId, data = hoje()) {
 }
 
 export async function listarAulasPresenciais(alunoId) {
-  return ok(
-    await sb.from("attendance").select("*")
-      .eq("student_id", alunoId).eq("in_person", true).order("date", { ascending: false })
-  );
+  return buscarTodasAsPaginas(() => sb.from("attendance").select("*")
+    .eq("student_id", alunoId).eq("in_person", true)
+    .order("date", { ascending: false }).order("id", { ascending: false }));
 }
 
 export async function removerAulaPresencial(id) {

@@ -14,7 +14,6 @@ import { esc, plural, formatarDataCurta, formatarData, textoTempoRelativo } from
 
 export async function render(alvo) {
   const alunoId = usuarioAtual().id;
-  const exercicios = await db.exerciciosComHistorico(alunoId);
 
   alvo.innerHTML = `
     <div class="wrap">
@@ -27,17 +26,27 @@ export async function render(alvo) {
     </div>`;
 
   const corpo = alvo.querySelector("#corpo");
+  await renderizarProgressao(corpo, alunoId);
+}
+
+// O professor usa exatamente o mesmo histórico do aluno. Manter o componente
+// compartilhado evita que as duas telas passem a calcular recorde ou volume de
+// jeitos diferentes quando a regra evoluir.
+export async function renderizarProgressao(alvo, alunoId, { visaoProfessor = false, nomeAluno = "" } = {}) {
+  alvo.innerHTML = `<div class="empty">Carregando evolução…</div>`;
+  const exercicios = await db.exerciciosComHistorico(alunoId);
+  if (!alvo.isConnected) return;
 
   if (!exercicios.length) {
-    corpo.innerHTML = `
+    alvo.innerHTML = `
       <div class="empty">
-        <p>Você ainda não registrou carga em nenhum exercício.</p>
-        <p class="small">Anote o peso durante o treino e a evolução aparece aqui sozinha.</p>
+        <p>${visaoProfessor ? `${esc(nomeAluno || "Este aluno")} ainda não registrou carga em nenhum exercício.` : "Você ainda não registrou carga em nenhum exercício."}</p>
+        <p class="small">${visaoProfessor ? "A progressão aparecerá depois do primeiro treino com peso registrado." : "Anote o peso durante o treino e a evolução aparece aqui sozinha."}</p>
       </div>`;
     return;
   }
 
-  corpo.innerHTML = `
+  alvo.innerHTML = `
     <label class="field" style="max-width:420px">
       <span>Exercício</span>
       <select id="exercicio">
@@ -46,14 +55,15 @@ export async function render(alvo) {
     </label>
     <div id="detalhe"><div class="empty">Carregando…</div></div>`;
 
-  const seletor = corpo.querySelector("#exercicio");
-  const detalhe = corpo.querySelector("#detalhe");
+  const seletor = alvo.querySelector("#exercicio");
+  const detalhe = alvo.querySelector("#detalhe");
 
   async function desenhar() {
     const exercicio = exercicios.find((e) => e.id === seletor.value);
     detalhe.innerHTML = `<div class="empty">Carregando…</div>`;
 
     const { pontos, recorde } = await db.progressaoDoExercicio(alunoId, exercicio.id);
+    if (!detalhe.isConnected || seletor.value !== exercicio.id) return;
     const comPeso = pontos.filter((p) => p.pesoMaximo != null);
 
     if (!comPeso.length) {
@@ -67,8 +77,8 @@ export async function render(alvo) {
 
     detalhe.innerHTML = `
       <div class="grid grid-3" style="margin:var(--sp-5) 0">
-        ${cartao("Hoje", `${formatarPeso(ultimo.pesoMaximo)}`, `no treino de ${formatarData(ultimo.data)}`)}
-        ${cartao("Seu recorde", formatarPeso(recorde?.pesoMaximo), recorde ? `em ${formatarData(recorde.data)}` : "—")}
+        ${cartao("Último treino", `${formatarPeso(ultimo.pesoMaximo)}`, `em ${formatarData(ultimo.data)}`)}
+        ${cartao(visaoProfessor ? "Recorde" : "Seu recorde", formatarPeso(recorde?.pesoMaximo), recorde ? `em ${formatarData(recorde.data)}` : "—")}
         ${cartao(
           "Desde o início",
           `${variacao > 0 ? "+" : ""}${formatarPeso(variacao)}`,
@@ -98,6 +108,7 @@ export async function render(alvo) {
                 ${p.volume ? ` · volume ${esc(formatarPeso(p.volume))}` : ""}
                 · ${esc(textoTempoRelativo(p.data))}
               </span>
+              ${detalhesDaSessao(p.detalhes)}
             </span>
           </div>`).join("")}
       </div>`;
@@ -105,6 +116,17 @@ export async function render(alvo) {
 
   seletor.addEventListener("change", desenhar);
   await desenhar();
+}
+
+function detalhesDaSessao(series = []) {
+  if (!series.length) return "";
+  const itens = series.map((s) => {
+    const partes = [];
+    if (s.peso != null) partes.push(formatarPeso(Number(s.peso)));
+    if (s.repeticoes != null) partes.push(`${Number(s.repeticoes)} rep.`);
+    return `Série ${Number(s.numero)}: ${partes.length ? partes.join(" × ") : "sem carga"}`;
+  });
+  return `<span class="muted small numeric" style="display:block;margin-top:var(--sp-1)">${esc(itens.join(" · "))}</span>`;
 }
 
 function cartao(rotulo, valor, apoio) {

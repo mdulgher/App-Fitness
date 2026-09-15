@@ -696,6 +696,13 @@ export async function progressaoDoExercicio(alunoId, exercicioId) {
         pesoMaximo: Math.max(...pesos) || null,
         volume: volume || null,
         series: series.length,
+        detalhes: [...series]
+          .sort((a, b) => a.set_number - b.set_number)
+          .map((s) => ({
+            numero: s.set_number,
+            peso: s.weight_kg,
+            repeticoes: s.reps_done,
+          })),
       };
     });
 

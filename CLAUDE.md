@@ -73,8 +73,13 @@ tipografia, espaço e preenchimento. Tokens em `:root` no `css/style.css`.
 Abrir o `index.html` com dois cliques **não funciona** (CORS em `file://`):
 
 ```bash
-npx serve . -l 5173
+node scripts/preview.cjs
 ```
+
+Esse servidor só entrega os arquivos públicos do app. Use `--demo` para os
+dados fictícios e `--lan` somente quando precisar testar em outro aparelho da
+rede local. Não use um servidor genérico na raiz, pois ele pode expor arquivos
+locais ignorados pelo Git.
 
 **Publicar é dar push.** Branch única `main`, sem CI, sem staging, sem build —
 todo push vai direto para produção e o Leo pode estar com a tela aberta. Teste
@@ -106,6 +111,7 @@ o teste batia no endpoint HTTP, não no caminho real do professor.
 
 Antes de publicar, rode as verificações da seção 2 do `TESTES.md`
 (`node --check` em todos os JS, `test-exercises.mjs`, `test-regressions.mjs`,
+`test-pagination.mjs`, `test-offline-snapshot.mjs`, `test-pwa.mjs`,
 `test-supabase-smoke.mjs`) e consulte `app_errors` — um fluxo visualmente
 correto ainda pode ter falhado em segundo plano.
 
@@ -134,5 +140,6 @@ versione senha, token ou chave.
 
 Não decida sozinho — pergunte. Em aberto hoje (`CONTEXTO.md` §9): esconder ou
 não os valores de mensalidade na lista de alunos; proteção contra senhas
-vazadas (só no plano Pro) ou entrada com Google; e manter ou limpar os 12
-alunos fictícios depois da avaliação do Leo.
+vazadas (só no plano Pro) ou entrada com Google; e manter ou limpar os 16
+alunos fictícios depois da avaliação do Leo. A mídia dos exercícios será
+fornecida pelo professor; não gerar ilustrações.

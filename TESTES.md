@@ -5,7 +5,7 @@ Este arquivo é a memória permanente de validação do app. Use-o depois de alt
 ## Regras de segurança do teste
 
 - Rode testes que criam, editam ou excluem dados primeiro em `http://127.0.0.1:5180`, no modo local.
-- No Supabase de produção, use somente as contas fictícias de `CREDENCIAIS.local.md`. Nunca altere aluno real sem autorização específica.
+- No Supabase de produção, use somente as contas fictícias de `SENHAS-TESTE.local.md`. Professor/admin continuam em `CREDENCIAIS.local.md`. Nunca altere aluno real sem autorização específica.
 - Não envie mensagens de WhatsApp durante o teste. Confira a prévia e feche a aba antes do envio.
 - Não cole senhas, tokens ou chaves privadas neste arquivo ou em arquivos versionados.
 - Consulte `app_errors` antes e depois do teste. Um fluxo visualmente correto ainda pode ter falhado em segundo plano.
@@ -28,6 +28,9 @@ $files = Get-ChildItem js -Recurse -Filter *.js
 foreach ($file in $files) { node --check $file.FullName }
 node scripts/test-exercises.mjs
 node scripts/test-regressions.mjs
+node scripts/test-pagination.mjs
+node scripts/test-offline-snapshot.mjs
+node scripts/test-pwa.mjs
 node scripts/test-supabase-smoke.mjs
 ```
 
@@ -36,6 +39,9 @@ Resultados esperados:
 - Nenhum erro de sintaxe.
 - Catálogo, imagens, URLs, importação e preservação de fichas: `OK`.
 - Fila concorrente, isolamento por aluno, persistência e domingo: `OK`.
+- Paginação sem corte em 1.001 e 10.000 linhas: `OK`.
+- Snapshot offline isolado por usuário e removido no logout: `OK`.
+- Manifest, ícones, app shell e política de atualização da PWA: `OK`.
 - Login, leitura protegida, log e ativação transacional no Supabase: `OK`.
 
 O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e reativa uma ficha que já estava ativa. Portanto, valida o RPC sem mudar a ficha escolhida.
@@ -98,6 +104,14 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 - [ ] Ativar ficha deixa exatamente uma ficha ativa para o aluno.
 - [ ] Simular falha de rede durante a ativação não deixa o aluno sem ficha ativa.
 - [ ] Outra conta de aluno não consegue ler a ficha.
+
+### Progressão
+
+- [ ] A aba carrega somente quando aberta e lista apenas exercícios com histórico.
+- [ ] Último treino, recorde, variação e gráfico respeitam a ordem das datas.
+- [ ] Cada sessão mostra peso e repetições de todas as séries registradas.
+- [ ] Trocar rapidamente o exercício não deixa uma resposta antiga sobrescrever a seleção atual.
+- [ ] Aluno sem cargas registradas vê o estado vazio sem erro.
 
 ### Financeiro
 
@@ -169,7 +183,8 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 
 - [ ] Nome e telefone persistem e atualizam o cabeçalho sem novo login.
 - [ ] Email aparece como identificador e não é editável.
-- [ ] Senhas menores ou diferentes são recusadas localmente.
+- [ ] Senhas com menos de 8 caracteres, sem maiúscula, minúscula ou número são recusadas localmente.
+- [ ] Senhas diferentes nos dois campos são recusadas localmente.
 - [ ] Troca de senha funciona no Supabase e a nova senha entra no próximo login.
 - [ ] Aluno não vê formulário Pix nem consegue alterar mensalidade e meta.
 - [ ] Professor consegue salvar e remover chave Pix.
@@ -202,6 +217,8 @@ Teste em desktop, 390 px e 320 px:
 - [ ] Calendário ocupa o card e permanece legível.
 - [ ] Instalação na tela inicial abre no app e mantém a navegação.
 - [ ] Após publicação, fechar e reabrir o PWA carrega a versão nova.
+- [ ] `service-worker.js`, `manifest.json` e todos os itens do app shell retornam 200.
+- [ ] Arquivos `.local.md` continuam retornando 404 no servidor de prévia.
 - [ ] Com internet lenta, a tela mostra carregamento e não duplica ações.
 
 ## 9. Log de erros

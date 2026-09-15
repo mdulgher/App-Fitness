@@ -32,6 +32,9 @@ js/config.local.js
 
 # Credenciais: o repositorio e publico e o app aponta para o banco de verdade.
 CREDENCIAIS.local.md
+SENHAS-TESTE.local.md
+SENHAS-TESTE.rotacao-pendente.local.md
+SENHAS-TESTE.rotacao-progresso.local.txt
 
 # Log de evolucao: registro interno de decisoes, licoes e pontos em aberto.
 #

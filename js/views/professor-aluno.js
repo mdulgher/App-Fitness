@@ -1,6 +1,6 @@
 // Perfil do aluno, visto pelo professor
 //
-// Três abas: Geral, Fichas e Financeiro — e Geral é a que abre.
+// Quatro abas: Geral, Fichas, Progressão e Financeiro — e Geral é a que abre.
 // O motivo é físico, não estético: o professor mexe nessa tela ao lado do
 // aluno, mostrando a ficha, e dinheiro não pode aparecer junto — nem o dele,
 // nem o que o vizinho de cadastro paga. Quem quiser ver o financeiro precisa
@@ -29,6 +29,7 @@ import {
 import { caminhoDoBanner } from "../catalogo-banners.js";
 import { renderizarCalendario } from "../calendar-grid.js";
 import { registrarErro } from "../log.js";
+import { renderizarProgressao } from "./aluno-evolucao.js";
 
 // Aulas avulsas: o saldo, a venda de pacote e o consumo.
 //
@@ -132,6 +133,7 @@ export async function render(alvo, { params }) {
       <div class="movement-tabs" id="abas" role="tablist" style="margin-bottom:var(--sp-4)">
         <button class="movement-tab" role="tab" data-aba="geral" aria-selected="true">Geral</button>
         <button class="movement-tab" role="tab" data-aba="fichas" aria-selected="false">Fichas</button>
+        <button class="movement-tab" role="tab" data-aba="progressao" aria-selected="false">Progressão</button>
         <button class="movement-tab" role="tab" data-aba="financeiro" aria-selected="false">Financeiro</button>
       </div>
 
@@ -162,6 +164,10 @@ export async function render(alvo, { params }) {
       <section id="painel-fichas" role="tabpanel" class="hidden">
         ${blocoListaDeFichas(aluno, fichas)}
         ${blocoFicha(ficha)}
+      </section>
+
+      <section id="painel-progressao" role="tabpanel" class="hidden">
+        <div class="empty">Abra esta aba para carregar a evolução.</div>
       </section>
 
       <section id="painel-financeiro" role="tabpanel" class="hidden">
@@ -261,16 +267,39 @@ export async function render(alvo, { params }) {
   // A aba volta para "Geral" a cada abertura da tela, de propósito: sair do
   // financeiro não pode depender de o professor lembrar de trocar antes de
   // virar o notebook para o aluno.
-  alvo.querySelector("#abas").addEventListener("click", (ev) => {
+  let progressaoCarregada = false;
+  let progressaoCarregando = false;
+  alvo.querySelector("#abas").addEventListener("click", async (ev) => {
     const botao = ev.target.closest("[data-aba]");
     if (!botao) return;
     const aba = botao.dataset.aba;
     alvo.querySelectorAll("[data-aba]").forEach((b) =>
       b.setAttribute("aria-selected", String(b.dataset.aba === aba))
     );
-    ["geral", "fichas", "financeiro"].forEach((nome) =>
+    ["geral", "fichas", "progressao", "financeiro"].forEach((nome) =>
       alvo.querySelector(`#painel-${nome}`).classList.toggle("hidden", nome !== aba)
     );
+
+    // O histórico pode crescer bastante. Ele só é consultado quando o professor
+    // realmente abre a aba, e uma única vez durante esta visita ao aluno.
+    if (aba === "progressao" && !progressaoCarregada && !progressaoCarregando) {
+      progressaoCarregando = true;
+      const painel = alvo.querySelector("#painel-progressao");
+      try {
+        await renderizarProgressao(painel, aluno.id, {
+          visaoProfessor: true,
+          nomeAluno: aluno.full_name.split(/\s+/)[0],
+        });
+        progressaoCarregada = true;
+      } catch (err) {
+        registrarErro(err, { contexto: { tela: "aluno", aba: "progressao", alunoId: aluno.id } });
+        if (painel.isConnected) {
+          painel.innerHTML = `<div class="alert" role="alert">Não foi possível carregar a progressão. Tente abrir a aba novamente.</div>`;
+        }
+      } finally {
+        progressaoCarregando = false;
+      }
+    }
   });
 }
 
