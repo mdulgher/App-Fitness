@@ -112,7 +112,8 @@ o teste batia no endpoint HTTP, não no caminho real do professor.
 Antes de publicar, rode as verificações da seção 2 do `TESTES.md`
 (`node --check` em todos os JS, `test-exercises.mjs`, `test-regressions.mjs`,
 `test-pagination.mjs`, `test-offline-snapshot.mjs`, `test-pwa.mjs`,
-`test-supabase-smoke.mjs`) e consulte `app_errors` — um fluxo visualmente
+`test-supabase-smoke.mjs`, `test-treinos-realizados.mjs`) e consulte
+`app_errors` — um fluxo visualmente
 correto ainda pode ter falhado em segundo plano.
 
 Não existe framework de teste unitário aqui e não é para introduzir um sem

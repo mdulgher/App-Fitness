@@ -934,20 +934,18 @@ está em [`TESTES.md`](TESTES.md); a análise original está em
 
 ### O que fazer a seguir, em ordem de valor
 
-1. **Validar “Treinos realizados” no aparelho e contra o banco real.**
-   Implementado em 15/09/2026 e verificado no navegador contra a camada local:
-   lista na Frequência, “Ver treino realizado” ao concluir e aba **Realizados**
-   no perfil do aluno. A consulta do Supabase (`historicoDeSessoes`, com
-   `attendance → workout_days` e `exercise_logs → exercises` embutidos) **ainda
-   não passou pelo banco real** — é o que falta conferir, junto do RLS do
-   professor lendo a carteira dele.
-2. **Validar a PWA no Android.** No iPhone, instalação pela tela inicial,
+1. **Validar a PWA no Android.** No iPhone, instalação pela tela inicial,
    reabertura sem rede, persistência da fila após fechar o app e sincronização
    ao reconectar foram validadas com o Supabase real em 14/09/2026. A fila
    enviou as séries e concluiu a sessão corretamente. Falta repetir o roteiro
    em um Android e conferir a atualização de versão.
-3. **Mídia dos exercícios**: não gerar ilustrações. O professor fornece e anexa
+2. **Mídia dos exercícios**: não gerar ilustrações. O professor fornece e anexa
    as fotos ou vídeos conforme preparar o conteúdo.
+
+**AT-01 fechado em 16/09/2026.** “Treinos realizados” foi conferido no app
+publicado e por teste read-only contra o Supabase real: relacionamentos
+embutidos, duas sessões do mesmo aluno no mesmo dia, cargas com exercício, RLS
+do professor sobre a carteira e isolamento entre alunos.
 
 ### Decisões em aberto (perguntar ao dono, não decidir sozinho)
 

@@ -32,6 +32,7 @@ node scripts/test-pagination.mjs
 node scripts/test-offline-snapshot.mjs
 node scripts/test-pwa.mjs
 node scripts/test-supabase-smoke.mjs
+node scripts/test-treinos-realizados.mjs
 ```
 
 Resultados esperados:
@@ -43,6 +44,7 @@ Resultados esperados:
 - Snapshot offline isolado por usuário e removido no logout: `OK`.
 - Manifest, ícones, app shell e política de atualização da PWA: `OK`.
 - Login, leitura protegida, log e ativação transacional no Supabase: `OK`.
+- Histórico real com relacionamentos embutidos, sessões separadas e RLS: `OK AT-01`.
 
 O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e reativa uma ficha que já estava ativa. Portanto, valida o RPC sem mudar a ficha escolhida.
 
@@ -112,6 +114,14 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 - [ ] Cada sessão mostra peso e repetições de todas as séries registradas.
 - [ ] Trocar rapidamente o exercício não deixa uma resposta antiga sobrescrever a seleção atual.
 - [ ] Aluno sem cargas registradas vê o estado vazio sem erro.
+
+### Treinos realizados
+
+- [ ] Frequência do aluno lista somente sessões concluídas e abre cada detalhe.
+- [ ] Duas sessões do mesmo dia aparecem em cartões separados.
+- [ ] Série vazia não entra na contagem; carga registrada mostra exercício e série corretos.
+- [ ] Ao concluir, “Ver treino realizado” abre a sessão recém-concluída.
+- [ ] A aba **Realizados** do professor lê a carteira; um aluno não lê a sessão de outro.
 
 ### Financeiro
 
