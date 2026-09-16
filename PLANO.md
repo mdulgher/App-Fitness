@@ -493,8 +493,14 @@ escrita explicitamente. O padrão é negar.
 de Frequência. Cada sessão mostra data, divisão, horário, exercícios e séries
 com carga e repetições. Após concluir um treino, o aluno recebe a ação **“Ver
 treino realizado”**, para a rotação automática ao próximo treino não parecer
-que apagou o anterior. O professor acessa a mesma leitura dentro do perfil do
-aluno. **Planejado para a próxima sessão; ainda não implementado.**
+que apagou o anterior. O professor acessa a mesma leitura na aba **Realizados**
+do perfil do aluno. **Implementado em 15/09/2026** (`js/treinos-realizados.js`,
+`db.historicoDeSessoes`).
+
+Duas sessões no mesmo dia aparecem separadas, porque são duas: o índice único
+da presença é por (aluno, data, divisão). O nome do exercício vem de
+`exercise_logs.exercise_id`, nunca da ficha atual — é o que faz o histórico
+sobreviver à troca de ficha (armadilha 5).
 
 ---
 

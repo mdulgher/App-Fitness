@@ -934,14 +934,13 @@ está em [`TESTES.md`](TESTES.md); a análise original está em
 
 ### O que fazer a seguir, em ordem de valor
 
-1. **Criar uma visualização clara de “Treinos realizados”.** O teste físico no
-   iPhone mostrou que, depois de concluir e sincronizar, o painel sugere a
-   próxima divisão vazia e parece ter apagado o treino anterior. Os registros
-   chegaram corretamente ao banco, mas hoje ficam espalhados entre Frequência
-   e Progressão. Amanhã, adicionar à tela de Frequência uma lista de sessões
-   concluídas com data, nome da divisão, horário, exercícios e todas as séries
-   (carga e repetições). Após concluir, oferecer **“Ver treino realizado”**. O
-   professor deve ter a mesma leitura dentro do perfil do aluno.
+1. **Validar “Treinos realizados” no aparelho e contra o banco real.**
+   Implementado em 15/09/2026 e verificado no navegador contra a camada local:
+   lista na Frequência, “Ver treino realizado” ao concluir e aba **Realizados**
+   no perfil do aluno. A consulta do Supabase (`historicoDeSessoes`, com
+   `attendance → workout_days` e `exercise_logs → exercises` embutidos) **ainda
+   não passou pelo banco real** — é o que falta conferir, junto do RLS do
+   professor lendo a carteira dele.
 2. **Validar a PWA no Android.** No iPhone, instalação pela tela inicial,
    reabertura sem rede, persistência da fila após fechar o app e sincronização
    ao reconectar foram validadas com o Supabase real em 14/09/2026. A fila

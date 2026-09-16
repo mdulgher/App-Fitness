@@ -19,7 +19,9 @@ import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import {
   esc, plural, hoje, formatarData, textoTempoRelativo, capaDoVideo, urlDeEmbed,
+  horaDe,
 } from "../utils.js";
+import { cartaoDeSessaoRealizada } from "../treinos-realizados.js";
 import { urlDeImagemSegura, videoSeguro } from "../exercise-validation.js";
 import { caminhoDoBanner } from "../catalogo-banners.js";
 import {
@@ -194,8 +196,15 @@ export async function render(alvo, { params }) {
           <p class="muted small" style="margin-bottom:var(--sp-4)">
             Registrado às ${esc(horaDe(sessao.completed_at))}. As cargas continuam editáveis se você errou alguma.
           </p>
-          <a class="btn btn-block" href="#/aluno">Voltar para os meus treinos</a>
+          <button class="btn btn-block" id="ver-realizado" type="button">Ver treino realizado</button>
+          <a class="btn btn-block" href="#/aluno" style="margin-top:var(--sp-2)">Voltar para os meus treinos</a>
         </div>`;
+
+      // O painel passa a sugerir a próxima divisão assim que esta é concluída, e
+      // no teste com o iPhone isso pareceu ter apagado o treino de agora. Este
+      // botão é a resposta: o que acabou de ser feito, do jeito que ficou
+      // gravado. O histórico completo fica na Frequência.
+      fimEl.querySelector("#ver-realizado").addEventListener("click", () => mostrarRealizado());
       return;
     }
 
@@ -433,6 +442,46 @@ export async function render(alvo, { params }) {
     botao.dataset.timer = String(timer);
   }
 
+  async function mostrarRealizado() {
+    dialogoConteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Treino realizado</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <div class="empty">Carregando…</div>`;
+    dialogo.showModal();
+    dialogoConteudo.querySelectorAll("[data-fechar]").forEach((b) =>
+      b.addEventListener("click", () => dialogo.close())
+    );
+
+    let corpo;
+    try {
+      const feitos = await db.historicoDeSessoes(alunoId, { de: hoje(), ate: hoje() });
+      const feito = feitos.find((s) => s.id === sessao?.id);
+      corpo = feito
+        ? cartaoDeSessaoRealizada(feito, { aberto: true })
+        : `<div class="empty">Este treino ainda não terminou de chegar ao servidor.</div>`;
+    } catch (err) {
+      registrarErro(err, { contexto: { acao: "verTreinoRealizado", diaId, sessaoId: sessao?.id } });
+      corpo = `<div class="alert" role="alert">Não foi possível carregar agora. Ele também fica na sua Frequência.</div>`;
+    }
+    if (!dialogo.open) return;
+
+    dialogoConteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Treino realizado</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      ${corpo}
+      <div class="dialog-actions">
+        <a class="btn" href="#/aluno/frequencia">Ver todos na Frequência</a>
+        <button type="button" class="btn" data-fechar>Fechar</button>
+      </div>`;
+    dialogoConteudo.querySelectorAll("[data-fechar]").forEach((b) =>
+      b.addEventListener("click", () => dialogo.close())
+    );
+  }
+
   function detalhe(item) {
     const ex = item.exercicio;
     const video = videoSeguro(ex.video_url);
@@ -547,8 +596,4 @@ function formatarPeso(kg) {
 function formatarPesoCampo(kg) {
   if (kg == null) return "";
   return String(kg).replace(".", ",");
-}
-
-function horaDe(iso) {
-  return new Date(iso).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
 }

@@ -2,9 +2,15 @@
   "version": "0.0.1",
   "configurations": [
     {
+      "name": "leo-personal-demo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/preview.cjs", "--demo"],
+      "port": 5180
+    },
+    {
       "name": "leo-personal",
-      "runtimeExecutable": "npx",
-      "runtimeArgs": ["--yes", "serve", ".", "-l", "5173"],
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["scripts/preview.cjs"],
       "port": 5173
     }
   ]

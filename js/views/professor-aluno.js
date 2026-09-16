@@ -1,6 +1,6 @@
 // Perfil do aluno, visto pelo professor
 //
-// Quatro abas: Geral, Fichas, Progressão e Financeiro — e Geral é a que abre.
+// Cinco abas: Geral, Fichas, Realizados, Progressão e Financeiro — Geral abre.
 // O motivo é físico, não estético: o professor mexe nessa tela ao lado do
 // aluno, mostrando a ficha, e dinheiro não pode aparecer junto — nem o dele,
 // nem o que o vizinho de cadastro paga. Quem quiser ver o financeiro precisa
@@ -30,6 +30,7 @@ import { caminhoDoBanner } from "../catalogo-banners.js";
 import { renderizarCalendario } from "../calendar-grid.js";
 import { registrarErro } from "../log.js";
 import { renderizarProgressao } from "./aluno-evolucao.js";
+import { renderizarTreinosRealizados } from "../treinos-realizados.js";
 
 // Aulas avulsas: o saldo, a venda de pacote e o consumo.
 //
@@ -133,6 +134,7 @@ export async function render(alvo, { params }) {
       <div class="movement-tabs" id="abas" role="tablist" style="margin-bottom:var(--sp-4)">
         <button class="movement-tab" role="tab" data-aba="geral" aria-selected="true">Geral</button>
         <button class="movement-tab" role="tab" data-aba="fichas" aria-selected="false">Fichas</button>
+        <button class="movement-tab" role="tab" data-aba="realizados" aria-selected="false">Realizados</button>
         <button class="movement-tab" role="tab" data-aba="progressao" aria-selected="false">Progressão</button>
         <button class="movement-tab" role="tab" data-aba="financeiro" aria-selected="false">Financeiro</button>
       </div>
@@ -164,6 +166,10 @@ export async function render(alvo, { params }) {
       <section id="painel-fichas" role="tabpanel" class="hidden">
         ${blocoListaDeFichas(aluno, fichas)}
         ${blocoFicha(ficha)}
+      </section>
+
+      <section id="painel-realizados" role="tabpanel" class="hidden">
+        <div class="empty">Abra esta aba para carregar os treinos realizados.</div>
       </section>
 
       <section id="painel-progressao" role="tabpanel" class="hidden">
@@ -269,6 +275,8 @@ export async function render(alvo, { params }) {
   // virar o notebook para o aluno.
   let progressaoCarregada = false;
   let progressaoCarregando = false;
+  let realizadosCarregados = false;
+  let realizadosCarregando = false;
   alvo.querySelector("#abas").addEventListener("click", async (ev) => {
     const botao = ev.target.closest("[data-aba]");
     if (!botao) return;
@@ -276,9 +284,25 @@ export async function render(alvo, { params }) {
     alvo.querySelectorAll("[data-aba]").forEach((b) =>
       b.setAttribute("aria-selected", String(b.dataset.aba === aba))
     );
-    ["geral", "fichas", "progressao", "financeiro"].forEach((nome) =>
+    ["geral", "fichas", "realizados", "progressao", "financeiro"].forEach((nome) =>
       alvo.querySelector(`#painel-${nome}`).classList.toggle("hidden", nome !== aba)
     );
+
+    // Mesma leitura que o aluno tem na Frequência dele: o professor precisa ver
+    // a carga que foi de fato levantada antes de ajustar a prescrição, e sem
+    // isso ele só tinha o calendário — sabia que treinou, não o que fez.
+    if (aba === "realizados" && !realizadosCarregados && !realizadosCarregando) {
+      realizadosCarregando = true;
+      try {
+        await renderizarTreinosRealizados(alvo.querySelector("#painel-realizados"), aluno.id, {
+          visaoProfessor: true,
+          nomeAluno: aluno.full_name.split(/\s+/)[0],
+        });
+        realizadosCarregados = true;
+      } finally {
+        realizadosCarregando = false;
+      }
+    }
 
     // O histórico pode crescer bastante. Ele só é consultado quando o professor
     // realmente abre a aba, e uma única vez durante esta visita ao aluno.

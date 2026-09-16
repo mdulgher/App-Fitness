@@ -17,6 +17,7 @@ import {
   resumoDoSaldo,
   diasDistintos,
   metaEfetiva,
+  montarSessaoRealizada,
 } from "./utils.js";
 
 const CHAVE = "lpt.db.v1";
@@ -502,6 +503,50 @@ export async function listarSessoes(alunoId, { de = null, ate = null } = {}) {
     )
     .sort((a, b) => b.date.localeCompare(a.date))
     .map(clone);
+}
+
+// Treinos realizados: só o que foi concluído, cada sessão já com a divisão e as
+// séries agrupadas por exercício.
+//
+// Separada de `listarSessoes` de propósito. Aquela devolve a linha crua da
+// presença e é o que o calendário precisa; esta responde "o que eu fiz naquele
+// dia", e é a leitura que faltava quando a rotação para a próxima divisão dava
+// a impressão de ter apagado o treino anterior.
+//
+// Duas sessões no mesmo dia (divisões diferentes) são duas entradas: o índice
+// único da presença é por (aluno, data, divisão), e juntá-las por data
+// esconderia metade do que o aluno treinou.
+export async function historicoDeSessoes(alunoId, { de = null, ate = null, limite = 30 } = {}) {
+  const dias = tabela("workout_days");
+  const exercicios = tabela("exercises");
+  const logs = tabela("exercise_logs");
+
+  return tabela("attendance")
+    .filter(
+      (a) =>
+        a.student_id === alunoId &&
+        a.completed_at &&
+        (!de || a.date >= de) &&
+        (!ate || a.date <= ate)
+    )
+    .sort(
+      (a, b) =>
+        b.date.localeCompare(a.date) ||
+        String(b.completed_at).localeCompare(String(a.completed_at))
+    )
+    .slice(0, limite ?? undefined)
+    .map((sessao) =>
+      montarSessaoRealizada(
+        clone(sessao),
+        dias.find((d) => d.id === sessao.workout_day_id)?.label ?? null,
+        logs
+          .filter((l) => l.attendance_id === sessao.id)
+          .map((l) => ({
+            ...clone(l),
+            exercicio: exercicios.find((e) => e.id === l.exercise_id) ?? null,
+          }))
+      )
+    );
 }
 
 // Abre a sessão do dia (ou devolve a que já existe). As cargas precisam de uma

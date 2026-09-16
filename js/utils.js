@@ -145,6 +145,20 @@ export function textoTempoRelativo(iso) {
   return `há ${Math.floor(d / 30)} meses`;
 }
 
+// Hora de um instante gravado pelo banco (`completed_at`, `created_at`).
+//
+// O fuso é fixo em São Paulo pelo mesmo motivo de `hoje()`: sem ele a hora sai
+// no fuso do aparelho, e o treino concluído às 19h40 aparece como 22h40 num
+// celular que voltou de viagem com o relógio errado.
+export function horaDe(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString("pt-BR", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "America/Sao_Paulo",
+  });
+}
+
 /* ---------- dias da semana ---------- */
 
 // 1 = segunda … 7 = domingo, como no banco. A semana começa na segunda para
@@ -388,6 +402,57 @@ export function ligarPullToRefresh(aoRefrescar) {
 // mesma semana.
 export function diasDistintos(sessoes) {
   return new Set(sessoes.map((s) => s.date)).size;
+}
+
+// Monta uma sessão realizada a partir da presença e das cargas gravadas nela.
+//
+// Vive aqui porque as duas implementações de dados chamam esta função: agrupar
+// por exercício e ordenar as séries é regra de domínio, e o histórico precisa
+// ter uma forma só, não uma por banco.
+//
+// O nome do exercício sai de `carga.exercicio`, resolvido por
+// `exercise_logs.exercise_id` — nunca da ficha atual. É exatamente para isso
+// que aquela coluna é redundante de propósito (armadilha 5): o professor troca
+// a ficha e o que o aluno levantou no mês passado continua legível.
+//
+// O agrupamento é pelo item da ficha (`workout_day_exercise_id`), não pelo
+// exercício: o mesmo exercício pode estar duas vezes na mesma divisão e são
+// duas entradas distintas do treino. Quando o professor apaga o item a coluna
+// vira NULL (`on delete set null`) e o agrupamento cai no exercício, que é o
+// que sobra — melhor juntar duas entradas antigas do que perder as duas.
+export function montarSessaoRealizada(sessao, divisao, cargas) {
+  // Série sem peso, sem repetição e sem tempo é linha que o aluno abriu e não
+  // preencheu — `registrarSerie` grava nulos quando ele limpa o campo. No
+  // histórico ela não é informação, é ruído: some daqui, e não da tabela.
+  const ordenadas = cargas
+    .filter((c) => c.weight_kg != null || c.reps_done != null || c.duration_seconds != null)
+    .sort(
+      (a, b) =>
+        String(a.created_at ?? "").localeCompare(String(b.created_at ?? "")) ||
+        (a.set_number ?? 0) - (b.set_number ?? 0)
+    );
+
+  const grupos = new Map();
+  for (const carga of ordenadas) {
+    const chave = carga.workout_day_exercise_id ?? `exercicio:${carga.exercise_id}`;
+    if (!grupos.has(chave)) {
+      grupos.set(chave, {
+        itemId: carga.workout_day_exercise_id ?? null,
+        exercicioId: carga.exercise_id,
+        nome: carga.exercicio?.name ?? "(exercício removido)",
+        grupo: carga.exercicio?.muscle_group ?? null,
+        series: [],
+      });
+    }
+    grupos.get(chave).series.push(carga);
+  }
+
+  return {
+    ...sessao,
+    divisao,
+    exercicios: [...grupos.values()],
+    totalDeSeries: ordenadas.length,
+  };
 }
 
 // Existem duas metas no banco: a da ficha (`workout_plans.weekly_target`, que

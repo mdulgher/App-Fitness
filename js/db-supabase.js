@@ -18,7 +18,7 @@ import { buscarTodasAsPaginas } from "./supabase-pagination.js";
 import { comSnapshot, apagarSnapshots } from "./offline-snapshot.js";
 import {
   hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo,
-  diasDistintos, metaEfetiva,
+  diasDistintos, metaEfetiva, montarSessaoRealizada,
 } from "./utils.js";
 
 export const sb = createClient(SUPABASE.url, SUPABASE.anonKey);
@@ -570,6 +570,46 @@ export async function listarSessoes(alunoId, { de = null, ate = null } = {}) {
     if (ate) q = q.lte("date", ate);
     return q;
   }));
+}
+
+// Treinos realizados — ver a explicação em db-local.js.
+//
+// Uma consulta só, com a divisão e as cargas embutidas. O limite de sessões
+// segura o tamanho: o embutido não é paginado, e sem teto no lado de fora o
+// histórico de um ano voltaria inteiro para desenhar uma lista de vinte linhas.
+//
+// O nome do exercício vem por `exercise_logs → exercises`, não pela ficha: a
+// FK de `exercise_id` é `on delete restrict`, então esse nome existe mesmo
+// depois de o professor refazer a prescrição. Já `attendance.workout_day_id` e
+// `workout_day_exercise_id` são `on delete set null` — daí a divisão poder vir
+// nula numa sessão antiga, o que a tela escreve em vez de esconder.
+export async function historicoDeSessoes(alunoId, { de = null, ate = null, limite = 30 } = {}) {
+  return snapshotDoProprioAluno(
+    alunoId,
+    `historico:${de ?? "inicio"}:${ate ?? "fim"}:${limite ?? "tudo"}`,
+    async () => {
+      let q = sb.from("attendance")
+        .select("*, workout_days(label), exercise_logs(*, exercises(name,muscle_group))")
+        .eq("student_id", alunoId)
+        .not("completed_at", "is", null)
+        .order("date", { ascending: false })
+        .order("completed_at", { ascending: false });
+      if (de) q = q.gte("date", de);
+      if (ate) q = q.lte("date", ate);
+      if (limite) q = q.limit(limite);
+
+      return ok(await q).map(({ workout_days, exercise_logs, ...sessao }) =>
+        montarSessaoRealizada(
+          sessao,
+          workout_days?.label ?? null,
+          (exercise_logs ?? []).map(({ exercises, ...carga }) => ({
+            ...carga,
+            exercicio: exercises ?? null,
+          }))
+        )
+      );
+    }
+  );
 }
 
 export async function abrirSessao(alunoId, diaId, data = hoje()) {

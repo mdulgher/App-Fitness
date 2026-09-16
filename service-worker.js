@@ -1,4 +1,4 @@
-const VERSAO = "2026.09.14-1";
+const VERSAO = "2026.09.15-1";
 const PREFIXO = "lpt-";
 const CACHE_SHELL = `${PREFIXO}shell-${VERSAO}`;
 const CACHE_RUNTIME = `${PREFIXO}runtime-${VERSAO}`;
@@ -42,6 +42,7 @@ const ARQUIVOS_DO_APP = [
   "./js/supabase-pagination.js",
   "./js/sync-queue.js",
   "./js/sync.js",
+  "./js/treinos-realizados.js",
   "./js/utils.js",
   "./js/views/aluno-anotacoes.js",
   "./js/views/aluno-evolucao.js",

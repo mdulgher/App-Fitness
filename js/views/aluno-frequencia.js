@@ -13,6 +13,7 @@ import {
 } from "../utils.js";
 import { registrarErro } from "../log.js";
 import { renderizarCalendario, nomeDoMes } from "../calendar-grid.js";
+import { renderizarTreinosRealizados } from "../treinos-realizados.js";
 
 const MESES = [
   "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
@@ -81,6 +82,12 @@ export async function render(alvo) {
         ${cartao("Média por semana", media(concluidas.length), "nos últimos 90 dias")}
       </div>
 
+      <!-- TREINOS REALIZADOS -->
+      <div class="row-between" style="margin-bottom:var(--sp-3);align-items:center">
+        <h2>Treinos realizados</h2>
+      </div>
+      <div id="treinos-realizados" style="margin-bottom:var(--sp-5)"></div>
+
       <!-- CALENDÁRIO DO MÊS CORRENTE -->
       <div class="row-between" style="margin-bottom:var(--sp-3);align-items:center">
         <h2>Calendário</h2>
@@ -109,6 +116,10 @@ export async function render(alvo) {
         ${semanas(diasTreinados, semana.meta)}
       </div>
     </div>`;
+
+  // Sem `await`: a lista é a parte pesada da tela e não pode atrasar o número
+  // da semana, que é o que o aluno vem ver.
+  renderizarTreinosRealizados(alvo.querySelector("#treinos-realizados"), alunoId);
 
   const calendarioGrid = alvo.querySelector("#calendario-grid");
   let pedidoDoMes = 0;

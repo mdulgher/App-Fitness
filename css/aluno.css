@@ -92,8 +92,46 @@
 .grafico-progressao .grade { stroke: #e5e5e5; stroke-width: 1; }
 .grafico-progressao .rotulo { font-size: 10px; fill: #999; }
 
+/* Treinos realizados. Mora aqui junto do resto do treino, mas o professor usa
+   as mesmas classes na aba do perfil do aluno — o histórico é o mesmo, e duas
+   folhas de estilo para a mesma leitura divergiriam na primeira mudança.
+
+   Fechado por padrão: a data e a divisão respondem "não apagou nada", que é a
+   pergunta; as cargas só interessam a quem abre. */
+.treino-feito { border: 1px solid #e5e5e5; border-radius: 12px; background: #fff; }
+.treino-feito[open] { border-color: #111; }
+.treino-feito-resumo {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap;
+  min-height: var(--tap); padding: 10px 16px;
+  cursor: pointer; list-style: none;
+}
+/* O triângulo nativo desalinha o `flex` e aparece diferente em cada navegador. */
+.treino-feito-resumo::-webkit-details-marker { display: none; }
+.treino-feito-identidade { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.treino-feito-corpo { padding: 12px 16px 14px; border-top: 1px solid #f0f0f0; }
+.treino-feito-exercicio {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; flex-wrap: wrap; padding: 8px 0;
+}
+.treino-feito-exercicio + .treino-feito-exercicio { border-top: 1px dashed #ebebeb; }
+/* Cada série é indivisível: com o texto corrido, a linha quebrava entre o "×" e
+   a repetição e "30 kg × 10" virava "30 kg ×" numa linha e "10" na outra. O
+   espaçamento separa as séries — ponto entre elas viraria um item solto no
+   início da linha seguinte. */
+.treino-feito-series {
+  display: flex; flex-wrap: wrap; gap: 2px 14px;
+  font-weight: 700; justify-content: flex-end;
+}
+.treino-feito-serie { white-space: nowrap; }
+
 @media (max-width: 700px) {
   .treino-progresso { position: static; }
+
+  /* Nome e cargas um sobre o outro: lado a lado, "42,5 kg × 10 · 45 kg × 8"
+     quebrava no meio de um número e ficava ilegível. */
+  .treino-feito-exercicio { flex-direction: column; gap: 2px; }
+  .treino-feito-series { justify-content: flex-start; }
   .exercicio-miniatura { width: 52px; height: 52px; flex-basis: 52px; }
   .exercicio-topo { gap: 10px; }
   .exercicio-topo h3 { font-size: 16px; }
