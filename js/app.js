@@ -7,7 +7,7 @@ import { iniciar, resolver, navegar, definirCallbackDeTroca, destinoAposLogin } 
 import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
 import { ligarSincronizacaoAutomatica } from "./sync.js";
-import { configurarLog, ligarCapturaGlobal } from "./log.js";
+import { configurarLog, ligarCapturaGlobal, registrarErro } from "./log.js";
 import { ligarCapturaDoConvite, deveConvidar, podeInstalarDireto, instalar, dispensar, reabrirConvite, podeOferecerInstalacao } from "./instalar.js";
 import { registrarPWA } from "./pwa.js";
 
