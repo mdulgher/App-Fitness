@@ -894,7 +894,7 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
     "Instalar na tela inicial" no menu da conta, que traz de volta na hora.
     Qualquer coisa que o usuário possa fechar precisa de um caminho de volta.
 
-26. **A meta semanal é da ficha, e só dela.** `metaEfetiva()` lê `workout_plans.weekly_target` e mais nada. `students.weekly_target` ainda existe no banco, é `not null default 3` e **ninguém mais a lê**: enquanto ela era fallback, a pergunta "qual é a meta?" nunca podia ser respondida com "não tem", porque o 3 padrão respondia primeiro — e o formulário de cadastro nem oferece o campo, então o número nunca tinha sido combinado com ninguém. Os ramos de "sem meta" escritos em 13/09 eram inalcançáveis por isso. Decisão do dono em 16/09/2026; a coluna sai numa migration própria. Não reintroduza o fallback "para não mostrar vazio": vazio é a resposta certa, e `scripts/test-regressions.mjs` falha se ele voltar.
+26. **A meta semanal é da ficha, e só dela.** `metaEfetiva()` lê `workout_plans.weekly_target` e mais nada. `students.weekly_target` era `not null default 3` e havia deixado de ter leitor antes disso; a migration `20260916184600_remove_weekly_target_de_students` derruba a coluna, e este repositório já assume que ela não existe mais. Enquanto ela era fallback, a pergunta "qual é a meta?" nunca podia ser respondida com "não tem", porque o 3 padrão respondia primeiro — e o formulário de cadastro nem oferece o campo, então o número nunca tinha sido combinado com ninguém. Os ramos de "sem meta" escritos em 13/09 eram inalcançáveis por isso. Decisão do dono em 16/09/2026. Não reintroduza o fallback "para não mostrar vazio": vazio é a resposta certa, e `scripts/test-regressions.mjs` falha se ele voltar.
 
 ---
 

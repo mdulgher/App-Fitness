@@ -55,8 +55,10 @@ Parecem duplicação ou lacuna e não são. Estão detalhadas em `CONTEXTO.md` �
 - **A frequência semanal não é um campo** (armadilha 14). É a contagem dos dias
   marcados na ficha.
 - **A meta semanal é da ficha, e só dela** (armadilha 26). Use `metaEfetiva()`.
-  `students.weekly_target` continua no banco e não deve ser lido por ninguém.
-  Sem meta é resposta válida — a tela escreve "sem meta", não inventa um número.
+  `students.weekly_target` sai do banco na migration
+  `20260916184600_remove_weekly_target_de_students` — este repositório já
+  assume que a coluna não existe mais. Sem meta é resposta válida — a tela
+  escreve "sem meta", não inventa um número.
 
 ## Design system
 

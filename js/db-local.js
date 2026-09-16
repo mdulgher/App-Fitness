@@ -258,11 +258,6 @@ function registroDeAluno(id, dados) {
     height_cm: dados.height_cm ?? null,
     start_weight_kg: dados.start_weight_kg ?? null,
     health_restrictions: dados.health_restrictions ?? null,
-    // Vestigial desde a decisão do AT-12 (16/09/2026): ninguém lê mais esta
-    // coluna — a meta é da ficha. Continua sendo escrita porque no banco ela é
-    // `not null default 3`; a camada local precisa espelhar o schema. Sai junto
-    // na migration que derrubar a coluna. Ver `metaEfetiva` em utils.js.
-    weekly_target: dados.weekly_target ?? 3,
     monthly_fee: dados.monthly_fee ?? null,
     due_day: dados.due_day ?? 5,
     active: true,

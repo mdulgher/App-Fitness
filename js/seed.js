@@ -70,7 +70,6 @@ export function criarDadosIniciais() {
       height_cm: 165,
       start_weight_kg: 62.5,
       health_restrictions: null,
-      weekly_target: 4,
       monthly_fee: 320,
       due_day: 5,
       active: true,
@@ -86,7 +85,6 @@ export function criarDadosIniciais() {
       // antes de prescrever agachamento livre.
       health_restrictions:
         "Hérnia de disco L5-S1. Sem agachamento livre e sem impacto. Priorizar leg press com amplitude curta.",
-      weekly_target: 3,
       monthly_fee: 280,
       due_day: 10,
       active: true,
@@ -99,7 +97,6 @@ export function criarDadosIniciais() {
       height_cm: 170,
       start_weight_kg: 68,
       health_restrictions: "Condromalácia no joelho direito (leve).",
-      weekly_target: 3,
       monthly_fee: 280,
       due_day: 15,
       active: true,
