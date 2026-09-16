@@ -522,11 +522,17 @@ const FICHA_COMPLETA = `
 // entrega. As telas não podem perceber diferença.
 function normalizar(ficha) {
   if (!ficha) return null;
+  // Arquivado sai aqui, num lugar só (AT-02). Filtrar na consulta exigiria
+  // repetir o filtro em cada leitura que embute a ficha, e a que esquecesse
+  // mostraria ao aluno um exercício que o professor tirou. O volume é de uma
+  // ficha, não de um relatório: filtrar depois de ler não custa nada.
   const dias = (ficha.workout_days ?? [])
+    .filter((dia) => !dia.archived_at)
     .sort((a, b) => a.order_index - b.order_index)
     .map((dia) => ({
       ...dia,
       exercicios: (dia.workout_day_exercises ?? [])
+        .filter((item) => !item.archived_at)
         .sort((a, b) => a.order_index - b.order_index)
         .map(({ exercises, ...item }) => ({ ...item, exercicio: exercises ?? null })),
     }));
@@ -603,11 +609,14 @@ export async function duplicarFicha(fichaId, { alunoId = null, titulo = null, co
     }).select().single()
   );
 
+  // Arquivado não se copia (AT-02): ele é histórico da ficha de origem, não
+  // prescrição. Copiar traria de volta, invisível, o que o professor tirou —
+  // e `archived_at` junto faria a cópia nascer sem metade do treino.
   const dias = ok(await sb.from("workout_days").select("*")
-    .eq("workout_plan_id", fichaId).order("order_index").order("id"));
+    .eq("workout_plan_id", fichaId).is("archived_at", null).order("order_index").order("id"));
 
   for (const [ordem, dia] of dias.entries()) {
-    const { id: _d, workout_plan_id: _fp, order_index: _o, ...camposDoDia } = dia;
+    const { id: _d, workout_plan_id: _fp, order_index: _o, archived_at: _ar, ...camposDoDia } = dia;
     const novoDia = ok(
       await sb.from("workout_days")
         .insert({ ...camposDoDia, workout_plan_id: nova.id, order_index: ordem })
@@ -615,12 +624,12 @@ export async function duplicarFicha(fichaId, { alunoId = null, titulo = null, co
     );
 
     const itens = ok(await sb.from("workout_day_exercises").select("*")
-      .eq("workout_day_id", dia.id).order("order_index").order("id"));
+      .eq("workout_day_id", dia.id).is("archived_at", null).order("order_index").order("id"));
     if (!itens.length) continue;
 
     ok(await sb.from("workout_day_exercises").insert(
       itens.map((item, i) => {
-        const { id: _i2, workout_day_id: _wd, order_index: _o2, ...campos } = item;
+        const { id: _i2, workout_day_id: _wd, order_index: _o2, archived_at: _ar2, ...campos } = item;
         return { ...campos, workout_day_id: novoDia.id, order_index: i };
       })
     ));
@@ -684,8 +693,37 @@ export async function atualizarDia(id, patch) {
   return atualizarLinha("workout_days", id, patch, "divisão do treino");
 }
 
+// Prescrição que o aluno já treinou se arquiva; a que ninguém usou se apaga
+// mesmo (AT-02). Apagar a usada era recusado pelo banco — `set null` nas cargas
+// colide no índice `nulls not distinct` — e, quando passava, o `set null`
+// disparava o trigger de vínculo e regravava `marked_by` da sessão. Arquivar
+// ainda preserva o rótulo da divisão no histórico de treinos realizados.
+//
+// Devolve `{ arquivado }` para a tela dizer o que aconteceu: "excluída" e
+// "arquivada" são coisas diferentes para quem clicou.
+async function diaTemHistorico(id) {
+  const presencas = ok(await sb.from("attendance").select("id").eq("workout_day_id", id).limit(1));
+  if (presencas.length) return true;
+  const itens = ok(await sb.from("workout_day_exercises").select("id").eq("workout_day_id", id));
+  if (!itens.length) return false;
+  const cargas = ok(
+    await sb.from("exercise_logs").select("id").in("workout_day_exercise_id", itens.map((i) => i.id)).limit(1)
+  );
+  return cargas.length > 0;
+}
+
+async function itemTemHistorico(id) {
+  const cargas = ok(await sb.from("exercise_logs").select("id").eq("workout_day_exercise_id", id).limit(1));
+  return cargas.length > 0;
+}
+
 export async function removerDia(id) {
+  if (await diaTemHistorico(id)) {
+    await atualizarLinha("workout_days", id, { archived_at: new Date().toISOString() }, "divisão do treino");
+    return { arquivado: true };
+  }
   ok(await sb.from("workout_days").delete().eq("id", id));
+  return { arquivado: false };
 }
 
 export async function adicionarExercicioNoDia({ diaId, exercicioId, ...resto }) {
@@ -712,7 +750,12 @@ export async function atualizarItemDoDia(id, patch) {
 }
 
 export async function removerItemDoDia(id) {
+  if (await itemTemHistorico(id)) {
+    await atualizarLinha("workout_day_exercises", id, { archived_at: new Date().toISOString() }, "este exercício da ficha");
+    return { arquivado: true };
+  }
   ok(await sb.from("workout_day_exercises").delete().eq("id", id));
+  return { arquivado: false };
 }
 
 export async function buscarDiaDeTreino(diaId) {

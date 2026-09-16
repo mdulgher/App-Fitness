@@ -395,12 +395,12 @@ export async function arquivarExercicio(id) {
 function montarFicha(ficha) {
   if (!ficha) return null;
   const dias = tabela("workout_days")
-    .filter((d) => d.workout_plan_id === ficha.id)
+    .filter((d) => d.workout_plan_id === ficha.id && !d.archived_at)
     .sort((a, b) => a.order_index - b.order_index)
     .map((dia) => ({
       ...clone(dia),
       exercicios: tabela("workout_day_exercises")
-        .filter((x) => x.workout_day_id === dia.id)
+        .filter((x) => x.workout_day_id === dia.id && !x.archived_at)
         .sort((a, b) => a.order_index - b.order_index)
         .map((item) => ({
           ...clone(item),
@@ -491,20 +491,21 @@ export async function duplicarFicha(fichaId, { alunoId = null, titulo = null, co
   };
   tabela("workout_plans").push(nova);
 
+  // Arquivado não se copia — ver o comentário na mesma função de db-supabase.js.
   const dias = tabela("workout_days")
-    .filter((d) => d.workout_plan_id === fichaId)
+    .filter((d) => d.workout_plan_id === fichaId && !d.archived_at)
     .sort((a, b) => a.order_index - b.order_index);
 
   dias.forEach((dia, ordem) => {
-    const { id: _d, workout_plan_id: _fp, order_index: _o, ...camposDoDia } = dia;
+    const { id: _d, workout_plan_id: _fp, order_index: _o, archived_at: _ar, ...camposDoDia } = dia;
     const novoDia = { ...clone(camposDoDia), id: uid(), workout_plan_id: nova.id, order_index: ordem };
     tabela("workout_days").push(novoDia);
 
     tabela("workout_day_exercises")
-      .filter((x) => x.workout_day_id === dia.id)
+      .filter((x) => x.workout_day_id === dia.id && !x.archived_at)
       .sort((a, b) => a.order_index - b.order_index)
       .forEach((item, i) => {
-        const { id: _i2, workout_day_id: _wd, order_index: _o2, ...campos } = item;
+        const { id: _i2, workout_day_id: _wd, order_index: _o2, archived_at: _ar2, ...campos } = item;
         tabela("workout_day_exercises").push({
           ...clone(campos), id: uid(), workout_day_id: novoDia.id, order_index: i,
         });
@@ -601,11 +602,28 @@ export async function atualizarDia(id, patch) {
   return clone(d);
 }
 
+// Espelha o Supabase: prescrição treinada arquiva, prescrição intocada apaga
+// (AT-02). Aqui não há FK nem índice único para recusar a exclusão, então a
+// camada local seria a única a "funcionar" — e esconderia no navegador o erro
+// que só aparece no banco de verdade.
+function diaTemHistoricoLocal(id) {
+  if (tabela("attendance").some((a) => a.workout_day_id === id)) return true;
+  const itens = tabela("workout_day_exercises").filter((x) => x.workout_day_id === id).map((x) => x.id);
+  return tabela("exercise_logs").some((l) => itens.includes(l.workout_day_exercise_id));
+}
+
 export async function removerDia(id) {
   const dados = carregar();
+  if (diaTemHistoricoLocal(id)) {
+    const dia = tabela("workout_days").find((d) => d.id === id);
+    if (dia) dia.archived_at = new Date().toISOString();
+    salvar();
+    return { arquivado: true };
+  }
   dados.workout_day_exercises = tabela("workout_day_exercises").filter((x) => x.workout_day_id !== id);
   dados.workout_days = tabela("workout_days").filter((d) => d.id !== id);
   salvar();
+  return { arquivado: false };
 }
 
 export async function adicionarExercicioNoDia({ diaId, exercicioId, ...resto }) {
@@ -637,8 +655,15 @@ export async function atualizarItemDoDia(id, patch) {
 
 export async function removerItemDoDia(id) {
   const dados = carregar();
+  if (tabela("exercise_logs").some((l) => l.workout_day_exercise_id === id)) {
+    const item = tabela("workout_day_exercises").find((x) => x.id === id);
+    if (item) item.archived_at = new Date().toISOString();
+    salvar();
+    return { arquivado: true };
+  }
   dados.workout_day_exercises = tabela("workout_day_exercises").filter((x) => x.id !== id);
   salvar();
+  return { arquivado: false };
 }
 
 export async function buscarDiaDeTreino(diaId) {

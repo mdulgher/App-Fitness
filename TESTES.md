@@ -56,8 +56,23 @@ Resultados esperados:
 - Acesso anônimo, isolamento, promoção de papel, Storage e ausência de senhas
   atuais no Git: `OK`. O teste agora falha — não apenas informa — se achar uma.
 - Histórico real com relacionamentos embutidos, sessões separadas e RLS: `OK AT-01`.
+- Prescrição arquivada em vez de excluída (AT-02): `prescrição arquivada` na
+  linha do `test-regressions`.
 
 O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e reativa uma ficha que já estava ativa. Portanto, valida o RPC sem mudar a ficha escolhida.
+
+### Depois do push, não antes
+
+```powershell
+node scripts/test-publicado.mjs
+```
+
+Confere arquivo por arquivo que o GitHub Pages está entregando o que está neste
+repositório, e que a release embutida no service worker bate nos dois lados —
+o que antes era conferência manual "pela fonte servida". Com mudança local ainda
+não publicada ele fica vermelho **com razão**, por isso não entra na lista
+acima. O Pages manda `max-age=600`: divergência com `age` abaixo disso é
+propagação, e some repetindo em dez minutos.
 
 ## 3. Login, sessão e navegação
 

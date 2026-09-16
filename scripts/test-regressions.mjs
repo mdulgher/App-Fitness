@@ -303,8 +303,66 @@ assert.match(telaAluno, /id="redefinir-senha"/);
 assert.match(telaAluno, /db\.redefinirSenhaDoAluno/);
 assert.match(telaAluno, /sessoesEncerradas/, "a tela precisa contar quando as sessões não caíram");
 
+// AT-02: prescrição treinada arquiva, prescrição intocada apaga.
+//
+// No banco real, apagar a treinada era RECUSADO — a FK faz `set null` nas
+// cargas e o índice `exercise_logs_uma_por_serie` é `nulls not distinct`, então
+// duas cargas da mesma sessão com o mesmo `set_number` viravam a mesma chave.
+// E quando passava, o `set null` disparava o trigger de vínculo e regravava
+// `marked_by` da sessão. Os dois foram provados contra o Supabase em 16/09.
+//
+// A camada local não tem FK nem índice único: sem este teste ela continuaria
+// "funcionando" e escondendo no navegador o que só quebra no banco de verdade.
+const at02 = await import("../js/db-local.js?instancia=at02");
+const fichaAt02 = await at02.criarFicha({ alunoId: "u-carla", titulo: "Ficha do AT-02" });
+const diaUsado = await at02.criarDia({ fichaId: fichaAt02.id, rotulo: "Treino usado" });
+const diaLimpo = await at02.criarDia({ fichaId: fichaAt02.id, rotulo: "Treino intocado" });
+const itemUsado = await at02.adicionarExercicioNoDia({ diaId: diaUsado.id, exercicioId: "ex-supino" });
+const itemLimpo = await at02.adicionarExercicioNoDia({ diaId: diaUsado.id, exercicioId: "ex-crucifixo" });
+
+const sessaoAt02 = await at02.abrirSessao("u-carla", diaUsado.id, "2026-09-16");
+await at02.registrarSerie({
+  alunoId: "u-carla", sessaoId: sessaoAt02.id, workoutDayExerciseId: itemUsado.id,
+  exercicioId: "ex-supino", serie: 1, peso: 40, reps: 10,
+});
+
+// Intocado some de verdade; treinado é arquivado, e cada caso se anuncia.
+assert.deepEqual(await at02.removerItemDoDia(itemLimpo.id), { arquivado: false });
+assert.deepEqual(await at02.removerItemDoDia(itemUsado.id), { arquivado: true });
+assert.deepEqual(await at02.removerDia(diaLimpo.id), { arquivado: false });
+assert.deepEqual(await at02.removerDia(diaUsado.id), { arquivado: true });
+
+// Arquivado sai da ficha — o aluno não pode continuar vendo o que o professor tirou.
+const fichaDepois = await at02.buscarFicha(fichaAt02.id);
+assert.equal(fichaDepois.dias.length, 0, "divisão arquivada não pode continuar aparecendo na ficha");
+
+// ...mas a carga e a sessão continuam lá, com o vínculo intacto. É o ponto
+// inteiro do AT-02: `set null` perdia o vínculo mesmo quando a exclusão passava.
+const depoisNoArmazenamento = JSON.parse(memoria.get("lpt.db.v1"));
+const cargaSobrevivente = depoisNoArmazenamento.exercise_logs.find((l) => l.attendance_id === sessaoAt02.id);
+assert.ok(cargaSobrevivente, "arquivar não pode levar a carga junto");
+assert.equal(
+  cargaSobrevivente.workout_day_exercise_id, itemUsado.id,
+  "arquivar tem de preservar o vínculo com o item prescrito; era isso que o set null destruía"
+);
+const sessaoSobrevivente = depoisNoArmazenamento.attendance.find((a) => a.id === sessaoAt02.id);
+assert.equal(sessaoSobrevivente.workout_day_id, diaUsado.id, "a sessão não pode perder a divisão");
+assert.equal(sessaoSobrevivente.marked_by, "student", "arquivar não pode reescrever quem marcou a sessão");
+
+// Cópia não herda arquivado: traria de volta, invisível, o que foi tirado.
+const copia = await at02.duplicarFicha(fichaAt02.id, { titulo: "Cópia do AT-02" });
+assert.equal((await at02.buscarFicha(copia.id)).dias.length, 0, "a cópia não pode trazer divisão arquivada");
+
+// E a camada do Supabase precisa arquivar pelo mesmo caminho, não só a local.
+const fonteSupabase = await readFile(new URL("../js/db-supabase.js", import.meta.url), "utf8");
+for (const trecho of ["diaTemHistorico", "itemTemHistorico", "archived_at"]) {
+  assert.match(fonteSupabase, new RegExp(trecho), `db-supabase.js perdeu ${trecho} (AT-02)`);
+}
+assert.match(fonteSupabase, /\.filter\(\(dia\) => !dia\.archived_at\)/, "normalizar precisa esconder divisão arquivada");
+assert.match(fonteSupabase, /\.filter\(\(item\) => !item\.archived_at\)/, "normalizar precisa esconder exercício arquivado");
+
 console.log(
   `OK: fila concorrente, isolamento, data estável, log saneado, release, prescrição, filtros, domingo, ` +
-  `meta da ficha, cadastro retomável e ` +
+  `meta da ficha, cadastro retomável, prescrição arquivada e ` +
   `contrato de dados (${noLocal.size} funções nas duas, ${chamadas.size} usadas pelas telas).`
 );

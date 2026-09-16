@@ -54,6 +54,11 @@ Parecem duplicação ou lacuna e não são. Estão detalhadas em `CONTEXTO.md` �
   é calculada contra a meta da ficha.
 - **A frequência semanal não é um campo** (armadilha 14). É a contagem dos dias
   marcados na ficha.
+- **Prescrição treinada arquiva, não apaga** (armadilha 27). `removerDia()` e
+  `removerItemDoDia()` gravam `archived_at` quando existe sessão ou carga
+  apontando para aquilo. Apagar era recusado pelo banco (`set null` colidindo
+  num índice `nulls not distinct`) e, quando passava, reescrevia o `marked_by`
+  da sessão. Não afrouxe o índice para "simplificar".
 - **A meta semanal é da ficha, e só dela** (armadilha 26). Use `metaEfetiva()`.
   `students.weekly_target` sai do banco na migration
   `20260916184600_remove_weekly_target_de_students` — este repositório já

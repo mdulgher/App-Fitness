@@ -405,8 +405,18 @@ export async function render(alvo, { params }) {
     corpo.querySelectorAll("[data-remover-dia]").forEach((b) =>
       aoClicar(b, async () => {
         const dia = ficha.dias.find((d) => d.id === b.dataset.removerDia);
-        if (!confirm(`Excluir ${dia.label} e seus exercícios?`)) return;
-        if (await proteger(() => db.removerDia(dia.id))) await carregar(ficha.id);
+        if (!confirm(
+          `Excluir ${dia.label} e seus exercícios?\n\n` +
+          "Se o aluno já treinou esta divisão, ela é arquivada em vez de excluída: " +
+          "sai da ficha, e o histórico dele continua mostrando o que foi feito."
+        )) return;
+        let resultado = null;
+        if (await proteger(async () => { resultado = await db.removerDia(dia.id); })) {
+          avisar(resultado?.arquivado
+            ? `${dia.label} foi arquivada porque já tem treino registrado. Ela sai da ficha e continua no histórico do aluno.`
+            : `${dia.label} foi excluída.`);
+          await carregar(ficha.id);
+        }
       })
     );
 
@@ -428,7 +438,13 @@ export async function render(alvo, { params }) {
 
     corpo.querySelectorAll("[data-remover-item]").forEach((b) =>
       aoClicar(b, async () => {
-        if (await proteger(() => db.removerItemDoDia(b.dataset.removerItem))) await carregar(ficha.id);
+        let resultado = null;
+        if (await proteger(async () => { resultado = await db.removerItemDoDia(b.dataset.removerItem); })) {
+          if (resultado?.arquivado) {
+            avisar("Exercício arquivado porque o aluno já registrou carga nele. Ele sai da ficha e continua no histórico.");
+          }
+          await carregar(ficha.id);
+        }
       })
     );
 
