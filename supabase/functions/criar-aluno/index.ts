@@ -121,19 +121,62 @@ Deno.serve(async (req) => {
     user_metadata: { full_name: nome },
   });
 
+  // Email ja cadastrado nao e necessariamente "aluno ja existe". Pode ser o
+  // resto de uma tentativa anterior que falhou DEPOIS de criar a conta de
+  // acesso: conexao caiu, o navegador fechou, o `deleteUser` de emergencia la
+  // embaixo nao completou. Nesse estado a conta existe no Auth mas o app nao
+  // sabe quem e a pessoa, e o professor ficava num beco sem saida — toda nova
+  // tentativa devolvia "Já existe uma conta com esse email" e nao havia por
+  // onde sair, nem pela tela nem pelo app.
+  //
+  // Entao aqui a funcao olha o estado real antes de recusar. Falta o registro
+  // em `students`? Completa o cadastro na conta que ja existe, com senha nova,
+  // porque a senha da tentativa anterior o professor nunca chegou a ver.
+  let id: string;
+  let retomado = false;
+
   if (erroCriacao) {
     const jaExiste = /already|registered|exists/i.test(erroCriacao.message);
-    return responder(
-      { error: jaExiste ? "Já existe uma conta com esse email." : erroCriacao.message },
-      jaExiste ? 409 : 400,
-    );
-  }
+    if (!jaExiste) return responder({ error: erroCriacao.message }, 400);
 
-  const id = criado.user.id;
+    // `profiles` tem o email porque o gatilho de criacao de conta o grava. Isso
+    // evita varrer `auth.admin.listUsers()` pagina a pagina so para achar um id.
+    const { data: perfilExistente } = await admin
+      .from("profiles").select("id, role").eq("email", email).maybeSingle();
+
+    if (!perfilExistente) {
+      return responder({ error: "Já existe uma conta com esse email." }, 409);
+    }
+    if (perfilExistente.role !== "student") {
+      return responder({ error: "Esse email já pertence a uma conta que não é de aluno." }, 409);
+    }
+
+    const { data: jaAluno } = await admin
+      .from("students").select("id").eq("id", perfilExistente.id).maybeSingle();
+
+    if (jaAluno) {
+      return responder({
+        error: "Esse aluno já está cadastrado. Se ele perdeu a senha, use “Redefinir senha” na página dele.",
+      }, 409);
+    }
+
+    id = perfilExistente.id;
+    retomado = true;
+    const { error: erroSenha } = await admin.auth.admin.updateUserById(id, { password: senha });
+    if (erroSenha) {
+      return responder({ error: `Não foi possível retomar o cadastro: ${erroSenha.message}` }, 400);
+    }
+  } else {
+    id = criado!.user.id;
+  }
 
   // O gatilho ja criou o perfil. Completa o que o professor preencheu.
   await admin.from("profiles").update({ full_name: nome, phone: dados.phone || null }).eq("id", id);
 
+  // `weekly_target` saiu daqui em 16/09: a meta semanal e da ficha
+  // (`workout_plans.weekly_target`) e ninguem mais le a coluna do cadastro.
+  // Ela ainda existe no banco, com `default 3`, e so cai na migration propria —
+  // que so pode rodar DEPOIS desta versao estar no ar.
   const { error: erroAluno } = await admin.from("students").insert({
     id,
     birth_date: dados.birth_date || null,
@@ -141,7 +184,6 @@ Deno.serve(async (req) => {
     height_cm: dados.height_cm ? Number(dados.height_cm) : null,
     start_weight_kg: dados.start_weight_kg ? Number(dados.start_weight_kg) : null,
     health_restrictions: dados.health_restrictions || null,
-    weekly_target: Number(dados.weekly_target) || 3,
     monthly_fee: dados.monthly_fee === "" || dados.monthly_fee == null ? null : Number(dados.monthly_fee),
     due_day: Number(dados.due_day) || 5,
     active: true,
@@ -150,9 +192,19 @@ Deno.serve(async (req) => {
   if (erroAluno) {
     // Conta sem registro de aluno seria um fantasma: existe para entrar, mas o
     // app nao sabe quem e. Desfaz para nao deixar lixo no meio do caminho.
-    await admin.auth.admin.deleteUser(id);
-    return responder({ error: `Não foi possível concluir o cadastro: ${erroAluno.message}` }, 400);
+    //
+    // So desfaz o que ESTA chamada criou. Numa retomada a conta de acesso e
+    // anterior, e apagar levaria junto o historico de quem ja treinava — o
+    // proximo cadastro cria tudo de novo do zero, entao o caminho seguro e
+    // deixar como esta e contar o que aconteceu.
+    if (!retomado) {
+      await admin.auth.admin.deleteUser(id);
+      return responder({ error: `Não foi possível concluir o cadastro: ${erroAluno.message}` }, 400);
+    }
+    return responder({
+      error: `A conta de acesso existe, mas o cadastro não completou: ${erroAluno.message}. Tente de novo.`,
+    }, 400);
   }
 
-  return responder({ id, email, senha, full_name: nome }, 201);
+  return responder({ id, email, senha, full_name: nome, retomado }, 201);
 });

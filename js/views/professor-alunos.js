@@ -190,11 +190,17 @@ export async function render(alvo) {
   function credenciais(criado) {
     conteudo.innerHTML = `
       <div class="dialog-top">
-        <span class="eyebrow">Conta criada</span>
+        <span class="eyebrow">${criado.retomado ? "Cadastro concluído" : "Conta criada"}</span>
         <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
       </div>
       <h2 id="dialog-title">${esc(criado.full_name)}</h2>
-      <p class="muted small">Mande estes dados para o aluno. A senha não aparece de novo depois que você fechar.</p>
+      ${criado.retomado
+        ? `<p class="muted small">
+             A conta de acesso já existia de uma tentativa anterior que não
+             terminou. O cadastro foi completado nela, e a senha abaixo é nova —
+             a da tentativa anterior não vale mais.
+           </p>`
+        : `<p class="muted small">Mande estes dados para o aluno. A senha não aparece de novo depois que você fechar.</p>`}
 
       <div class="card" style="margin:var(--sp-4) 0">
         <div class="eyebrow">Email</div>

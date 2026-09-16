@@ -244,8 +244,67 @@ for (const camada of ["db-local.js", "db-supabase.js"]) {
   assert.doesNotMatch(fonte, /metaEfetiva\([^)]*,/, `${camada} passa aluno para metaEfetiva`);
 }
 
+// AT-06: cadastro retomável e redefinição de senha.
+//
+// O caso que justifica a retomada existir: a conta de acesso é criada antes do
+// registro do aluno, então uma falha no meio deixa a primeira sem a segunda. O
+// professor não tinha saída — toda nova tentativa devolvia "já existe uma conta
+// com esse email" e o aluno não aparecia em lugar nenhum.
+//
+// Roda contra a camada local, que espelha as mesmas recusas do servidor. Ela
+// precisa de `localStorage`, que não existe no Node: o stub abaixo é a memória
+// que o navegador daria.
+const memoria = new Map();
+globalThis.localStorage = {
+  getItem: (c) => (memoria.has(c) ? memoria.get(c) : null),
+  setItem: (c, v) => memoria.set(c, String(v)),
+  removeItem: (c) => memoria.delete(c),
+};
+const local = await import("../js/db-local.js");
+
+const novo = await local.criarAluno({ full_name: "Fulano de Teste", email: "Fulano@Teste.local", goal: "Saúde geral" });
+assert.equal(novo.retomado, false);
+
+// Email repetido de um aluno completo é recusa, e a mensagem precisa apontar a
+// saída — senão o professor fica sem saber o que fazer com a conta que existe.
+await assert.rejects(
+  local.criarAluno({ full_name: "Fulano de Teste", email: "fulano@teste.local" }),
+  /já está cadastrado.*Redefinir senha/s
+);
+
+// Perfil sem registro em `students` é o cadastro interrompido: retoma, não
+// recusa. O módulo guarda os dados num cache próprio, então a montagem desse
+// estado passa pelo armazenamento e por uma instância nova — mexer só no
+// armazenamento não seria visto pela instância já carregada.
+const perfis = JSON.parse(memoria.get("lpt.db.v1"));
+perfis.students = perfis.students.filter((s) => s.id !== novo.id);
+memoria.set("lpt.db.v1", JSON.stringify(perfis));
+const local2 = await import("../js/db-local.js?instancia=retomada");
+const retomado = await local2.criarAluno({ full_name: "Fulano de Teste", email: "fulano@teste.local", goal: "Hipertrofia" });
+assert.equal(retomado.retomado, true);
+assert.equal(retomado.id, novo.id, "retomar não pode criar uma segunda conta para o mesmo email");
+assert.equal((await local2.buscarAluno(novo.id)).goal, "Hipertrofia");
+
+// O professor não é aluno: nem para cadastrar por cima, nem para ter a senha
+// redefinida por esta porta. Sem isto, um id no corpo da requisição viraria
+// tomada de conta.
+const professor = JSON.parse(memoria.get("lpt.db.v1")).profiles.find((p) => p.role === "trainer");
+await assert.rejects(local2.criarAluno({ full_name: "X", email: professor.email }), /não é de aluno/);
+await assert.rejects(local2.redefinirSenhaDoAluno(professor.id), /Só a senha de um aluno/);
+await assert.rejects(local2.redefinirSenhaDoAluno("id-que-nao-existe"), /não encontrado/);
+
+const redefinida = await local2.redefinirSenhaDoAluno(novo.id);
+assert.equal(redefinida.id, novo.id);
+assert.equal(redefinida.sessoesEncerradas, true, "redefinir sem derrubar sessão deixaria o aparelho antigo logado");
+
+// A tela precisa do caminho de recuperação que a mensagem promete.
+const telaAluno = await readFile(new URL("../js/views/professor-aluno.js", import.meta.url), "utf8");
+assert.match(telaAluno, /id="redefinir-senha"/);
+assert.match(telaAluno, /db\.redefinirSenhaDoAluno/);
+assert.match(telaAluno, /sessoesEncerradas/, "a tela precisa contar quando as sessões não caíram");
+
 console.log(
   `OK: fila concorrente, isolamento, data estável, log saneado, release, prescrição, filtros, domingo, ` +
-  `meta da ficha e ` +
+  `meta da ficha, cadastro retomável e ` +
   `contrato de dados (${noLocal.size} funções nas duas, ${chamadas.size} usadas pelas telas).`
 );

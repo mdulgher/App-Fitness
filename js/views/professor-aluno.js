@@ -261,6 +261,34 @@ export async function render(alvo, { params }) {
     })
   );
 
+  // Redefinir senha invalida a senha atual do aluno e derruba os aparelhos
+  // dele. Pede confirmação no próprio botão, como bloquear acesso — e pelo
+  // mesmo motivo: é irreversível no sentido que importa, porque a senha antiga
+  // não volta.
+  alvo.querySelector("#redefinir-senha")?.addEventListener("click", async (ev) => {
+    const b = ev.currentTarget;
+    if (b.dataset.confirmando !== "1") {
+      b.dataset.confirmando = "1";
+      b.textContent = "Confirmar";
+      return;
+    }
+    b.disabled = true;
+    b.textContent = "Redefinindo…";
+    try {
+      const resultado = await db.redefinirSenhaDoAluno(aluno.id);
+      dialogoDeSenhaNova(alvo, resultado);
+      b.dataset.confirmando = "";
+      b.disabled = false;
+      b.textContent = "Redefinir senha";
+    } catch (err) {
+      registrarErro(err, {
+        contexto: { tela: "aluno", acao: "redefinirSenhaDoAluno", alunoId: aluno.id },
+      });
+      b.disabled = false;
+      b.textContent = err.message;
+    }
+  });
+
   alvo.querySelector("[data-novo-recado]")?.addEventListener("click", () =>
     formularioDeRecado(alvo, aluno, null, recarregar)
   );
@@ -423,6 +451,62 @@ function formularioDePacote(alvo, aluno, aoSalvar) {
       erro.classList.remove("hidden");
       botao.disabled = false;
       botao.textContent = "Vender";
+    }
+  });
+}
+
+// A senha nova aparece UMA vez. O Supabase guarda só o hash: nem o professor
+// consegue consultá-la depois, e por isso a tela avisa antes de fechar em vez
+// de deixar descobrir sozinho.
+//
+// `sessoesEncerradas` vem do servidor e não é enfeite: trocar a senha e não
+// derrubar as sessões deixaria um aparelho antigo logado com a conta — é a
+// mesma armadilha do "Sair" que não saía, de 16/09. Se a derrubada falhar, o
+// professor precisa saber, porque aí a senha nova sozinha não tirou ninguém.
+function dialogoDeSenhaNova(alvo, resultado) {
+  const dialogo = alvo.querySelector("#dialogo");
+  const conteudo = alvo.querySelector("#dialogo-conteudo");
+
+  conteudo.innerHTML = `
+    <div class="dialog-top">
+      <span class="eyebrow">Senha redefinida</span>
+      <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+    </div>
+    <h2 id="dialog-title">${esc(resultado.full_name ?? "Aluno")}</h2>
+    <p class="muted small">
+      Mande esta senha para o aluno. Ela não aparece de novo depois que você fechar.
+    </p>
+
+    <div class="card" style="margin:var(--sp-4) 0">
+      <div class="eyebrow">Email</div>
+      <div class="numeric" style="font-size:17px;font-weight:700;margin-bottom:var(--sp-3)">${esc(resultado.email ?? "—")}</div>
+      <div class="eyebrow">Senha nova</div>
+      <div class="numeric" style="font-size:22px;font-weight:800;letter-spacing:.04em">${esc(resultado.senha ?? "—")}</div>
+    </div>
+
+    ${resultado.senha
+      ? ""
+      : `<div class="alert">No modo local não existe conta de acesso, então não há senha para mostrar.</div>`}
+    ${resultado.sessoesEncerradas
+      ? `<div class="muted small">Os aparelhos onde ele estava logado foram desconectados.</div>`
+      : `<div class="alert" role="alert">A senha foi trocada, mas não foi possível desconectar os aparelhos onde ele já estava logado. Quem estiver dentro continua dentro até sair.</div>`}
+
+    <div class="dialog-actions" style="margin-top:var(--sp-3)">
+      <button class="btn" id="copiar-senha">Copiar dados</button>
+      <button class="btn btn-primary" data-fechar>Concluir</button>
+    </div>`;
+
+  dialogo.showModal();
+  conteudo.querySelectorAll("[data-fechar]").forEach((b) => b.addEventListener("click", () => dialogo.close()));
+
+  const copiar = conteudo.querySelector("#copiar-senha");
+  copiar.addEventListener("click", async () => {
+    const texto = `Leo Personal Trainning\nEmail: ${resultado.email ?? ""}\nSenha: ${resultado.senha ?? ""}`;
+    try {
+      await navigator.clipboard.writeText(texto);
+      copiar.textContent = "Copiado";
+    } catch {
+      copiar.textContent = "Copie na mão";
     }
   });
 }
@@ -709,11 +793,14 @@ function blocoCadastro(aluno) {
         <button type="button" class="btn btn-sm" data-acesso="${aluno.access_blocked ? "liberar" : "bloquear"}">
           ${aluno.access_blocked ? "Liberar acesso" : "Bloquear acesso"}
         </button>
+        <button type="button" class="btn btn-sm" id="redefinir-senha">Redefinir senha</button>
       </div>
       <div class="muted small" style="margin-top:var(--sp-2)">
         Parar de cobrar tira o aluno da geração de mensalidade e não mexe no
         acesso. Bloquear o acesso impede ele de entrar no app e não cancela
         cobrança nenhuma — o histórico dele continua aqui para você.
+        Redefinir a senha gera uma nova para você passar ao aluno e derruba os
+        aparelhos onde ele estava logado.
       </div>
     </div>`;
 }

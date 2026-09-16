@@ -422,6 +422,32 @@ export async function criarAluno(dados) {
   return data;
 }
 
+// Redefine a senha do aluno e devolve a nova para o professor repassar.
+//
+// Mesma razão de `criarAluno` para viver numa Edge Function: trocar a senha de
+// outra pessoa exige `service_role`. A função confere no servidor que quem pede
+// é o professor e que o alvo é mesmo um aluno — sem isso, um id chutado no
+// corpo da requisição viraria tomada de conta.
+//
+// A senha volta uma vez só. O Supabase guarda apenas o hash; nem o professor
+// consegue consultá-la depois, o que é por que a tela avisa antes de fechar.
+export async function redefinirSenhaDoAluno(alunoId) {
+  const { data: { session } } = await sb.auth.getSession();
+  if (!session) throw new Error("Faça login novamente para redefinir a senha.");
+
+  const { data, error } = await sb.functions.invoke("redefinir-senha-aluno", {
+    body: { alunoId },
+  });
+
+  if (error) {
+    let detalhe = null;
+    try { detalhe = (await error.context?.json?.())?.error; } catch {}
+    throw new Error(detalhe || error.message);
+  }
+  if (data?.error) throw new Error(data.error);
+  return data;
+}
+
 // Situação COMERCIAL: entra ou não na geração de mensalidade. Não mexe no
 // acesso do aluno ao app — para isso existe `bloquearAcesso`.
 export async function desativarAluno(id, ativo = false) {

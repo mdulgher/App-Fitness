@@ -247,7 +247,53 @@ export async function buscarAluno(id) {
   return aluno ? juntarPerfil(aluno) : null;
 }
 
+// A linha de `students`, num lugar só, porque ela é criada em dois caminhos:
+// cadastro novo e retomada de um cadastro interrompido. Duplicar o literal era
+// convite para os dois divergirem quando entrasse coluna nova.
+function registroDeAluno(id, dados) {
+  return {
+    id,
+    birth_date: dados.birth_date ?? null,
+    goal: dados.goal ?? null,
+    height_cm: dados.height_cm ?? null,
+    start_weight_kg: dados.start_weight_kg ?? null,
+    health_restrictions: dados.health_restrictions ?? null,
+    // Vestigial desde a decisão do AT-12 (16/09/2026): ninguém lê mais esta
+    // coluna — a meta é da ficha. Continua sendo escrita porque no banco ela é
+    // `not null default 3`; a camada local precisa espelhar o schema. Sai junto
+    // na migration que derrubar a coluna. Ver `metaEfetiva` em utils.js.
+    weekly_target: dados.weekly_target ?? 3,
+    monthly_fee: dados.monthly_fee ?? null,
+    due_day: dados.due_day ?? 5,
+    active: true,
+    created_at: hoje(),
+  };
+}
+
+// Espelha `criar-aluno` no Supabase, inclusive a retomada: email repetido não é
+// necessariamente "aluno já existe". Aqui não há conta de acesso separada, então
+// o estado equivalente é ter perfil sem registro em `students` — que é o que
+// sobra de uma tentativa interrompida no meio.
 export async function criarAluno({ full_name, email, phone, ...dados }) {
+  const normalizado = String(email ?? "").trim().toLowerCase();
+  const perfilExistente = tabela("profiles").find(
+    (p) => String(p.email ?? "").toLowerCase() === normalizado
+  );
+
+  if (perfilExistente) {
+    if (perfilExistente.role !== "student") {
+      throw new Error("Esse email já pertence a uma conta que não é de aluno.");
+    }
+    if (tabela("students").some((s) => s.id === perfilExistente.id)) {
+      throw new Error(
+        "Esse aluno já está cadastrado. Se ele perdeu a senha, use “Redefinir senha” na página dele."
+      );
+    }
+    tabela("students").push(registroDeAluno(perfilExistente.id, dados));
+    salvar();
+    return { id: perfilExistente.id, email, full_name: perfilExistente.full_name, senha: null, retomado: true };
+  }
+
   const id = uid();
   tabela("profiles").push({
     id,
@@ -258,28 +304,34 @@ export async function criarAluno({ full_name, email, phone, ...dados }) {
     avatar_url: null,
     created_at: hoje(),
   });
-  tabela("students").push({
-    id,
-    birth_date: dados.birth_date ?? null,
-    goal: dados.goal ?? null,
-    height_cm: dados.height_cm ?? null,
-    start_weight_kg: dados.start_weight_kg ?? null,
-    health_restrictions: dados.health_restrictions ?? null,
-    // Vestigial desde a decisão do AT-12 (16/09/2026): ninguém lê mais esta
-    // coluna — a meta é da ficha. Continua sendo escrita porque no banco ela é
-    // `not null default 3` e a Edge Function `criar-aluno` faz o mesmo; a
-    // camada local precisa espelhar o schema. Sai junto na migration que
-    // derrubar a coluna. Ver `metaEfetiva` em utils.js.
-    weekly_target: dados.weekly_target ?? 3,
-    monthly_fee: dados.monthly_fee ?? null,
-    due_day: dados.due_day ?? 5,
-    active: true,
-    created_at: hoje(),
-  });
+  tabela("students").push(registroDeAluno(id, dados));
   salvar();
   // Mesmo formato de db-supabase.js, onde a senha temporária volta da Edge
   // Function para o professor repassar ao aluno.
-  return { id, email, full_name, senha: null };
+  return { id, email, full_name, senha: null, retomado: false };
+}
+
+// Espelha `redefinir-senha-aluno`. Aqui não existe conta de acesso — o modo
+// local entra por qualquer senha — então não há senha para devolver. O que a
+// função ainda garante são as MESMAS recusas do servidor: alvo inexistente e
+// alvo que não é aluno. Se essas checagens só existissem no Supabase, o modo
+// local passaria num caso que o real recusa.
+export async function redefinirSenhaDoAluno(alunoId) {
+  const perfil = tabela("profiles").find((p) => p.id === alunoId);
+  if (!perfil) throw new Error("Aluno não encontrado.");
+  if (perfil.role !== "student") {
+    throw new Error("Só a senha de um aluno pode ser redefinida por aqui.");
+  }
+  if (!tabela("students").some((s) => s.id === alunoId)) {
+    throw new Error("Essa conta não é de um aluno cadastrado.");
+  }
+  return {
+    id: alunoId,
+    email: perfil.email,
+    full_name: perfil.full_name,
+    senha: null,
+    sessoesEncerradas: true,
+  };
 }
 
 export async function atualizarAluno(id, patch) {
