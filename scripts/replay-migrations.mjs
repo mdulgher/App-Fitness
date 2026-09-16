@@ -21,6 +21,14 @@ import { SUPABASE } from "../js/config.js";
 const raiz = path.resolve(import.meta.dirname, "..");
 const resetar = process.argv.includes("--reset");
 
+// `--ate <prefixo>` para no fim daquela migration. Existe por uma ordem que só
+// aparece quando se ensaia de verdade: o snapshot de `backups/` é ANTERIOR à
+// tenancy, e as linhas dele não têm `tenant_id`. Restaurar depois do M03, que
+// exige NOT NULL sem default, falharia. O ciclo fiel é replay até antes do M01,
+// restore, e só então M01→M03 — que é também a ordem que produção vai viver.
+const indiceAte = process.argv.indexOf("--ate");
+const ate = indiceAte >= 0 ? process.argv[indiceAte + 1] : null;
+
 const md = await fs.readFile(path.join(raiz, "CREDENCIAIS-ENSAIO.local.md"), "utf8");
 const senha = md.match(/Senha do banco \| `([^`]+)`/)?.[1];
 const ref = md.match(/\| ref \| (\S+) \|/)?.[1];
@@ -104,8 +112,10 @@ const pasta = path.join(raiz, "supabase", "migrations");
 const arquivos = (await fs.readdir(pasta)).filter((f) => f.endsWith(".sql")).sort();
 
 let aplicadas = 0;
+let parou = false;
 for (const arquivo of arquivos) {
-  if (jaAplicadas.has(arquivo)) continue;
+  if (ate && parou) break;
+  if (jaAplicadas.has(arquivo)) { if (ate && arquivo.startsWith(ate)) parou = true; continue; }
   const sql = await fs.readFile(path.join(pasta, arquivo), "utf8");
   try {
     // Cada migration é uma transação: falha no meio não deixa meia migration
@@ -116,6 +126,7 @@ for (const arquivo of arquivos) {
     await cliente.query("commit");
     aplicadas++;
     console.log(`  ok   ${arquivo}`);
+    if (ate && arquivo.startsWith(ate)) { parou = true; break; }
   } catch (erro) {
     await cliente.query("rollback");
     console.error(`  FALHA ${arquivo}`);
