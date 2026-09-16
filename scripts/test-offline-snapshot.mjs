@@ -33,10 +33,14 @@ await assert.rejects(
 
 // O caso que faltava: recusa de acesso COM o navegador dizendo que está
 // offline. Antes, `pareceFalhaDeRede` devolvia true só por `online: false` e o
-// snapshot respondia no lugar do erro — o professor bloqueava o aluno, o RLS
-// negava, e a tela seguia mostrando o treino guardado como se fosse falta de
-// sinal. `navigator.onLine` dá falso negativo com frequência (Wi-Fi de
-// academia, VPN, captive portal), então isso não era hipótese remota.
+// snapshot respondia no lugar do erro — sessão expirada virava "falta de sinal"
+// e o usuário seguia numa cópia velha em vez de entrar de novo.
+// `navigator.onLine` dá falso negativo com frequência (Wi-Fi de academia, VPN,
+// captive portal), então isso não era hipótese remota.
+//
+// A mensagem de aluno bloqueado está na lista por precaução, mas aquele caso
+// não chega por aqui: RLS em SELECT filtra linha em vez de levantar erro
+// (medido no banco real em 15/09/2026). Ver `ehRecusaDeAcesso`.
 for (const mensagem of [
   "permission denied for table workout_plans",
   "new row violates row-level security policy",

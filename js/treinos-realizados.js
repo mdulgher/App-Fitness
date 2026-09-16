@@ -14,20 +14,37 @@ import { db } from "./db.js";
 import { esc, plural, formatarData, horaDe, textoTempoRelativo } from "./utils.js";
 import { registrarErro } from "./log.js";
 
+// Título da sessão. Sessão sem divisão é a maioria no banco real, não a
+// exceção: em 15/09/2026 eram 43 de 47 concluídas — 18 aulas presenciais
+// (`in_person`, marcadas pelo professor) e 25 marcadas pelo próprio aluno sem
+// passar por uma divisão da ficha. Só 4 vinham do fluxo prescrito.
+//
+// A primeira versão disto escrevia "Divisão removida da ficha" para todas, o
+// que era falso em 91% dos casos e assustava sem motivo. E não há como afirmar
+// remoção: `attendance.workout_day_id` é `on delete set null`, então divisão
+// apagada e divisão que nunca existiu ficam idênticas no banco. Então o texto
+// diz o que se sabe, e nada além.
+function tituloDaSessao(sessao) {
+  if (sessao.divisao) return sessao.divisao;
+  if (sessao.in_person) return "Aula com o professor";
+  return "Treino sem divisão";
+}
+
 // Uma sessão concluída, com as séries por exercício. Vem fechada por padrão: a
 // lista inteira aberta viraria uma parede de números onde não se acha nada.
 export function cartaoDeSessaoRealizada(sessao, { aberto = false } = {}) {
-  const titulo = sessao.divisao ?? "Divisão removida da ficha";
+  // "com o professor" já está no título quando é aula presencial; repetir no
+  // subtítulo era ruído.
+  const marcadaPeloProfessor = sessao.marked_by === "trainer" && !sessao.in_person;
 
   return `
     <details class="treino-feito"${aberto ? " open" : ""}>
       <summary class="treino-feito-resumo">
         <span class="treino-feito-identidade">
-          <span class="list-item-title">${esc(titulo)}</span>
+          <span class="list-item-title">${esc(tituloDaSessao(sessao))}</span>
           <span class="muted small">
             ${esc(formatarData(sessao.date))} · ${esc(horaDe(sessao.completed_at))}
-            ${sessao.in_person ? " · com o professor" : ""}
-            ${sessao.marked_by === "trainer" ? " · marcado pelo professor" : ""}
+            ${marcadaPeloProfessor ? " · marcado pelo professor" : ""}
           </span>
         </span>
         <span class="${sessao.totalDeSeries ? "tag tag-quiet" : "tag"} numeric">
@@ -43,7 +60,9 @@ export function cartaoDeSessaoRealizada(sessao, { aberto = false } = {}) {
            </div>`
         : `<div class="treino-feito-corpo">
              <p class="muted small" style="margin:0">
-               Presença registrada, sem peso nem repetição anotados neste treino.
+               ${sessao.in_person
+                 ? "Aula presencial registrada pelo professor. Carga por exercício não é anotada nessas aulas."
+                 : "Presença registrada, sem peso nem repetição anotados neste treino."}
              </p>
            </div>`}
     </details>`;

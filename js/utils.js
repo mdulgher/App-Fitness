@@ -407,17 +407,30 @@ export function diasDistintos(sessoes) {
 // Recusa de acesso nunca é falta de sinal.
 //
 // As duas heurísticas de rede do app — a do snapshot e a da fila — tratavam
-// QUALQUER erro como falha de rede quando `navigator.onLine` dizia offline. O
-// problema é que esse sinal é notoriamente frouxo (dá falso negativo em Wi-Fi
-// de academia, em VPN e em captive portal), então uma recusa real do banco
-// entrava nesse caminho: o professor bloqueava o acesso do aluno, o RLS negava
-// a leitura, e a tela mostrava o snapshot antigo como se fosse só falta de
-// sinal. O aluno seguia vendo o treino que já não era dele.
+// QUALQUER erro como falha de rede quando `navigator.onLine` dizia offline, e
+// esse sinal é notoriamente frouxo: dá falso negativo em Wi-Fi de academia, em
+// VPN e em captive portal. Então uma recusa real do banco caía nesse caminho.
+//
+// Os dois casos que de fato chegam aqui:
+//
+//   - **Sessão expirada ou revogada.** O PostgREST responde 401 e a mensagem
+//     fala de JWT. A tela então respondia com o snapshot em vez de mandar o
+//     usuário entrar de novo, e ele seguia navegando numa cópia velha que não
+//     dava mais para atualizar.
+//   - **Escrita que o RLS recusa.** Na fila isso virava tentativa eterna: o
+//     app dizia "mando sozinho quando a rede voltar" e a série nunca subia.
+//
+// **O que NÃO passa por aqui** — verificado no banco real em 15/09/2026, e
+// anotado porque é fácil concluir o contrário: bloquear o acesso do aluno
+// (`access_blocked`) entra nas policies via `acesso_bloqueado()`, mas RLS em
+// SELECT **filtra linha, não levanta erro**. O aluno bloqueado recebe zero
+// linhas, `comSnapshot` nem chega no `catch`, e o snapshot não tem como
+// mascarar nada. Esse caso se resolve no login, não aqui.
 //
 // A detecção é pela mensagem porque `ok()` em db-supabase.js joga fora o código
 // do Postgres ao criar o Error. É uma lista frouxa de propósito: classificar
 // um erro de rede como permissão só custa uma tela de erro a mais, enquanto o
-// contrário esconde dado que devia ter sumido.
+// contrário deixa passar por falta de sinal o que era recusa.
 const RECUSA_DE_ACESSO =
   /permission denied|row-level security|not authorized|unauthorized|forbidden|jwt|invalid.*token|token.*expired|acesso bloqueado|sessão expirou/i;
 
