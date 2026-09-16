@@ -32,6 +32,9 @@ js/config.local.js
 
 # Credenciais: o repositorio e publico e o app aponta para o banco de verdade.
 CREDENCIAIS.local.md
+# Projeto Supabase de ensaio (EXP-00/EXP-01). Guarda service_role e senha do
+# banco — o que a linha do js/config.local.js acima ja diz que nunca entra.
+CREDENCIAIS-ENSAIO.local.md
 SENHAS-TESTE.local.md
 SENHAS-TESTE.rotacao-pendente.local.md
 SENHAS-TESTE.rotacao-progresso.local.txt
