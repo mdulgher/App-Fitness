@@ -45,9 +45,27 @@ console.log(`Alvo: db.${ref}.supabase.co (produção é ${refDeProducao}, intoca
 
 if (resetar) {
   await cliente.query("drop schema if exists public cascade; create schema public;");
-  await cliente.query("grant usage on schema public to anon, authenticated, service_role;");
-  await cliente.query("grant all on schema public to postgres;");
-  console.log("Schema public zerado.");
+
+  // Achado do EXP-00: NENHUMA migration concede privilégio de tabela. Elas só
+  // fazem `revoke` em pontos específicos, o que revela que contavam com os
+  // grants que o Supabase já deixa prontos num projeto novo. Derrubar o schema
+  // leva junto esses grants e as default privileges — e aí o banco sobe com o
+  // schema certo e `permission denied for table students` para todo mundo.
+  //
+  // Reproduzir a linha de base da plataforma aqui é o certo: é o estado que
+  // existia ANTES da primeira migration rodar em produção. Fazer isso por
+  // migration seria inventar postura de segurança que o app nunca teve.
+  //
+  // As `default privileges` são o que mais importa: as tabelas ainda não
+  // existem neste ponto, então quem as cobre são elas, não o `grant on all`.
+  await cliente.query(`
+    grant usage on schema public to postgres, anon, authenticated, service_role;
+    grant all on schema public to postgres, service_role;
+    alter default privileges in schema public grant all on tables to postgres, anon, authenticated, service_role;
+    alter default privileges in schema public grant all on routines to postgres, anon, authenticated, service_role;
+    alter default privileges in schema public grant all on sequences to postgres, anon, authenticated, service_role;
+  `);
+  console.log("Schema public zerado, com a linha de base de privilégios do Supabase.");
 }
 
 // ---- compatibilidade: objetos que produção tem e o repositório não cria ----
