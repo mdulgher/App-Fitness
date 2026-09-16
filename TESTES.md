@@ -41,7 +41,7 @@ Resultados esperados:
 - Nenhum erro de sintaxe.
 - Catálogo, imagens, URLs, importação e preservação de fichas: `OK`.
 - Fila concorrente, isolamento, data estável do treino, saneamento do log,
-  release, prescrição, filtros e domingo: `OK`.
+  release, prescrição, filtros, domingo e **meta da ficha**: `OK`.
 - Paginação sem corte em 1.001 e 10.000 linhas: `OK`.
 - Snapshot offline isolado por usuário e removido no logout: `OK`.
 - Manifest, ícones, app shell e política de atualização da PWA: `OK`.
@@ -305,3 +305,19 @@ app_errors antes/depois:
 Problemas encontrados:
 Evidências ou observações:
 ```
+
+## Backfill da meta semanal (AT-12)
+
+`scripts/backfill-meta-da-ficha.mjs` não faz parte da rotina: é migração de
+dados, roda uma vez por ambiente. **Simula por padrão** e só grava com
+`--aplicar`; só preenche ficha com meta nula, nunca sobrescreve e nunca inventa
+número. Roda com as RLS do professor de propósito — com `service_role` passaria
+mesmo se a política estivesse errada.
+
+```bash
+node scripts/backfill-meta-da-ficha.mjs
+node scripts/backfill-meta-da-ficha.mjs --aplicar
+```
+
+Esperado: `restamSemMeta` igual a `semMetaNoCadastro` e `OK backfill AT-12`.
+Se der zero fichas a preencher, o ambiente já está migrado — não é falha.

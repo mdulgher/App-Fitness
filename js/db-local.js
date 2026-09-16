@@ -215,7 +215,7 @@ function resumoDoAluno(aluno) {
     diasSemTreinar: ultimoTreino ? diasEntre(ultimoTreino, H) : null,
     treinosNaSemana: diasDistintos(naSemana),
     comPersonalNaSemana: diasDistintos(naSemana.filter((s) => s.in_person)),
-    metaSemanal: metaEfetiva(fichaAtiva, aluno),
+    metaSemanal: metaEfetiva(fichaAtiva),
     temFichaAtiva: Boolean(fichaAtiva),
     fichaAtivaId: fichaAtiva?.id ?? null,
     fichaVenceEm: fichaAtiva?.end_date ?? null,
@@ -265,6 +265,11 @@ export async function criarAluno({ full_name, email, phone, ...dados }) {
     height_cm: dados.height_cm ?? null,
     start_weight_kg: dados.start_weight_kg ?? null,
     health_restrictions: dados.health_restrictions ?? null,
+    // Vestigial desde a decisão do AT-12 (16/09/2026): ninguém lê mais esta
+    // coluna — a meta é da ficha. Continua sendo escrita porque no banco ela é
+    // `not null default 3` e a Edge Function `criar-aluno` faz o mesmo; a
+    // camada local precisa espelhar o schema. Sai junto na migration que
+    // derrubar a coluna. Ver `metaEfetiva` em utils.js.
     weekly_target: dados.weekly_target ?? 3,
     monthly_fee: dados.monthly_fee ?? null,
     due_day: dados.due_day ?? 5,
@@ -716,8 +721,7 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
       a.date >= segunda &&
       a.date <= domingo
   );
-  const aluno = tabela("students").find((s) => s.id === alunoId);
-  const meta = metaEfetiva(ficha, aluno);
+  const meta = metaEfetiva(ficha);
   const dias = diasDistintos(feitos);
 
   return {

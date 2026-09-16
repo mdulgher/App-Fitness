@@ -348,7 +348,7 @@ async function montarResumos(alunos) {
       // treino, e era o que fazia o cartão e a lista discordarem.
       treinosNaSemana: diasDistintos(naSemana),
       comPersonalNaSemana: diasDistintos(naSemana.filter((s) => s.in_person)),
-      metaSemanal: metaEfetiva(ficha, aluno),
+      metaSemanal: metaEfetiva(ficha),
       temFichaAtiva: Boolean(ficha),
       fichaAtivaId: ficha?.id ?? null,
       fichaVenceEm: ficha?.end_date ?? null,
@@ -810,14 +810,15 @@ export async function resumoDaSemana(alunoId, referencia = hoje()) {
     const segunda = inicioDaSemana(referencia);
     const domingo = somarDias(segunda, 6);
 
-    const [ficha, aluno, feitos] = await Promise.all([
+    // A consulta a `students.weekly_target` saiu junto com o fallback (AT-12):
+    // era uma ida ao banco por semana para ler um número que ninguém combinou.
+    const [ficha, feitos] = await Promise.all([
       ok(await sb.from("workout_plans").select("weekly_target").eq("student_id", alunoId).eq("active", true).maybeSingle()),
-      ok(await sb.from("students").select("weekly_target").eq("id", alunoId).maybeSingle()),
       ok(await sb.from("attendance").select("date,in_person").eq("student_id", alunoId)
         .not("completed_at", "is", null).gte("date", segunda).lte("date", domingo)),
     ]);
 
-    const meta = metaEfetiva(ficha, aluno);
+    const meta = metaEfetiva(ficha);
     const dias = diasDistintos(feitos);
 
     return {

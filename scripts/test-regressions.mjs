@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { criarFila } from "../js/sync-queue.js";
 import { sanitizarParaLog } from "../js/log.js";
+import { metaEfetiva } from "../js/utils.js";
 
 function ambiente() {
   let texto = "{}";
@@ -205,7 +206,46 @@ assert.doesNotMatch(treino, /data:\s*hoje\(\)/);
 assert.match(listaAlunos, /filtro-situacao/);
 assert.match(listaAlunos, /filtro-atencao/);
 
+// AT-12: a meta é da ficha e só dela. `students.weekly_target` é
+// `not null default 3`, então enquanto ele fosse fallback nenhuma tela poderia
+// dizer "sem meta" — o 3 do cadastro sempre responderia primeiro. Este teste
+// falha se o fallback voltar, inclusive por alguém "consertar" um null.
+assert.equal(metaEfetiva({ weekly_target: 5 }), 5);
+assert.equal(metaEfetiva({ weekly_target: null }), null, "ficha sem meta não pode herdar do cadastro");
+assert.equal(metaEfetiva(null), null, "aluno sem ficha ativa não tem meta");
+assert.equal(metaEfetiva(undefined), null);
+assert.equal(metaEfetiva.length, 1, "metaEfetiva não pode voltar a receber o aluno");
+// Direto, sem depender da aridade declarada: um segundo argumento tem de ser
+// ignorado. Sem esta linha, reintroduzir o fallback por `arguments[1]` passava.
+assert.equal(
+  metaEfetiva({ weekly_target: null }, { weekly_target: 3 }), null,
+  "metaEfetiva voltou a considerar um segundo argumento"
+);
+
+// Nenhuma tela pode ler a coluna do cadastro de novo — foi assim que a
+// Frequência e o editor passaram a mostrar números diferentes em 13/09.
+for (const arquivo of await readdir(new URL("../js/views/", import.meta.url))) {
+  if (!arquivo.endsWith(".js")) continue;
+  const fonte = await readFile(new URL(`../js/views/${arquivo}`, import.meta.url), "utf8");
+  assert.doesNotMatch(
+    fonte, /aluno\.weekly_target|aluno\?\.weekly_target/,
+    `${arquivo} voltou a ler a meta do cadastro; a meta é da ficha (AT-12)`
+  );
+  assert.doesNotMatch(
+    fonte, /metaEfetiva\([^)]*,/,
+    `${arquivo} passa um segundo argumento para metaEfetiva (AT-12)`
+  );
+}
+
+// A camada de dados também não: a consulta a `students.weekly_target` saiu do
+// resumo da semana junto com o fallback.
+for (const camada of ["db-local.js", "db-supabase.js"]) {
+  const fonte = await readFile(new URL(`../js/${camada}`, import.meta.url), "utf8");
+  assert.doesNotMatch(fonte, /metaEfetiva\([^)]*,/, `${camada} passa aluno para metaEfetiva`);
+}
+
 console.log(
-  `OK: fila concorrente, isolamento, data estável, log saneado, release, prescrição, filtros, domingo e ` +
+  `OK: fila concorrente, isolamento, data estável, log saneado, release, prescrição, filtros, domingo, ` +
+  `meta da ficha e ` +
   `contrato de dados (${noLocal.size} funções nas duas, ${chamadas.size} usadas pelas telas).`
 );

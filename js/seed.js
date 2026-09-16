@@ -177,6 +177,7 @@ export function criarDadosIniciais() {
       description: "Foco em membros superiores. Progressão de carga semanal.",
       start_date: somarDias(H, -42),
       end_date: somarDias(H, 42),
+      weekly_target: 4,
       active: true,
       created_at: somarDias(H, -42),
       updated_at: somarDias(H, -42),
@@ -190,6 +191,7 @@ export function criarDadosIniciais() {
       description: "Primeiras 8 semanas.",
       start_date: somarDias(H, -120),
       end_date: somarDias(H, -43),
+      weekly_target: 3,
       active: false,
       created_at: somarDias(H, -120),
       updated_at: somarDias(H, -43),
@@ -202,6 +204,7 @@ export function criarDadosIniciais() {
       description: "Sem impacto. Respeitar restrição lombar.",
       start_date: somarDias(H, -30),
       end_date: null,
+      weekly_target: 3,
       active: true,
       created_at: somarDias(H, -30),
       updated_at: somarDias(H, -30),
@@ -214,6 +217,9 @@ export function criarDadosIniciais() {
       description: "Base para alunos novos de hipertrofia.",
       start_date: null,
       end_date: null,
+      // Modelo não tem aluno, então não tem combinado: a meta entra quando a
+      // cópia virar ficha de alguém.
+      weekly_target: null,
       active: false,
       created_at: somarDias(H, -60),
       updated_at: somarDias(H, -60),

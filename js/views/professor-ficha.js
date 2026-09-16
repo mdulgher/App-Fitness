@@ -162,7 +162,7 @@ export async function render(alvo, { params }) {
             <div class="numeric" style="font-size:24px;font-weight:800;letter-spacing:-.03em">
               ${plural(diasOcupados.size, "dia marcado", "dias marcados")}
             </div>
-            <div class="muted small">${textoDaAgenda(diasOcupados.size, metaEfetiva(ficha, aluno))}</div>
+            <div class="muted small">${textoDaAgenda(diasOcupados.size, metaEfetiva(ficha))}</div>
           </div>
           <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
             <button class="btn btn-sm" data-editar-ficha>Editar ficha</button>
@@ -212,8 +212,8 @@ export async function render(alvo, { params }) {
   // lidos como se fossem o mesmo:
   //
   //   AGENDA  — dias da semana marcados nas divisões desta ficha. É o plano.
-  //   META    — o combinado com o aluno (`metaEfetiva`: a da ficha, ou a do
-  //             cadastro quando a ficha não tem). É o alvo.
+  //   META    — o combinado com o aluno (`metaEfetiva`, hoje só a da ficha).
+  //             É o alvo.
   //   FEITOS  — dias em que ele realmente treinou, na tela de Frequência.
   //
   // Os dois primeiros aparecem aqui, e agora com nomes que os separam: antes o
@@ -221,13 +221,10 @@ export async function render(alvo, { params }) {
   // chamava "Treinos por semana" para a meta — mesmo nome, coisas diferentes,
   // na mesma tela.
   //
-  // A comparação passa por `metaEfetiva`. Esta era a única tela que lia
-  // `aluno.weekly_target` direto, então uma ficha com meta própria mostrava um
-  // número aqui e outro na Frequência do aluno.
-  //
-  // As duas colunas continuam existindo de propósito: qual delas manda, e se
-  // uma deve sumir, é decisão do dono e está no parking lot — não dá para
-  // apagar coluna sem antes decidir o significado.
+  // Em 16/09 o dono decidiu que a meta é da ficha, e `metaEfetiva` deixou de
+  // olhar o cadastro. Ficha sem meta agora é ficha sem meta: o texto abaixo
+  // pede para definir em vez de exibir o 3 padrão do cadastro como se fosse
+  // combinado. Ver a explicação inteira em `utils.js`.
   function textoDaAgenda(diasMarcados, metaDaFicha) {
     if (!metaDaFicha) return "nenhuma meta combinada — defina em “Editar ficha”";
     const alvo = `${plural(metaDaFicha, "treino", "treinos")} por semana`;
@@ -513,11 +510,13 @@ export async function render(alvo, { params }) {
         </div>
         <div class="field"><label for="ff-meta">Meta de treinos por semana</label>
           <input id="ff-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14"
-                 value="${esc(existente?.weekly_target ?? aluno.weekly_target ?? 3)}" />
+                 value="${esc(existente?.weekly_target ?? fichas.find((f) => f.active)?.weekly_target ?? "")}" />
           <div class="field-hint">
             O combinado com o aluno, e é contra isso que a Frequência dele é
             medida. Não é o mesmo que a agenda: os dias de cada divisão você
             marca nos cartões, e eles podem não fechar com esta meta.
+            Em branco, o aluno vê “sem meta” — que é melhor do que um número
+            que ninguém combinou.
           </div></div>
         <div data-erro class="alert hidden" role="alert"></div>
         <div class="dialog-actions">

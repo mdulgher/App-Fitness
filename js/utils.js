@@ -508,16 +508,29 @@ export function montarSessaoRealizada(sessao, divisao, cargas) {
   };
 }
 
-// Existem duas metas no banco: a da ficha (`workout_plans.weekly_target`, que
-// pode ser nula) e a do cadastro do aluno (`students.weekly_target`, com padrão
-// 3). A ficha manda, porque a meta é o combinado daquele ciclo de treino; o
-// cadastro é o padrão de quem ainda não teve meta definida na ficha.
+// AT-12, decisão do dono em 16/09/2026: **a meta é da ficha**, e só dela.
 //
-// Devolve null quando não há meta nenhuma — e null aqui é resposta, não falha:
-// quem exibe precisa escrever "sem meta", nunca dividir por ele. Era daí que
-// saía o "0/null na semana" na lista do professor.
-export function metaEfetiva(ficha, aluno) {
-  return ficha?.weekly_target ?? aluno?.weekly_target ?? null;
+// Havia duas colunas. `students.weekly_target` é `not null default 3`, então
+// todo aluno nasce com 3 sem ninguém ter combinado nada — e o formulário de
+// cadastro nem oferece o campo. Enquanto essa coluna era o fallback, a
+// pergunta "qual é a meta?" nunca podia ser respondida com "não tem": o 3
+// fantasma aparecia na tela com a mesma cara de um número acertado com o
+// aluno, e os ramos de "sem meta" escritos em 13/09 eram inalcançáveis.
+//
+// Meta é propriedade da prescrição, não da pessoa: ficha nova de 4 dias é uma
+// meta nova. Pendurada na ficha, ela ainda herda de graça o histórico que
+// `start_date`/`end_date`/`active` já dão — no cadastro, o número anterior era
+// sobrescrito e sumia.
+//
+// A coluna do cadastro continua no banco por enquanto (derrubá-la é migration,
+// em release próprio); ninguém mais a lê. As fichas que estavam com meta nula
+// foram preenchidas a partir dela por `scripts/backfill-meta-da-ficha.mjs`.
+//
+// Devolve null quando não há meta — e null aqui é resposta, não falha: quem
+// exibe precisa escrever "sem meta", nunca dividir por ele. Era daí que saía o
+// "0/null na semana" na lista do professor.
+export function metaEfetiva(ficha) {
+  return ficha?.weekly_target ?? null;
 }
 
 // Foto de perfil: aceita HTTPS (o Storage do Supabase) e imagem embutida

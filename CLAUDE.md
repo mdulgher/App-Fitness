@@ -51,9 +51,12 @@ Parecem duplicação ou lacuna e não são. Estão detalhadas em `CONTEXTO.md` �
 - **Status de pagamento é derivado, nunca coluna** (armadilha 2). Armazenado,
   "vencido" apodrece.
 - **Falta não é registro** (armadilha 3). Só se grava treino feito; a frequência
-  é calculada contra `weekly_target`.
+  é calculada contra a meta da ficha.
 - **A frequência semanal não é um campo** (armadilha 14). É a contagem dos dias
   marcados na ficha.
+- **A meta semanal é da ficha, e só dela** (armadilha 26). Use `metaEfetiva()`.
+  `students.weekly_target` continua no banco e não deve ser lido por ninguém.
+  Sem meta é resposta válida — a tela escreve "sem meta", não inventa um número.
 
 ## Design system
 

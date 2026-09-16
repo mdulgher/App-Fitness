@@ -852,7 +852,7 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 13. **"Lançar cobrança" não é "cobrar".** Lançar cria a linha do mês no banco; quem avisa o aluno é o botão de WhatsApp. Já houve confusão com isso: o professor via um aluno devedor e o botão respondia "todos já têm cobrança neste mês" — estava certo, mas parecia quebrado. Se mudar esse fluxo, mantenha a distinção explícita na tela.
 
-14. **A frequência semanal não é um campo.** É a contagem dos dias marcados nas divisões da ficha. Guardar o número separado faria ele divergir do calendário na primeira edição.
+14. **A frequência semanal não é um campo.** É a contagem dos dias marcados nas divisões da ficha. Guardar o número separado faria ele divergir do calendário na primeira edição. Ela não se confunde com a **meta** — ver a armadilha 26.
 
 15. **O nome e a cidade do Pix precisam ser ASCII sem acento e dentro do limite.** "João" ou uma cidade com mais de 15 caracteres fazem o banco do aluno recusar o código inteiro. `js/pix.js` normaliza — não contorne isso montando o payload à mão.
 
@@ -893,6 +893,8 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
     única porta para instalar o app. Agora o silêncio dura 14 dias e existe
     "Instalar na tela inicial" no menu da conta, que traz de volta na hora.
     Qualquer coisa que o usuário possa fechar precisa de um caminho de volta.
+
+26. **A meta semanal é da ficha, e só dela.** `metaEfetiva()` lê `workout_plans.weekly_target` e mais nada. `students.weekly_target` ainda existe no banco, é `not null default 3` e **ninguém mais a lê**: enquanto ela era fallback, a pergunta "qual é a meta?" nunca podia ser respondida com "não tem", porque o 3 padrão respondia primeiro — e o formulário de cadastro nem oferece o campo, então o número nunca tinha sido combinado com ninguém. Os ramos de "sem meta" escritos em 13/09 eram inalcançáveis por isso. Decisão do dono em 16/09/2026; a coluna sai numa migration própria. Não reintroduza o fallback "para não mostrar vazio": vazio é a resposta certa, e `scripts/test-regressions.mjs` falha se ele voltar.
 
 ---
 
