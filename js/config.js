@@ -4,7 +4,7 @@ export const APP_NAME = "Leo Personal Trainning";
 
 // Identifica exatamente o conjunto de arquivos que produziu um erro. O mesmo
 // valor aparece no service worker; os testes impedem que os dois divirjam.
-export const RELEASE_ID = "2026.09.16-6";
+export const RELEASE_ID = "2026.09.16-7";
 
 // 'local'    -> dados no localStorage do navegador, sem senha de verdade
 // 'supabase' -> banco de verdade, com login e regras de acesso reais
