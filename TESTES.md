@@ -61,6 +61,19 @@ Resultados esperados:
 
 O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e reativa uma ficha que já estava ativa. Portanto, valida o RPC sem mudar a ficha escolhida.
 
+### Armadilha do `node_modules` (não há `package.json`)
+
+Três scripts usam pacote externo: `sharp` e `jimp` (imagens) e `pg` (replay de
+migrations). Como o projeto **não tem `package.json`**, o npm trata cada
+instalação como a árvore inteira e **poda o que não foi citado** — instalar só
+um deles apaga os outros, e o teste que dependia quebra com
+`ERR_MODULE_NOT_FOUND`. Aconteceu em 16/09 com o `sharp`. Instale sempre os três
+juntos:
+
+```powershell
+npm install sharp jimp pg --no-save
+```
+
 ### Antes de cada migration
 
 ```powershell
