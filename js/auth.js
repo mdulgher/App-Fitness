@@ -122,8 +122,11 @@ export function ligarTimeoutDeSessao(minutos, aoExpirar) {
   let timer = null;
 
   function resetar() {
-    if (!usuario) return; // sem sessão, não agenda
+    // Limpar antes da guarda: no logout, `usuario` já é null e o timer antigo
+    // continuava agendado. Ele não derrubava ninguém (a guarda de dentro segura),
+    // mas ficava rodando sem dono.
     clearTimeout(timer);
+    if (!usuario) return; // sem sessão, não há o que expirar
     timer = setTimeout(async () => {
       if (!usuario) return;
       await sair();
@@ -134,5 +137,14 @@ export function ligarTimeoutDeSessao(minutos, aoExpirar) {
   const EVENTOS = ["mousemove", "keydown", "touchstart", "click"];
   EVENTOS.forEach((ev) => document.addEventListener(ev, resetar, { passive: true }));
 
-  resetar(); // começa a contar ao ligar
+  // O login é o momento em que o relógio precisa começar, e era justamente o
+  // que faltava. Esta função é chamada uma vez, na partida do app, quando em
+  // geral ninguém está logado: `resetar()` caía na guarda e não agendava nada.
+  // Depois só um evento de mouse ou toque religava a contagem — e o clique do
+  // próprio "Entrar" não serve, porque ele borbulha até o `document` antes de
+  // `entrar()` terminar e definir o usuário. Quem entrava e deixava o celular
+  // na mesa ficava com a sessão aberta sem prazo.
+  window.addEventListener("lpt:sessao", resetar);
+
+  resetar(); // e conta desde já quando a sessão foi restaurada do armazenamento
 }

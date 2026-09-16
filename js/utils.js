@@ -404,6 +404,27 @@ export function diasDistintos(sessoes) {
   return new Set(sessoes.map((s) => s.date)).size;
 }
 
+// Recusa de acesso nunca é falta de sinal.
+//
+// As duas heurísticas de rede do app — a do snapshot e a da fila — tratavam
+// QUALQUER erro como falha de rede quando `navigator.onLine` dizia offline. O
+// problema é que esse sinal é notoriamente frouxo (dá falso negativo em Wi-Fi
+// de academia, em VPN e em captive portal), então uma recusa real do banco
+// entrava nesse caminho: o professor bloqueava o acesso do aluno, o RLS negava
+// a leitura, e a tela mostrava o snapshot antigo como se fosse só falta de
+// sinal. O aluno seguia vendo o treino que já não era dele.
+//
+// A detecção é pela mensagem porque `ok()` em db-supabase.js joga fora o código
+// do Postgres ao criar o Error. É uma lista frouxa de propósito: classificar
+// um erro de rede como permissão só custa uma tela de erro a mais, enquanto o
+// contrário esconde dado que devia ter sumido.
+const RECUSA_DE_ACESSO =
+  /permission denied|row-level security|not authorized|unauthorized|forbidden|jwt|invalid.*token|token.*expired|acesso bloqueado|sessão expirou/i;
+
+export function ehRecusaDeAcesso(err) {
+  return RECUSA_DE_ACESSO.test(String(err?.message ?? err ?? ""));
+}
+
 // Nova ordem depois de mover um item uma posição para cima ou para baixo.
 // Devolve pares {id, ordem}, ou vazio quando o movimento não cabe (já é o
 // primeiro, já é o último, id fora da lista).

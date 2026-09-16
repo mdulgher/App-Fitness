@@ -16,6 +16,22 @@ import {
   isoParaDataBR, dataBRParaIso, ligarMascaraDeData,
 } from "../utils.js";
 
+// As restrições ficam no perfil do aluno, e o perfil é outra tela. Quem está
+// escolhendo exercício está aqui, e ninguém volta para conferir lesão antes de
+// cada item — é assim que um agachamento entra na ficha de quem tem problema no
+// joelho. A informação precisa estar onde a decisão acontece.
+//
+// Fica acima do corpo e fora do `#corpo` de propósito: trocar de ficha no
+// seletor redesenha o corpo, e o aviso não pode desaparecer nesse caminho.
+function blocoRestricoes(aluno) {
+  if (!aluno.health_restrictions) return "";
+  return `
+    <div class="alert" style="margin-bottom:var(--sp-4)">
+      <div class="eyebrow">Restrições e lesões de ${esc(aluno.full_name.split(/\s+/)[0])}</div>
+      <p style="margin:var(--sp-2) 0 0">${esc(aluno.health_restrictions)}</p>
+    </div>`;
+}
+
 export async function render(alvo, { params }) {
   const [alunoId] = params;
   const aluno = await db.buscarAluno(alunoId);
@@ -46,6 +62,7 @@ export async function render(alvo, { params }) {
       </div>
 
       <div id="feedback" role="status" class="library-feedback hidden"></div>
+      ${blocoRestricoes(aluno)}
       <div id="corpo"><div class="empty">Carregando…</div></div>
     </div>
 

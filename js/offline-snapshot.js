@@ -2,6 +2,8 @@
 // Não substitui o Supabase e nunca é fonte para gravação: ao reconectar, a
 // leitura nova sobrescreve o snapshot e a fila envia as intenções pendentes.
 
+import { ehRecusaDeAcesso } from "./utils.js";
+
 const PREFIXO = "lpt:snapshot:";
 
 function chave(usuarioId, nome) {
@@ -9,6 +11,10 @@ function chave(usuarioId, nome) {
 }
 
 export function pareceFalhaDeRede(err, online = globalThis.navigator?.onLine !== false) {
+  // Antes de olhar o `online`: recusa de acesso não é falta de rede, e cobrir
+  // isso com snapshot mostraria ao aluno o treino que ele acabou de perder o
+  // direito de ver. A explicação completa está em `ehRecusaDeAcesso`.
+  if (ehRecusaDeAcesso(err)) return false;
   if (!online) return true;
   return /failed to fetch|fetch failed|network(?:error| request)?|load failed|timeout/i
     .test(String(err?.message ?? ""));

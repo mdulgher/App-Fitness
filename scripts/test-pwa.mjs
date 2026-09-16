@@ -44,4 +44,13 @@ for (const url of arquivosDoShell) {
 }
 
 assert.doesNotMatch(sw, /CREDENCIAIS|SENHAS-TESTE|\.local\.md/);
-console.log(`OK: manifest, ${manifest.icons.length} ícones, ${arquivosDoShell.length} itens do app shell e política de atualização da PWA.`);
+
+// A mensagem antes dizia "e política de atualização da PWA", e nada aqui
+// olhava para isso — verde afirmando o que não tinha sido conferido. O que este
+// arquivo prova é o app shell: todo JS/CSS listado existe, e todo arquivo de
+// `js/` e `css/` está listado. O adiamento do recarregamento (`js/pwa.js`) é
+// comportamento de navegador e se confere pelo roteiro de `TESTES.md`.
+console.log(
+  `OK: manifest, ${manifest.icons.length} ícones e ${arquivosDoShell.length} itens do app shell ` +
+  `(todos existem, e nenhum arquivo de js/ ou css/ ficou fora).`
+);

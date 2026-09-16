@@ -6,7 +6,7 @@ import { restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial, ligarTim
 import { iniciar, resolver, navegar, definirCallbackDeTroca, destinoAposLogin } from "./router.js";
 import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
-import { ligarSincronizacaoAutomatica } from "./sync.js";
+import { ligarSincronizacaoAutomatica, pendentes } from "./sync.js";
 import { configurarLog, ligarCapturaGlobal, registrarErro } from "./log.js";
 import { ligarCapturaDoConvite, deveConvidar, podeInstalarDireto, instalar, dispensar, reabrirConvite, podeOferecerInstalacao } from "./instalar.js";
 import { registrarPWA } from "./pwa.js";
@@ -211,7 +211,13 @@ configurarLog({
   usuarioAtual,
 });
 ligarCapturaGlobal();
-registrarPWA().catch((err) => registrarErro(err, { origem: "pwa", contexto: { acao: "registrarServiceWorker" } }));
+// Nunca recarregar por cima de um treino em andamento nem com registro ainda
+// na fila: o aluno perderia o campo que está digitando, e a série guardada
+// precisa sair daqui antes de a página ser trocada.
+registrarPWA({
+  ehSeguroRecarregar: () =>
+    !location.hash.startsWith("#/aluno/treino/") && pendentes() === 0,
+}).catch((err) => registrarErro(err, { origem: "pwa", contexto: { acao: "registrarServiceWorker" } }));
 
 desenharBarraDeModo();
 

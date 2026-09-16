@@ -1,11 +1,24 @@
 // Núcleo testável da fila. Cada intenção tem uma versão; ao terminar uma
 // requisição, só essa versão é removida. Uma correção feita durante o envio
 // permanece na fila e será a próxima a subir.
+//
+// Tudo o mais entra por injeção para o teste rodar sem navegador. A única
+// importação é a regra de recusa de acesso, que precisa ser a MESMA do
+// snapshot: duas cópias divergiriam, e é justamente dessa classificação que
+// depende o dado do aluno parar de aparecer quando ele perde o acesso.
+import { ehRecusaDeAcesso } from "./utils.js";
+
 const CHAVE = "lpt:fila-offline";
 const chaveTreino = (alunoId, diaId, data) => `${alunoId}|${diaId}|${data}`;
 
 export function pareceErroDeRede(err, online = true) {
   if (err?.code === "LOCAL_STORAGE") return false;
+  // Recusa de acesso não é falta de rede. Tratada como rede, a fila parava com
+  // `break` e tentava de novo para sempre: a série nunca subia, o aluno lia
+  // "mando sozinho quando a rede voltar" e ninguém descobria que o banco tinha
+  // recusado a escrita. Assim ela é bloqueada, a mensagem real fica na entrada
+  // e o erro sobe para o log.
+  if (ehRecusaDeAcesso(err)) return false;
   if (!online) return true;
   return /failed to fetch|fetch failed|network(?:error| request)?|load failed|timeout/i
     .test(String(err?.message ?? ""));
