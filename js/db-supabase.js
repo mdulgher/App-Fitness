@@ -101,8 +101,19 @@ export async function alunoVinculado(id) {
 export async function sairDaConta() {
   const usuarioId = await idDaSessao();
   const { error } = await sb.auth.signOut();
-  if (error) throw new Error(error.message);
+
+  // Apagar o que é local acontece de qualquer jeito, antes de decidir se houve
+  // erro: se a sessão já tinha morrido no servidor, o snapshot do aluno ficaria
+  // guardado no aparelho justamente na hora em que ele está saindo.
   apagarSnapshots(usuarioId);
+
+  // "Auth session missing" é o resultado desejado, não falha — não há sessão
+  // para encerrar porque ela já não existe. Lançar aqui quebrava o logout
+  // inteiro: `sair()` parava no meio, a tela não ia para o login, e quem tocou
+  // em "Sair" continuava logado. Apareceu no app publicado em 16/09/2026.
+  if (error && !/session missing|session_not_found|auth session/i.test(error.message)) {
+    throw new Error(error.message);
+  }
 }
 
 export async function usuarioDaSessao() {

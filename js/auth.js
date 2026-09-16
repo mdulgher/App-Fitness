@@ -104,9 +104,16 @@ export async function recarregarPerfil() {
   return usuario;
 }
 
+// Sair sempre encerra a sessão local, mesmo que o servidor recuse. Manter o
+// usuário "logado" na tela porque o `signOut` falhou é o pior dos dois mundos:
+// ele fica com uma sessão que não funciona mais e sem caminho para refazer o
+// login. Quem chama trata o erro — a saída em si não é negociável.
 export async function sair() {
-  await db.sairDaConta();
-  usuario = null;
+  try {
+    await db.sairDaConta();
+  } finally {
+    usuario = null;
+  }
 }
 
 export function rotaInicial() {
@@ -129,7 +136,15 @@ export function ligarTimeoutDeSessao(minutos, aoExpirar) {
     if (!usuario) return; // sem sessão, não há o que expirar
     timer = setTimeout(async () => {
       if (!usuario) return;
-      await sair();
+      // `aoExpirar()` tem de rodar mesmo se a saída der erro: o que protege o
+      // aparelho emprestado é a tela voltar para o login. Sem este try, um
+      // `signOut` recusado virava rejeição solta e a sessão expirada ficava na
+      // tela como se nada tivesse acontecido.
+      try {
+        await sair();
+      } catch (err) {
+        registrarErro(err, { origem: "sessao", contexto: { acao: "expirarSessao" } });
+      }
       aoExpirar();
     }, MS);
   }

@@ -135,7 +135,14 @@ document.getElementById("instalar-app").addEventListener("click", () => {
 
 document.getElementById("sair").addEventListener("click", async () => {
   fecharMenuDaConta();
-  await sair();
+  // A ida para o login não pode depender de o servidor aceitar o logout. Sem
+  // este try, um `signOut` recusado deixava quem tocou em "Sair" exatamente
+  // onde estava — pior num aparelho emprestado, que é quando se toca em Sair.
+  try {
+    await sair();
+  } catch (err) {
+    registrarErro(err, { origem: "sessao", contexto: { acao: "sair" } });
+  }
   navegar("#/login");
   resolver();
 });
