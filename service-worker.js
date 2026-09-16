@@ -1,4 +1,4 @@
-const VERSAO = "2026.09.16-7";
+const VERSAO = "2026.09.16-8";
 const PREFIXO = "lpt-";
 const CACHE_SHELL = `${PREFIXO}shell-${VERSAO}`;
 const CACHE_RUNTIME = `${PREFIXO}runtime-${VERSAO}`;
