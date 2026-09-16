@@ -36,6 +36,14 @@ SENHAS-TESTE.local.md
 SENHAS-TESTE.rotacao-pendente.local.md
 SENHAS-TESTE.rotacao-progresso.local.txt
 
+# Backups do banco (scripts/backup.mjs).
+#
+# Nao ha passo de build: tudo que e versionado tambem e SERVIDO pelo GitHub
+# Pages. Um export daqui traz nome, telefone, data de nascimento, restricao de
+# saude e mensalidade de aluno real — publicar isso seria vazamento, nao
+# descuido de organizacao. Fica fora do Git e fora do servidor de previa.
+backups/
+
 # Log de evolucao: registro interno de decisoes, licoes e pontos em aberto.
 #
 # Nao ha passo de build, entao tudo que e versionado tambem e SERVIDO pelo

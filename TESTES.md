@@ -61,6 +61,23 @@ Resultados esperados:
 
 O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e reativa uma ficha que já estava ativa. Portanto, valida o RPC sem mudar a ficha escolhida.
 
+### Antes de cada migration
+
+```powershell
+node scripts/backup.mjs
+```
+
+Export read-only de todas as tabelas para `backups/<carimbo>/`, fora do Git
+(o repositório é público e o export traz nome, telefone, restrição de saúde e
+mensalidade de aluno real). A lista de tabelas sai das migrations, então tabela
+nova entra sozinha. Se alguma tabela não puder ser lida, a pasta é renomeada
+para `-INCOMPLETO` e o script sai com erro.
+
+**Não confunda com backup completo (OP-01 segue aberto):** não inclui
+`auth.users`, então ninguém consegue entrar a partir dele; roda sob a RLS do
+professor, não como `service_role`; e o restore nunca foi provado, porque não
+existe ambiente para restaurar que não seja produção (OP-02).
+
 ### Depois do push, não antes
 
 ```powershell
