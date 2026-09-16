@@ -98,21 +98,48 @@ export async function alunoVinculado(id) {
   return Boolean(linha);
 }
 
+// O SDK **não** é suficiente para sair.
+//
+// `signOut()` só limpa o armazenamento quando encontra a sessão em memória. Se
+// ela dessincronizou do disco — outra aba, um reload, token expirado — ele
+// responde "Auth session missing" e **deixa o token no localStorage**. Aí a
+// próxima abertura do app restaura a conta inteira. `scope: "local"` também
+// não limpa nesse estado.
+//
+// Medido no app publicado em 16/09/2026: depois de tocar em "Sair", um reload
+// voltava logado como o professor. Num aparelho emprestado — que é justamente
+// quando alguém toca em Sair — isso entrega a conta para a pessoa seguinte.
+//
+// Então a limpeza do que é local é nossa, e acontece sempre, antes de qualquer
+// decisão sobre erro. Revogar no servidor continua sendo o ideal, mas não é o
+// que garante a saída.
 export async function sairDaConta() {
   const usuarioId = await idDaSessao();
   const { error } = await sb.auth.signOut();
 
-  // Apagar o que é local acontece de qualquer jeito, antes de decidir se houve
-  // erro: se a sessão já tinha morrido no servidor, o snapshot do aluno ficaria
-  // guardado no aparelho justamente na hora em que ele está saindo.
+  limparSessaoPersistida();
   apagarSnapshots(usuarioId);
 
   // "Auth session missing" é o resultado desejado, não falha — não há sessão
   // para encerrar porque ela já não existe. Lançar aqui quebrava o logout
-  // inteiro: `sair()` parava no meio, a tela não ia para o login, e quem tocou
-  // em "Sair" continuava logado. Apareceu no app publicado em 16/09/2026.
+  // inteiro: `sair()` parava no meio e a tela não ia para o login.
   if (error && !/session missing|session_not_found|auth session/i.test(error.message)) {
     throw new Error(error.message);
+  }
+}
+
+// As chaves que o SDK persiste para ESTE projeto. O nome base é
+// `sb-<ref>-auth-token`, e o SDK pode fatiá-lo em `...auth-token.0`, `.1` quando
+// o token é grande — por isso a comparação é por prefixo, não por nome exato.
+function limparSessaoPersistida() {
+  try {
+    const ref = new URL(SUPABASE.url).hostname.split(".")[0];
+    const prefixo = `sb-${ref}-auth-token`;
+    Object.keys(localStorage)
+      .filter((chave) => chave.startsWith(prefixo))
+      .forEach((chave) => localStorage.removeItem(chave));
+  } catch {
+    // Sem localStorage não há sessão persistida para limpar.
   }
 }
 
