@@ -18,6 +18,7 @@ import {
   diasDistintos,
   metaEfetiva,
   montarSessaoRealizada,
+  ordemAoMover,
 } from "./utils.js";
 
 const CHAVE = "lpt.db.v1";
@@ -393,6 +394,101 @@ export async function criarFicha({ alunoId, titulo, descricao = null, inicio = h
   return clone(nova);
 }
 
+// Duplica a prescrição — divisões, exercícios, séries prescritas, recados do
+// professor, agenda semanal e arte. **Nunca** o que é do aluno: presença, carga
+// registrada e o estado "ativa" ficam de fora. Copiar carga faria o histórico
+// do aluno ganhar treino que ele não fez.
+//
+// Copia todas as colunas menos as de identidade e vínculo, em vez de listar
+// campo por campo. Uma coluna nova na divisão (foi o caso de `banner` e de
+// `weekdays`) passaria a ser silenciosamente perdida na cópia se a lista fosse
+// explícita, e ninguém descobriria até o professor reclamar.
+//
+// `comoTemplate` guarda a ficha sem aluno, para reusar em qualquer um. O banco
+// exige esse par (`template_nao_tem_aluno`): template não tem aluno, ficha tem.
+export async function duplicarFicha(fichaId, { alunoId = null, titulo = null, comoTemplate = false } = {}) {
+  const origem = tabela("workout_plans").find((p) => p.id === fichaId);
+  if (!origem) throw new Error("Ficha não encontrada.");
+
+  const dono = comoTemplate ? null : (alunoId ?? origem.student_id);
+  if (!comoTemplate && !dono) throw new Error("Escolha o aluno que vai receber a cópia.");
+
+  const { id: _id, student_id: _aluno, is_template: _t, active: _a, title: _titulo,
+    start_date: _i, end_date: _f, created_at: _c, updated_at: _u, ...resto } = origem;
+
+  const nova = {
+    ...clone(resto),
+    id: uid(),
+    student_id: dono,
+    is_template: comoTemplate,
+    title: titulo?.trim() || `${origem.title} (cópia)`,
+    start_date: comoTemplate ? null : hoje(),
+    end_date: null,
+    active: false,
+    created_at: hoje(),
+    updated_at: hoje(),
+  };
+  tabela("workout_plans").push(nova);
+
+  const dias = tabela("workout_days")
+    .filter((d) => d.workout_plan_id === fichaId)
+    .sort((a, b) => a.order_index - b.order_index);
+
+  dias.forEach((dia, ordem) => {
+    const { id: _d, workout_plan_id: _fp, order_index: _o, ...camposDoDia } = dia;
+    const novoDia = { ...clone(camposDoDia), id: uid(), workout_plan_id: nova.id, order_index: ordem };
+    tabela("workout_days").push(novoDia);
+
+    tabela("workout_day_exercises")
+      .filter((x) => x.workout_day_id === dia.id)
+      .sort((a, b) => a.order_index - b.order_index)
+      .forEach((item, i) => {
+        const { id: _i2, workout_day_id: _wd, order_index: _o2, ...campos } = item;
+        tabela("workout_day_exercises").push({
+          ...clone(campos), id: uid(), workout_day_id: novoDia.id, order_index: i,
+        });
+      });
+  });
+
+  salvar();
+  return clone(nova);
+}
+
+// Move uma divisão (ou um exercício) uma posição. Botão, não arrastar: o
+// professor usa isso no celular com uma mão, e arrastar não funciona por
+// teclado nem com leitor de tela.
+export async function moverDia(diaId, direcao) {
+  const dia = tabela("workout_days").find((d) => d.id === diaId);
+  if (!dia) throw new Error("Divisão não encontrada.");
+  const irmaos = tabela("workout_days")
+    .filter((d) => d.workout_plan_id === dia.workout_plan_id)
+    .sort((a, b) => a.order_index - b.order_index);
+  return aplicarOrdem(irmaos, ordemAoMover(irmaos.map((d) => d.id), diaId, direcao));
+}
+
+export async function moverItemDoDia(itemId, direcao) {
+  const item = tabela("workout_day_exercises").find((x) => x.id === itemId);
+  if (!item) throw new Error("Exercício não encontrado na ficha.");
+  const irmaos = tabela("workout_day_exercises")
+    .filter((x) => x.workout_day_id === item.workout_day_id)
+    .sort((a, b) => a.order_index - b.order_index);
+  return aplicarOrdem(irmaos, ordemAoMover(irmaos.map((x) => x.id), itemId, direcao));
+}
+
+function aplicarOrdem(linhas, ordens) {
+  const porId = new Map(linhas.map((l) => [l.id, l]));
+  let mudou = false;
+  for (const { id, ordem } of ordens) {
+    const linha = porId.get(id);
+    if (linha && linha.order_index !== ordem) {
+      linha.order_index = ordem;
+      mudou = true;
+    }
+  }
+  if (mudou) salvar();
+  return mudou;
+}
+
 export async function atualizarFicha(id, patch) {
   const f = tabela("workout_plans").find((p) => p.id === id);
   if (!f) throw new Error("Ficha não encontrada.");
@@ -578,6 +674,17 @@ export async function concluirSessao(sessaoId, porQuem = "student") {
   if (!s) return null;
   s.completed_at = new Date().toISOString();
   s.marked_by = porQuem;
+  salvar();
+  return clone(s);
+}
+
+// Desmarcar é diferente de apagar: a sessão e as cargas continuam lá, só deixa
+// de contar como presença. É o que o aluno faz no calendário quando marcou o
+// dia errado — apagar levaria embora o peso que ele anotou.
+export async function desconcluirSessao(sessaoId) {
+  const s = tabela("attendance").find((a) => a.id === sessaoId);
+  if (!s) throw new Error("Sessão não encontrada.");
+  s.completed_at = null;
   salvar();
   return clone(s);
 }

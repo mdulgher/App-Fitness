@@ -147,3 +147,13 @@
 
 /* Dois toques para excluir: o segundo estado precisa parecer outro botão. */
 .btn-perigo { background: #111; color: #fff; border-color: #111; }
+
+/* Setas de reordenar no editor de ficha. Quadradas e estreitas para caberem ao
+   lado de "Renomear"/"Excluir" sem empurrar a linha, mas com a mesma altura
+   mínima dos outros botões — o professor mexe nisso no celular.
+
+   Desabilitado importa aqui: nos extremos da lista a seta continua visível e
+   apagada, em vez de desaparecer. Botão que some muda o lugar dos vizinhos a
+   cada movimento, e o dedo acerta o errado. */
+.btn-mover { padding: 0; width: 40px; min-width: 40px; font-size: 15px; line-height: 1; }
+.btn-mover:disabled { opacity: 0.3; cursor: default; }

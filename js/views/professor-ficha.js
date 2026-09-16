@@ -145,8 +145,10 @@ export async function render(alvo, { params }) {
             </div>
             <div class="muted small">${meta(diasOcupados.size, aluno.weekly_target)}</div>
           </div>
-          <div class="row" style="gap:var(--sp-2)">
+          <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
             <button class="btn btn-sm" data-editar-ficha>Editar ficha</button>
+            <button class="btn btn-sm" data-duplicar>Duplicar</button>
+            <button class="btn btn-sm" data-salvar-template>Salvar como modelo</button>
             ${ficha.active
               ? `<span class="tag tag-solid">Ativa para o aluno</span>`
               : `<button class="btn btn-sm btn-primary" data-ativar>Ativar para o aluno</button>`}
@@ -155,7 +157,9 @@ export async function render(alvo, { params }) {
       </div>
 
       <div class="stack">
-        ${ficha.dias.map(cartaoDoDia).join("") || `<div class="empty">Nenhuma divisão ainda. Crie o Treino A para começar.</div>`}
+        ${ficha.dias
+          .map((dia, i) => cartaoDoDia(dia, i, ficha.dias.length))
+          .join("") || `<div class="empty">Nenhuma divisão ainda. Crie o Treino A para começar.</div>`}
       </div>
 
       <button class="btn btn-block" style="margin-top:var(--sp-4)" data-novo-dia>+ Nova divisão (Treino ${proximaLetra()})</button>`;
@@ -192,7 +196,7 @@ export async function render(alvo, { params }) {
     return `acima da meta de ${plural(alvoSemanal, "treino", "treinos")} do aluno`;
   }
 
-  function cartaoDoDia(dia) {
+  function cartaoDoDia(dia, posicao, total) {
     const arte = caminhoDoBanner(dia.banner);
     return `
       <div class="card card-com-banner" data-dia="${esc(dia.id)}">
@@ -203,6 +207,7 @@ export async function render(alvo, { params }) {
           </div>
           ${arte ? `<img class="dia-banner-arte" src="${esc(arte)}" alt="" aria-hidden="true" />` : ""}
           <div class="row dia-banner-acoes" style="gap:var(--sp-2)">
+            ${botoesDeMover("mover-dia", dia.id, posicao, total, dia.label)}
             <button class="btn btn-sm" data-arte="${esc(dia.id)}">Arte</button>
             <button class="btn btn-sm" data-renomear="${esc(dia.id)}">Renomear</button>
             <button class="btn btn-sm" data-remover-dia="${esc(dia.id)}">Excluir</button>
@@ -217,7 +222,9 @@ export async function render(alvo, { params }) {
           </div>
 
           <div class="list">
-            ${dia.exercicios.map(linhaExercicio).join("") || `<div class="empty">Nenhum exercício nesta divisão.</div>`}
+            ${dia.exercicios
+              .map((item, i) => linhaExercicio(item, i, dia.exercicios.length))
+              .join("") || `<div class="empty">Nenhum exercício nesta divisão.</div>`}
           </div>
 
           <button class="btn btn-block btn-sm" style="margin-top:var(--sp-3)" data-add="${esc(dia.id)}">
@@ -227,14 +234,31 @@ export async function render(alvo, { params }) {
       </div>`;
   }
 
-  function linhaExercicio(item) {
+  // Setas, não arrastar. A ordem do treino importa (aquecimento antes de carga
+  // máxima), e o professor mexe nisso no celular, com uma mão, às vezes de pé
+  // ao lado do aluno. Arrastar não funciona por teclado nem com leitor de tela,
+  // e no toque briga com a rolagem da página.
+  function botoesDeMover(acao, id, posicao, total, oQue) {
+    return `
+      <button class="btn btn-sm btn-mover" data-${acao}="${esc(id)}" data-direcao="-1"
+              ${posicao === 0 ? "disabled" : ""}
+              aria-label="Mover ${esc(oQue)} para cima">↑</button>
+      <button class="btn btn-sm btn-mover" data-${acao}="${esc(id)}" data-direcao="1"
+              ${posicao === total - 1 ? "disabled" : ""}
+              aria-label="Mover ${esc(oQue)} para baixo">↓</button>`;
+  }
+
+  function linhaExercicio(item, posicao, total) {
     const nome = item.exercicio?.name ?? "(exercício removido)";
     return `
       <div class="list-item" data-item="${esc(item.id)}">
         <span class="list-item-main">
           <span class="row-between">
             <span class="list-item-title truncate">${esc(nome)}</span>
-            <button class="btn btn-sm" data-remover-item="${esc(item.id)}" aria-label="Remover ${esc(nome)}">Remover</button>
+            <span class="row" style="gap:var(--sp-2)">
+              ${botoesDeMover("mover-item", item.id, posicao, total, nome)}
+              <button class="btn btn-sm" data-remover-item="${esc(item.id)}" aria-label="Remover ${esc(nome)}">Remover</button>
+            </span>
           </span>
           <span class="row" style="gap:var(--sp-2);margin-top:var(--sp-2);flex-wrap:wrap">
             <label class="field field-inline"><span>Séries</span>
@@ -260,7 +284,56 @@ export async function render(alvo, { params }) {
       }
     });
 
-    corpo.querySelector("[data-editar-ficha]")?.addEventListener("click", () => formularioDaFicha(ficha));
+    // Abrir o formulário virou operação assíncrona (busca os modelos), então
+    // passa pelo `proteger`: falha ao listar não pode sumir como rejeição solta.
+    corpo.querySelector("[data-editar-ficha]")?.addEventListener("click", () =>
+      proteger(() => formularioDaFicha(ficha), { acao: "abrirFormularioDaFicha" })
+    );
+
+    // Duplicar é o atalho do ciclo novo: o professor renova a ficha a cada três
+    // meses mudando carga e alguns exercícios, não começando do zero. A cópia
+    // nasce inativa, então o aluno continua vendo a ficha antiga até o professor
+    // decidir trocar.
+    aoClicar(corpo.querySelector("[data-duplicar]"), async () => {
+      let copia = null;
+      const feito = await proteger(
+        async () => { copia = await db.duplicarFicha(ficha.id); },
+        { acao: "duplicarFicha" }
+      );
+      if (!feito) return;
+      await carregar(copia?.id ?? null);
+      avisar("Ficha duplicada. A cópia está inativa — ative quando o ciclo virar.");
+    });
+
+    // Modelo é a mesma prescrição sem aluno nenhum, para servir de ponto de
+    // partida em qualquer um. O banco exige esse par: modelo não tem aluno.
+    aoClicar(corpo.querySelector("[data-salvar-template]"), async () => {
+      const ok = await proteger(
+        () => db.duplicarFicha(ficha.id, { comoTemplate: true, titulo: ficha.title }),
+        { acao: "salvarComoTemplate" }
+      );
+      if (ok) avisar(`"${ficha.title}" virou modelo. Ele aparece ao criar ficha para qualquer aluno.`);
+    });
+
+    corpo.querySelectorAll("[data-mover-dia]").forEach((b) =>
+      aoClicar(b, async () => {
+        const feito = await proteger(
+          () => db.moverDia(b.dataset.moverDia, Number(b.dataset.direcao)),
+          { acao: "moverDia" }
+        );
+        if (feito) await carregar(ficha.id);
+      })
+    );
+
+    corpo.querySelectorAll("[data-mover-item]").forEach((b) =>
+      aoClicar(b, async () => {
+        const feito = await proteger(
+          () => db.moverItemDoDia(b.dataset.moverItem, Number(b.dataset.direcao)),
+          { acao: "moverItemDoDia" }
+        );
+        if (feito) await carregar(ficha.id);
+      })
+    );
     aoClicar(corpo.querySelector("[data-novo-dia]"), async () => {
       const rotulo = `Treino ${proximaLetra()}`;
       // A ordem vem do maior índice existente, não da contagem: divisões
@@ -328,15 +401,32 @@ export async function render(alvo, { params }) {
   }
 
   seletor.addEventListener("change", () => carregar(seletor.value));
-  alvo.querySelector("#nova").addEventListener("click", () => formularioDaFicha(null));
+  alvo.querySelector("#nova").addEventListener("click", () =>
+    proteger(() => formularioDaFicha(null), { acao: "abrirFormularioDaFicha" })
+  );
 
   /* ---------- diálogos ---------- */
 
   const fechar = () => dialogo.close();
 
-  function formularioDaFicha(existente) {
+  async function formularioDaFicha(existente) {
     // Três meses: é o ciclo que o Leo usa para renovar ficha.
     const padraoFim = somarMeses(hoje(), 3);
+
+    // Partir de algo que já existe é o caso comum: o professor tem um ABC que
+    // funciona e ajusta por aluno. Só na criação — editar uma ficha existente
+    // não pode trocar o conteúdo dela por outro sem aviso.
+    //
+    // Os modelos não têm aluno, então não aparecem em `listarFichas`; são
+    // buscados aqui, e não na carga da tela, para o modelo que o professor
+    // acabou de salvar já estar na lista sem recarregar.
+    const origens = existente
+      ? []
+      : [
+          ...fichas.map((f) => ({ id: f.id, rotulo: `${f.title}${f.active ? " (ativa)" : ""}` })),
+          ...(await db.listarTemplates()).map((t) => ({ id: t.id, rotulo: `Modelo: ${t.title}` })),
+        ];
+
     dialogoConteudo.innerHTML = `
       <div class="dialog-top">
         <span class="eyebrow">${existente ? "Editar ficha" : "Nova ficha"}</span>
@@ -344,6 +434,16 @@ export async function render(alvo, { params }) {
       </div>
       <h2>${existente ? esc(existente.title) : `Ficha de ${esc(aluno.full_name)}`}</h2>
       <form id="form-ficha">
+        ${origens.length ? `
+          <div class="field"><label for="ff-origem">Começar de</label>
+            <select id="ff-origem" name="origem">
+              <option value="">Ficha em branco</option>
+              ${origens.map((o) => `<option value="${esc(o.id)}">${esc(o.rotulo)}</option>`).join("")}
+            </select>
+            <div class="field-hint">
+              Copia divisões, exercícios e séries prescritas. Não copia carga
+              registrada nem presença do aluno.
+            </div></div>` : ""}
         <div class="field"><label for="ff-titulo">Título</label>
           <input id="ff-titulo" name="title" required maxlength="80"
                  value="${esc(existente?.title ?? "Treino ABC")}" /></div>
@@ -417,6 +517,14 @@ export async function render(alvo, { params }) {
           await db.atualizarFicha(existente.id, patch);
           fechar();
           await carregar(existente.id);
+        } else if (dados.origem) {
+          // Duplicar já grava título e aluno; as datas e a meta digitadas aqui
+          // vão depois, porque a cópia nasce começando hoje e sem prazo.
+          const nova = await db.duplicarFicha(dados.origem, { alunoId, titulo: patch.title });
+          await db.atualizarFicha(nova.id, patch);
+          fechar();
+          await carregar(nova.id);
+          avisar("Ficha criada a partir da cópia, e inativa. Revise as cargas antes de ativar.");
         } else {
           const nova = await db.criarFicha({
             alunoId, titulo: patch.title, descricao: patch.description,

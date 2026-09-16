@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile, readdir } from "node:fs/promises";
 import { criarFila } from "../js/sync-queue.js";
 
 function ambiente() {
@@ -65,4 +66,42 @@ const dias = new Map([["2026-09-13", { id: "domingo" }]]);
 const feitos = [...dias.keys()].filter((data) => data >= "2026-09-07" && data <= "2026-09-13").length;
 assert.equal(feitos, 1);
 
-console.log("OK: fila concorrente, isolamento por aluno, persistência e domingo.");
+// As duas implementações de dados precisam expor as MESMAS funções (regra 2 do
+// CLAUDE.md). Quando divergem, a tela quebra só no banco em que ninguém testou
+// naquele dia — foi assim que `desconcluirSessao` ficou meses existindo apenas
+// no Supabase enquanto a Frequência a chamava, e desmarcar treino estourava no
+// modo local. Nenhum dos dois arquivos pode ser importado aqui (um quer
+// localStorage, o outro busca o SDK na rede), então a conferência é no texto.
+//
+// Só `entrarComoId` fica de fora: é o atalho de entrar sem senha nos dados
+// fictícios, e existir no Supabase seria justamente o problema.
+const SO_NO_LOCAL = new Set(["entrarComoId"]);
+const exportadas = async (arquivo) => {
+  const texto = await readFile(new URL(`../js/${arquivo}`, import.meta.url), "utf8");
+  return new Set([...texto.matchAll(/^export (?:async )?function (\w+)/gm)].map((m) => m[1]));
+};
+
+const noLocal = await exportadas("db-local.js");
+const noSupabase = await exportadas("db-supabase.js");
+const faltamNoSupabase = [...noLocal].filter((n) => !noSupabase.has(n) && !SO_NO_LOCAL.has(n));
+const faltamNoLocal = [...noSupabase].filter((n) => !noLocal.has(n));
+
+assert.deepEqual(faltamNoSupabase, [], `faltam em db-supabase.js: ${faltamNoSupabase.join(", ")}`);
+assert.deepEqual(faltamNoLocal, [], `faltam em db-local.js: ${faltamNoLocal.join(", ")}`);
+
+// E toda função que as telas chamam precisa existir nas duas.
+const telas = await readdir(new URL("../js/views/", import.meta.url));
+const chamadas = new Set();
+for (const tela of telas.filter((t) => t.endsWith(".js"))) {
+  const texto = await readFile(new URL(`../js/views/${tela}`, import.meta.url), "utf8");
+  for (const m of texto.matchAll(/\bdb\.(\w+)\s*\(/g)) chamadas.add(m[1]);
+}
+const semImplementacao = [...chamadas].filter(
+  (n) => !(noLocal.has(n) && noSupabase.has(n)) && n !== "importarCatalogoPeito"
+);
+assert.deepEqual(semImplementacao, [], `telas chamam sem as duas implementações: ${semImplementacao.join(", ")}`);
+
+console.log(
+  `OK: fila concorrente, isolamento por aluno, persistência, domingo e ` +
+  `contrato de dados (${noLocal.size} funções nas duas, ${chamadas.size} usadas pelas telas).`
+);

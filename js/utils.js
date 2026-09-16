@@ -404,6 +404,25 @@ export function diasDistintos(sessoes) {
   return new Set(sessoes.map((s) => s.date)).size;
 }
 
+// Nova ordem depois de mover um item uma posição para cima ou para baixo.
+// Devolve pares {id, ordem}, ou vazio quando o movimento não cabe (já é o
+// primeiro, já é o último, id fora da lista).
+//
+// Reatribui de 0 a n-1 em vez de só trocar os dois índices dos vizinhos. É de
+// propósito: fichas antigas têm `order_index` repetido, porque divisões criadas
+// em sequência rápida nasciam todas com o mesmo valor, e nesse estado "trocar
+// com o vizinho" não tem vizinho definido. Normalizar conserta a ficha na
+// primeira vez que o professor reordena, e depois só duas linhas mudam.
+export function ordemAoMover(ids, id, direcao) {
+  const de = ids.indexOf(id);
+  const para = de + direcao;
+  if (de < 0 || para < 0 || para >= ids.length) return [];
+
+  const nova = [...ids];
+  [nova[de], nova[para]] = [nova[para], nova[de]];
+  return nova.map((cada, ordem) => ({ id: cada, ordem }));
+}
+
 // Monta uma sessão realizada a partir da presença e das cargas gravadas nela.
 //
 // Vive aqui porque as duas implementações de dados chamam esta função: agrupar

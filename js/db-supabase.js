@@ -18,7 +18,7 @@ import { buscarTodasAsPaginas } from "./supabase-pagination.js";
 import { comSnapshot, apagarSnapshots } from "./offline-snapshot.js";
 import {
   hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo,
-  diasDistintos, metaEfetiva, montarSessaoRealizada,
+  diasDistintos, metaEfetiva, montarSessaoRealizada, ordemAoMover,
 } from "./utils.js";
 
 export const sb = createClient(SUPABASE.url, SUPABASE.anonKey);
@@ -489,6 +489,88 @@ export async function criarFicha({ alunoId, titulo, descricao = null, inicio = h
 
 export async function atualizarFicha(id, patch) {
   return ok(await sb.from("workout_plans").update(patch).eq("id", id).select().single());
+}
+
+// Duplica a prescrição — ver a explicação em db-local.js.
+//
+// Não é transacional: são várias inserções em sequência, e uma falha no meio
+// deixa a cópia incompleta. É aceito aqui porque a cópia nasce **inativa** e o
+// aluno não vê nada até o professor ativar; o conserto é excluir e duplicar de
+// novo. Uma RPC resolveria e fica para quando isto virar operação frequente.
+export async function duplicarFicha(fichaId, { alunoId = null, titulo = null, comoTemplate = false } = {}) {
+  const origem = ok(await sb.from("workout_plans").select("*").eq("id", fichaId).maybeSingle());
+  if (!origem) throw new Error("Esta ficha não existe mais — a tela está desatualizada. Recarregue a página.");
+
+  const dono = comoTemplate ? null : (alunoId ?? origem.student_id);
+  if (!comoTemplate && !dono) throw new Error("Escolha o aluno que vai receber a cópia.");
+
+  const { id: _id, student_id: _aluno, is_template: _t, active: _a, title: _titulo,
+    start_date: _i, end_date: _f, created_at: _c, updated_at: _u, ...resto } = origem;
+
+  const nova = ok(
+    await sb.from("workout_plans").insert({
+      ...resto,
+      student_id: dono,
+      is_template: comoTemplate,
+      title: titulo?.trim() || `${origem.title} (cópia)`,
+      start_date: comoTemplate ? null : hoje(),
+      end_date: null,
+      active: false,
+    }).select().single()
+  );
+
+  const dias = ok(await sb.from("workout_days").select("*")
+    .eq("workout_plan_id", fichaId).order("order_index").order("id"));
+
+  for (const [ordem, dia] of dias.entries()) {
+    const { id: _d, workout_plan_id: _fp, order_index: _o, ...camposDoDia } = dia;
+    const novoDia = ok(
+      await sb.from("workout_days")
+        .insert({ ...camposDoDia, workout_plan_id: nova.id, order_index: ordem })
+        .select().single()
+    );
+
+    const itens = ok(await sb.from("workout_day_exercises").select("*")
+      .eq("workout_day_id", dia.id).order("order_index").order("id"));
+    if (!itens.length) continue;
+
+    ok(await sb.from("workout_day_exercises").insert(
+      itens.map((item, i) => {
+        const { id: _i2, workout_day_id: _wd, order_index: _o2, ...campos } = item;
+        return { ...campos, workout_day_id: novoDia.id, order_index: i };
+      })
+    ));
+  }
+
+  return nova;
+}
+
+export async function moverDia(diaId, direcao) {
+  const dia = ok(await sb.from("workout_days").select("workout_plan_id").eq("id", diaId).maybeSingle());
+  if (!dia) throw new Error("Esta divisão não existe mais — recarregue a página.");
+  const irmaos = ok(await sb.from("workout_days").select("id,order_index")
+    .eq("workout_plan_id", dia.workout_plan_id).order("order_index").order("id"));
+  return gravarOrdem("workout_days", irmaos, ordemAoMover(irmaos.map((d) => d.id), diaId, direcao));
+}
+
+export async function moverItemDoDia(itemId, direcao) {
+  const item = ok(await sb.from("workout_day_exercises").select("workout_day_id").eq("id", itemId).maybeSingle());
+  if (!item) throw new Error("Este exercício não está mais na ficha — recarregue a página.");
+  const irmaos = ok(await sb.from("workout_day_exercises").select("id,order_index")
+    .eq("workout_day_id", item.workout_day_id).order("order_index").order("id"));
+  return gravarOrdem("workout_day_exercises", irmaos, ordemAoMover(irmaos.map((x) => x.id), itemId, direcao));
+}
+
+// Grava só quem mudou de posição. Com `order_index` repetido a primeira
+// reordenação reescreve vários; depois são dois. Não há índice único em
+// (pai, order_index), então não existe colisão no meio da sequência.
+async function gravarOrdem(nomeDaTabela, linhas, ordens) {
+  const atual = new Map(linhas.map((l) => [l.id, l.order_index]));
+  const mudanca = ordens.filter(({ id, ordem }) => atual.get(id) !== ordem);
+  for (const { id, ordem } of mudanca) {
+    ok(await sb.from(nomeDaTabela).update({ order_index: ordem }).eq("id", id).select("id"));
+  }
+  return mudanca.length > 0;
 }
 
 // Ativar uma ficha desativa as outras do mesmo aluno: `fichaAtiva()` usa
