@@ -2,7 +2,7 @@
 
 import { db, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import {
-  esc, iniciais, textoTempoRelativo, plural, moeda, ligarMascaraDeMoeda, moedaParaNumero,
+  esc, iniciais, textoTempoRelativo, plural, ligarMascaraDeMoeda, moedaParaNumero,
 } from "../utils.js";
 import { DIAS_SEM_TREINAR_ALERTA } from "../config.js";
 import { registrarErro } from "../log.js";
@@ -230,6 +230,12 @@ export async function render(alvo) {
   await carregar();
 }
 
+// O valor da mensalidade não entra nesta linha (OP-09, decidido em 16/09/2026).
+// Esta lista é aberta de pé, na academia, com o aluno do lado — o mesmo cenário
+// que definiu a altura mínima de toque. Mostrar quanto cada um paga expõe preço
+// negociado caso a caso para quem der uma olhada na tela. A tag de status já diz
+// o que o professor precisa para agir; o valor fica na página do aluno e no
+// Financeiro, que são telas abertas de propósito.
 function linha(a) {
   const r = a.resumo;
   return `
@@ -243,7 +249,6 @@ function linha(a) {
         <span class="muted small">
           ${esc(a.goal ?? "Sem objetivo")} ·
           ${r.ultimoTreino ? `treinou ${textoTempoRelativo(r.ultimoTreino)}` : "sem treinos"}
-          ${a.monthly_fee ? ` · ${moeda(a.monthly_fee)}/mês` : ""}
           ${a.active ? "" : " · <strong>inativo</strong>"}
         </span>
       </span>
