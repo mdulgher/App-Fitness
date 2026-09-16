@@ -17,6 +17,7 @@ const fila = criarFila({
 
 export const pendentes = fila.pendentes;
 export const pendentesDoTreino = fila.pendentesDoTreino;
+export const dataPendenteDoTreino = fila.dataPendenteDoTreino;
 export const precisamAtencao = fila.precisamAtencao;
 export const seriesNaFila = fila.seriesNaFila;
 export const conclusaoNaFila = fila.conclusaoNaFila;

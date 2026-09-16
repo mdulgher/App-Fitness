@@ -4,6 +4,8 @@ import { db, ROTULO_STATUS, CLASSE_STATUS } from "../db.js";
 import {
   esc, iniciais, textoTempoRelativo, plural, moeda, ligarMascaraDeMoeda, moedaParaNumero,
 } from "../utils.js";
+import { DIAS_SEM_TREINAR_ALERTA } from "../config.js";
+import { registrarErro } from "../log.js";
 
 export async function render(alvo) {
   let alunos = [];
@@ -24,6 +26,24 @@ export async function render(alvo) {
         <input type="search" id="busca" placeholder="Nome ou objetivo" />
       </label>
 
+      <div class="exercise-form-grid" aria-label="Filtros de alunos">
+        <label class="field"><span>Situação da carteira</span>
+          <select id="filtro-situacao">
+            <option value="todos">Ativos e inativos</option>
+            <option value="ativos">Somente ativos</option>
+            <option value="inativos">Somente inativos</option>
+          </select>
+        </label>
+        <label class="field"><span>Precisa de atenção</span>
+          <select id="filtro-atencao">
+            <option value="todos">Todos</option>
+            <option value="sem-ficha">Sem ficha ativa</option>
+            <option value="sem-treino">Sem treino recente</option>
+            <option value="vencidos">Mensalidade vencida</option>
+          </select>
+        </label>
+      </div>
+
       <div class="list" id="lista"><div class="empty">Carregando…</div></div>
     </div>
     <dialog class="exercise-dialog" id="aluno-dialog" aria-labelledby="dialog-title">
@@ -32,32 +52,51 @@ export async function render(alvo) {
 
   const lista = alvo.querySelector("#lista");
   const busca = alvo.querySelector("#busca");
+  const filtroSituacao = alvo.querySelector("#filtro-situacao");
+  const filtroAtencao = alvo.querySelector("#filtro-atencao");
   const dialog = alvo.querySelector("#aluno-dialog");
   const conteudo = alvo.querySelector("#dialog-conteudo");
 
   async function carregar() {
     try {
       alunos = await db.listarAlunos({ incluirInativos: true });
-      const ativos = alunos.filter((a) => a.active).length;
-      alvo.querySelector("#resumo-alunos").textContent =
-        `${plural(ativos, "aluno ativo", "alunos ativos")}${alunos.length > ativos ? ` · ${alunos.length - ativos} inativo(s)` : ""}`;
       desenhar();
     } catch (err) {
+      registrarErro(err, { contexto: { tela: "alunos", acao: "listarAlunos" } });
       lista.innerHTML = `<div class="empty"><p>Não foi possível carregar os alunos.</p><p class="small">${esc(err.message)}</p></div>`;
     }
   }
 
   function desenhar() {
     const termo = busca.value.toLowerCase().trim();
-    const visiveis = alunos.filter(
-      (a) => !termo || a.full_name.toLowerCase().includes(termo) || (a.goal ?? "").toLowerCase().includes(termo)
-    );
+    const visiveis = alunos.filter((a) => {
+      const bateBusca = !termo || a.full_name.toLowerCase().includes(termo) ||
+        (a.goal ?? "").toLowerCase().includes(termo);
+      const bateSituacao = filtroSituacao.value === "todos" ||
+        (filtroSituacao.value === "ativos" ? a.active : !a.active);
+      const r = a.resumo;
+      const bateAtencao = filtroAtencao.value === "todos" ||
+        (filtroAtencao.value === "sem-ficha" && !r.temFichaAtiva) ||
+        (filtroAtencao.value === "sem-treino" &&
+          (r.diasSemTreinar == null || r.diasSemTreinar >= DIAS_SEM_TREINAR_ALERTA)) ||
+        (filtroAtencao.value === "vencidos" && r.statusFinanceiro === "overdue");
+      return bateBusca && bateSituacao && bateAtencao;
+    });
+    const ativos = alunos.filter((a) => a.active).length;
+    const resumoBase = `${plural(ativos, "aluno ativo", "alunos ativos")}` +
+      (alunos.length > ativos ? ` · ${plural(alunos.length - ativos, "inativo", "inativos")}` : "");
+    const filtrando = termo || filtroSituacao.value !== "todos" || filtroAtencao.value !== "todos";
+    alvo.querySelector("#resumo-alunos").textContent = filtrando
+      ? `${plural(visiveis.length, "resultado", "resultados")} de ${alunos.length} · ${resumoBase}`
+      : resumoBase;
     lista.innerHTML = visiveis.length
       ? visiveis.map(linha).join("")
       : `<div class="empty">${alunos.length ? "Nenhum aluno corresponde à busca." : "Nenhum aluno cadastrado ainda. Comece pelo botão “Novo aluno”."}</div>`;
   }
 
   busca.addEventListener("input", desenhar);
+  filtroSituacao.addEventListener("change", desenhar);
+  filtroAtencao.addEventListener("change", desenhar);
   alvo.querySelector("#novo").addEventListener("click", () => formulario());
 
   function fechar() { dialog.close(); }

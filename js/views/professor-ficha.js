@@ -311,6 +311,14 @@ export async function render(alvo, { params }) {
             <label class="field field-inline" style="flex:1;min-width:160px"><span>Observação</span>
               <input type="text" maxlength="120" value="${esc(item.trainer_notes ?? "")}" data-campo="trainer_notes" /></label>
           </span>
+          <span class="row" style="gap:var(--sp-2);margin-top:var(--sp-2);flex-wrap:wrap">
+            <label class="field field-inline" style="flex:1;min-width:180px"><span>Carga sugerida</span>
+              <input type="text" maxlength="80" placeholder="Ex.: 20 kg ou moderada"
+                     value="${esc(item.load_notes ?? "")}" data-campo="load_notes" /></label>
+            <label class="field field-inline" style="min-width:130px"><span>Grupo</span>
+              <input type="text" maxlength="12" placeholder="Ex.: A1"
+                     value="${esc(item.group_label ?? "")}" data-campo="group_label" data-maiusculo /></label>
+          </span>
         </span>
       </div>`;
   }
@@ -433,9 +441,13 @@ export async function render(alvo, { params }) {
       input.addEventListener("change", async () => {
         const id = input.closest("[data-item]").dataset.item;
         const campo = input.dataset.campo;
-        const valor = input.type === "number"
+        let valor = input.type === "number"
           ? (input.value === "" ? null : Number(input.value))
           : (input.value.trim() || null);
+        if (input.hasAttribute("data-maiusculo") && valor) {
+          valor = valor.toUpperCase().replace(/\s+/g, "");
+          input.value = valor;
+        }
         if (await proteger(() => db.atualizarItemDoDia(id, { [campo]: valor }))) avisar("Alteração salva.");
       })
     );

@@ -117,14 +117,22 @@ const naPastaDeOutro = await enviarAvatar(alunoA, alunoB.id, nomeDoTeste);
 assert.ok([400, 401, 403].includes(naPastaDeOutro),
   `CRÍTICO: um aluno conseguiu escrever na pasta de avatar de outro (HTTP ${naPastaDeOutro}).`);
 
-const naPropriaPasta = await enviarAvatar(alunoA, alunoA.id, nomeDoTeste);
-assert.ok(naPropriaPasta === 200, `O aluno não consegue subir o próprio avatar: HTTP ${naPropriaPasta}.`);
-
-const apagar = await fetch(`${SUPABASE.url}/storage/v1/object/avatars/${alunoA.id}/${nomeDoTeste}`, {
-  method: "DELETE",
-  headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${alunoA.token}` },
-});
-assert.equal(apagar.ok, true, `O aluno não consegue apagar o próprio avatar: HTTP ${apagar.status}.`);
+let avatarCriado = false;
+try {
+  const naPropriaPasta = await enviarAvatar(alunoA, alunoA.id, nomeDoTeste);
+  avatarCriado = naPropriaPasta === 200;
+  assert.ok(avatarCriado, `O aluno não consegue subir o próprio avatar: HTTP ${naPropriaPasta}.`);
+} finally {
+  // Limpeza não pode depender de todos os asserts posteriores passarem. Uma
+  // falha de segurança não deve também deixar fixture órfã no Storage.
+  if (avatarCriado) {
+    const apagar = await fetch(`${SUPABASE.url}/storage/v1/object/avatars/${alunoA.id}/${nomeDoTeste}`, {
+      method: "DELETE",
+      headers: { apikey: SUPABASE.anonKey, Authorization: `Bearer ${alunoA.token}` },
+    });
+    assert.equal(apagar.ok, true, `O aluno não consegue apagar o próprio avatar: HTTP ${apagar.status}.`);
+  }
+}
 
 // Aula presencial é aula paga: quem marca é o professor. Se o aluno conseguisse
 // inserir uma linha `in_person`, ele se daria aulas de graça — o saldo do pacote
@@ -163,6 +171,12 @@ const senhasAtuaisNoHistorico = linhas.filter(({ senha }) => {
   });
   return busca.status === 0 && busca.stdout.trim();
 }).length;
+
+assert.equal(
+  senhasAtuaisNoHistorico,
+  0,
+  "Uma senha atual de conta de teste apareceu no histórico Git. Rotacione-a antes de publicar.",
+);
 
 console.log("OK: acesso anônimo bloqueado, isolamento entre alunos, promoção de papel recusada, avatar isolado por pasta e aula presencial só do professor.");
 console.log(`INFO: ${senhasAtuaisNoHistorico} senha(s) atual(is) de contas de teste aparecem no histórico Git.`);

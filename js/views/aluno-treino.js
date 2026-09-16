@@ -18,7 +18,7 @@
 import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import {
-  esc, plural, hoje, formatarData, textoTempoRelativo, capaDoVideo, urlDeEmbed,
+  esc, plural, hoje, somarDias, formatarData, textoTempoRelativo, capaDoVideo, urlDeEmbed,
   horaDe, ehRecusaDeAcesso,
 } from "../utils.js";
 import { cartaoDeSessaoRealizada } from "../treinos-realizados.js";
@@ -26,7 +26,8 @@ import { urlDeImagemSegura, videoSeguro } from "../exercise-validation.js";
 import { caminhoDoBanner } from "../catalogo-banners.js";
 import {
   enfileirarSerie, enfileirarConclusao, seriesNaFila, conclusaoNaFila,
-  sincronizar, pendentesDoTreino, erroNaFila, textoParaRecuperar, descartarTreino,
+  sincronizar, pendentesDoTreino, dataPendenteDoTreino, erroNaFila,
+  textoParaRecuperar, descartarTreino,
 } from "../sync.js";
 import { registrarErro } from "../log.js";
 
@@ -46,15 +47,27 @@ export async function render(alvo, { params }) {
 
   // Sessão de hoje, se já existir. Procurar em vez de abrir é de propósito:
   // `abrirSessao` criaria a linha só por ter aberto a tela.
-  let sessao = (await db.listarSessoes(alunoId, { de: hoje(), ate: hoje() }))
-    .find((s) => s.workout_day_id === diaId) ?? null;
+  const dataDeAbertura = hoje();
+  const dataDaFila = dataPendenteDoTreino(alunoId, diaId);
+  const sessoesRecentes = await db.listarSessoes(alunoId, {
+    de: somarDias(dataDeAbertura, -1), ate: dataDeAbertura,
+  });
+  let sessao = sessoesRecentes.find(
+    (s) => s.workout_day_id === diaId && s.date === (dataDaFila ?? dataDeAbertura)
+  ) ?? sessoesRecentes.find(
+    (s) => s.workout_day_id === diaId && !s.completed_at && s.date === somarDias(dataDeAbertura, -1)
+  ) ?? null;
+  // A data é identidade da execução. Depois daqui não volta a consultar o
+  // relógio: atravessar meia-noite não pode criar outra sessão nem separar as
+  // séries já registradas da conclusão.
+  const dataTreino = dataDaFila ?? sessao?.date ?? dataDeAbertura;
 
   let cargas = sessao ? await db.listarCargasDaSessao(sessao.id) : [];
 
   // O que ficou na fila deste treino: o aluno pode ter digitado sem sinal,
   // saído do app e voltado. O que ele viu na tela precisa continuar lá.
-  let fila = seriesNaFila(alunoId, diaId, hoje());
-  let conclusaoPendente = conclusaoNaFila(alunoId, diaId, hoje());
+  let fila = seriesNaFila(alunoId, diaId, dataTreino);
+  let conclusaoPendente = conclusaoNaFila(alunoId, diaId, dataTreino);
   let salvamentosEmCurso = 0;
 
   // "Da última vez" ignora a sessão de hoje: comparar o treino com ele mesmo
@@ -72,7 +85,7 @@ export async function render(alvo, { params }) {
     <div class="wrap treino-do-dia">
       <a class="muted small" href="#/aluno">&larr; Meu treino</a>
 
-      ${bannerDoDia(dia)}
+      ${bannerDoDia(dia, dataTreino)}
 
       <div id="feedback" role="status" class="library-feedback hidden"></div>
       <div id="pendencias" class="aviso-fila hidden" role="status"></div>
@@ -114,11 +127,11 @@ export async function render(alvo, { params }) {
   }
 
   function desenharPendencias() {
-    const total = pendentesDoTreino(alunoId, diaId, hoje());
+    const total = pendentesDoTreino(alunoId, diaId, dataTreino);
     pendenciasEl.classList.toggle("hidden", total === 0);
     if (!total) return;
 
-    const erro = erroNaFila(alunoId, diaId, hoje());
+    const erro = erroNaFila(alunoId, diaId, dataTreino);
     const precisaAtencao = Boolean(erro);
     pendenciasEl.classList.toggle("precisa-atencao", precisaAtencao);
     pendenciasEl.setAttribute("role", precisaAtencao ? "alert" : "status");
@@ -160,7 +173,7 @@ export async function render(alvo, { params }) {
   }
 
   function mostrarRecuperacaoDaFila() {
-    const texto = textoParaRecuperar(alunoId, diaId, hoje());
+    const texto = textoParaRecuperar(alunoId, diaId, dataTreino);
     dialogoConteudo.innerHTML = `
       <div class="dialog-top">
         <span class="eyebrow">Recuperar registros</span>
@@ -206,7 +219,7 @@ export async function render(alvo, { params }) {
       confirmacao.classList.add("hidden");
     });
     confirmacao.querySelector("[data-confirmar-descarte]").addEventListener("click", async () => {
-      await descartarTreino(alunoId, diaId, hoje());
+      await descartarTreino(alunoId, diaId, dataTreino);
       fila = {};
       conclusaoPendente = false;
       dialogo.close();
@@ -223,14 +236,14 @@ export async function render(alvo, { params }) {
   // Depois que a fila vai embora, quem manda é o banco.
   async function recarregarDoBanco(redesenharTudo = true) {
     try {
-      sessao = (await db.listarSessoes(alunoId, { de: hoje(), ate: hoje() }))
+      sessao = (await db.listarSessoes(alunoId, { de: dataTreino, ate: dataTreino }))
         .find((s) => s.workout_day_id === diaId) ?? sessao;
       cargas = sessao ? await db.listarCargasDaSessao(sessao.id) : cargas;
     } catch {
       // Continua offline: a tela segue mostrando o que está na fila.
     }
-    fila = seriesNaFila(alunoId, diaId, hoje());
-    conclusaoPendente = conclusaoNaFila(alunoId, diaId, hoje());
+    fila = seriesNaFila(alunoId, diaId, dataTreino);
+    conclusaoPendente = conclusaoNaFila(alunoId, diaId, dataTreino);
     if (!alvo.isConnected || !redesenharTudo) return;
     desenharProgresso();
     desenharExercicios();
@@ -305,7 +318,7 @@ export async function render(alvo, { params }) {
       botao.textContent = "Registrando…";
       salvamentosEmCurso += 1;
       try {
-        await enfileirarConclusao({ alunoId, diaId, data: hoje() });
+        await enfileirarConclusao({ alunoId, diaId, data: dataTreino });
         conclusaoPendente = true;
         desenharFim();
         desenharPendencias();
@@ -314,10 +327,10 @@ export async function render(alvo, { params }) {
         desenharProgresso();
         desenharFim();
         desenharPendencias();
-        if (!conclusaoNaFila(alunoId, diaId, hoje())) {
+        if (!conclusaoNaFila(alunoId, diaId, dataTreino)) {
           avisar("Presença registrada. Bom treino feito.");
-        } else if (erroNaFila(alunoId, diaId, hoje())) {
-          avisar(`Presença guardada. ${mensagemDeAtencao(erroNaFila(alunoId, diaId, hoje()))}`);
+        } else if (erroNaFila(alunoId, diaId, dataTreino)) {
+          avisar(`Presença guardada. ${mensagemDeAtencao(erroNaFila(alunoId, diaId, dataTreino))}`);
         } else {
           avisar("Sem internet. Presença guardada no aparelho — mando sozinho quando a rede voltar.");
         }
@@ -364,6 +377,12 @@ export async function render(alvo, { params }) {
         ${item.trainer_notes
           ? `<p class="exercicio-recado"><strong>Professor:</strong> ${esc(item.trainer_notes)}</p>`
           : ""}
+
+        ${(item.group_label || item.load_notes) ? `
+          <div class="prescricao-exercicio" aria-label="Prescrição do professor">
+            ${item.group_label ? `<span class="tag tag-solid">Grupo ${esc(item.group_label)}</span>` : ""}
+            ${item.load_notes ? `<span><strong>Carga sugerida:</strong> ${esc(item.load_notes)}</span>` : ""}
+          </div>` : ""}
 
         <div class="ultima-vez">${textoDaUltimaVez(ultima)}</div>
 
@@ -461,23 +480,23 @@ export async function render(alvo, { params }) {
     salvamentosEmCurso += 1;
     try {
       await enfileirarSerie({
-        alunoId, diaId, data: hoje(), itemId: item.id,
+        alunoId, diaId, data: dataTreino, itemId: item.id,
         exercicioId: item.exercise_id, serie, peso, reps,
       });
-      fila = seriesNaFila(alunoId, diaId, hoje());
+      fila = seriesNaFila(alunoId, diaId, dataTreino);
       marcarLinha(linha, peso != null || reps != null, true);
       desenharProgresso();
       desenharPendencias();
       await sincronizar();
       await recarregarDoBanco(false);
-      const continuaPendente = Boolean(seriesNaFila(alunoId, diaId, hoje())?.[`${item.id}:${serie}`]);
+      const continuaPendente = Boolean(seriesNaFila(alunoId, diaId, dataTreino)?.[`${item.id}:${serie}`]);
       marcarLinha(linha, peso != null || reps != null, continuaPendente);
       desenharProgresso();
       desenharPendencias();
       if (!continuaPendente) {
         avisar("Série registrada.");
-      } else if (erroNaFila(alunoId, diaId, hoje())) {
-        avisar(`Série guardada. ${mensagemDeAtencao(erroNaFila(alunoId, diaId, hoje()))}`);
+      } else if (erroNaFila(alunoId, diaId, dataTreino)) {
+        avisar(`Série guardada. ${mensagemDeAtencao(erroNaFila(alunoId, diaId, dataTreino))}`);
       } else {
         avisar("Sem internet. Série guardada no aparelho — mando sozinho quando a rede voltar.");
       }
@@ -499,32 +518,36 @@ export async function render(alvo, { params }) {
   // Sem som e sem notificação — o celular está no bolso ou no chão, e o aluno
   // olha quando quiser.
   const descansos = new Set();
-  const pararDescanso = (timer) => { clearInterval(timer); descansos.delete(timer); };
+  const pararDescanso = (descanso) => {
+    clearInterval(descanso.timer);
+    descansos.delete(descanso);
+  };
+  function atualizarDescanso(descanso) {
+    const restam = Math.max(0, Math.ceil((descanso.terminaEm - Date.now()) / 1000));
+    if (restam > 0) {
+      descanso.botao.textContent = `${restam}s — toque para parar`;
+      return;
+    }
+    pararDescanso(descanso);
+    descanso.botao.dataset.rodando = "0";
+    descanso.botao.textContent = "Descanso acabou — próxima série";
+  }
+  const atualizarDescansos = () => descansos.forEach(atualizarDescanso);
   function contarDescanso(botao) {
     if (botao.dataset.rodando === "1") {
-      pararDescanso(Number(botao.dataset.timer));
+      const atual = [...descansos].find((descanso) => descanso.botao === botao);
+      if (atual) pararDescanso(atual);
       botao.dataset.rodando = "0";
       botao.textContent = `Descansar ${botao.dataset.descanso}s`;
       return;
     }
 
-    let restam = Number(botao.dataset.descanso);
+    const segundos = Number(botao.dataset.descanso);
     botao.dataset.rodando = "1";
-    botao.textContent = `${restam}s — toque para parar`;
-
-    const timer = setInterval(() => {
-      restam -= 1;
-      if (restam > 0) {
-        botao.textContent = `${restam}s — toque para parar`;
-        return;
-      }
-      pararDescanso(timer);
-      botao.dataset.rodando = "0";
-      botao.textContent = "Descanso acabou — próxima série";
-    }, 1000);
-
-    descansos.add(timer);
-    botao.dataset.timer = String(timer);
+    const descanso = { botao, terminaEm: Date.now() + segundos * 1000, timer: null };
+    descanso.timer = setInterval(() => atualizarDescanso(descanso), 1000);
+    descansos.add(descanso);
+    atualizarDescanso(descanso);
   }
 
   async function mostrarRealizado() {
@@ -541,7 +564,7 @@ export async function render(alvo, { params }) {
 
     let corpo;
     try {
-      const feitos = await db.historicoDeSessoes(alunoId, { de: hoje(), ate: hoje() });
+      const feitos = await db.historicoDeSessoes(alunoId, { de: dataTreino, ate: dataTreino });
       const feito = feitos.find((s) => s.id === sessao?.id);
       corpo = feito
         ? cartaoDeSessaoRealizada(feito, { aberto: true })
@@ -618,11 +641,13 @@ export async function render(alvo, { params }) {
     atualizacaoDaFila = setTimeout(recarregarDoBanco, 50);
   };
   window.addEventListener("lpt:fila", aoMudarFila);
+  document.addEventListener("visibilitychange", atualizarDescansos);
   return () => {
     clearTimeout(atualizacaoDaFila);
-    descansos.forEach(clearInterval);
+    descansos.forEach((descanso) => clearInterval(descanso.timer));
     descansos.clear();
     window.removeEventListener("lpt:fila", aoMudarFila);
+    document.removeEventListener("visibilitychange", atualizarDescansos);
   };
 }
 
@@ -635,13 +660,13 @@ export async function render(alvo, { params }) {
 // Sem arte escolhida o banner continua preto, só sem figura: virar um cabeçalho
 // branco quando falta a imagem faria a tela mudar de cara sem motivo aparente
 // para o aluno.
-function bannerDoDia(dia) {
+function bannerDoDia(dia, dataTreino) {
   const arte = caminhoDoBanner(dia.banner);
   return `
     <div class="card card-com-banner" style="margin-top:var(--sp-4)">
       <div class="dia-banner">
         <div class="dia-banner-texto">
-          <div class="eyebrow" style="color:#a3a3a3">Treino de ${formatarData(hoje())}</div>
+          <div class="eyebrow" style="color:#a3a3a3">Treino de ${formatarData(dataTreino)}</div>
           <h3 style="font-size:26px;letter-spacing:-.03em">${esc(dia.label)}</h3>
           <div class="small">
             ${plural(dia.exercicios.length, "exercício", "exercícios")} ·

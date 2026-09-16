@@ -145,9 +145,27 @@ function limparSessaoPersistida() {
   }
 }
 
-export async function usuarioDaSessao() {
-  const { data } = await sb.auth.getSession();
-  return data.session?.user ?? null;
+export async function usuarioDaSessao({ validar = false } = {}) {
+  if (!validar) {
+    const { data } = await sb.auth.getSession();
+    return data.session?.user ?? null;
+  }
+
+  const { data, error } = await sb.auth.getUser();
+  if (!error) return data.user ?? null;
+  // Sessão revogada/expirada é estado, não indisponibilidade. Já uma falha de
+  // rede não pode derrubar quem está usando dados offline.
+  if (/jwt|session|refresh token|not authenticated|user not found/i.test(error.message)) return null;
+  throw new Error(traduzErro(error.message));
+}
+
+export function observarSessao(aoMudar) {
+  const { data } = sb.auth.onAuthStateChange((evento, sessao) => {
+    // O callback do SDK roda sob um lock interno. Sair dele antes de consultar
+    // perfil evita deadlock nas chamadas seguintes do próprio Supabase.
+    queueMicrotask(() => aoMudar(sessao?.user ?? null, evento));
+  });
+  return () => data.subscription.unsubscribe();
 }
 
 function traduzErro(msg) {

@@ -8,6 +8,9 @@ import { db } from "./db.js";
 import { registrarErro } from "./log.js";
 
 let usuario = null;
+let reconciliacao = null;
+let reconciliacaoLigada = false;
+let avisoDaSessao = null;
 
 // Aluno bloqueado não fica com o app pela metade: sem isso ele entraria e veria
 // todas as telas vazias, porque a RLS recusa os dados dele — parecendo bug, e
@@ -43,6 +46,74 @@ export async function restaurarSessao() {
 
 export function usuarioAtual() {
   return usuario;
+}
+
+export function consumirAvisoDaSessao() {
+  const aviso = avisoDaSessao;
+  avisoDaSessao = null;
+  return aviso;
+}
+
+async function reconciliarSessao({ contaInformada, validar = false, motivo = "retomada" } = {}) {
+  if (reconciliacao) return reconciliacao;
+  reconciliacao = (async () => {
+    try {
+      const anterior = usuario;
+      const conta = contaInformada === undefined
+        ? await db.usuarioDaSessao({ validar })
+        : contaInformada;
+
+      if (!conta) {
+        if (!anterior) return null;
+        usuario = null;
+        avisoDaSessao = "Sua sessão terminou em outro lugar ou expirou. Entre novamente para continuar.";
+        window.dispatchEvent(new CustomEvent("lpt:sessao", { detail: { origem: "reconciliacao", motivo } }));
+        return null;
+      }
+
+      // Mesmo usuário ainda é relido ao voltar/ficar online: bloqueio e papel
+      // não podem ficar congelados durante toda a vida do PWA.
+      const perfil = await db.buscarPerfil(conta.id);
+      if (!perfil) throw new Error("Sua conta está sem perfil. Entre novamente ou fale com o professor.");
+      usuario = perfil;
+      if (await bloqueado()) {
+        await db.sairDaConta();
+        usuario = null;
+        avisoDaSessao = ACESSO_BLOQUEADO;
+      }
+
+      if (anterior?.id !== usuario?.id || anterior?.role !== usuario?.role) {
+        window.dispatchEvent(new CustomEvent("lpt:sessao", { detail: { origem: "reconciliacao", motivo } }));
+      } else {
+        window.dispatchEvent(new CustomEvent("lpt:perfil"));
+      }
+      return usuario;
+    } catch (err) {
+      // Falha de rede ao conferir não invalida uma sessão que já estava em
+      // uso. A RLS continua sendo a barreira quando a rede responder.
+      registrarErro(err, { origem: "sessao", contexto: { acao: "reconciliarSessao", motivo } });
+      return usuario;
+    } finally {
+      reconciliacao = null;
+    }
+  })();
+  return reconciliacao;
+}
+
+export function ligarReconciliacaoDeSessao() {
+  if (reconciliacaoLigada) return;
+  reconciliacaoLigada = true;
+  db.observarSessao((conta, evento) => reconciliarSessao({
+    contaInformada: conta,
+    motivo: `auth:${evento}`,
+  }));
+  window.addEventListener("online", () => reconciliarSessao({ validar: true, motivo: "online" }));
+  window.addEventListener("pageshow", () => reconciliarSessao({ validar: navigator.onLine, motivo: "pageshow" }));
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") {
+      reconciliarSessao({ validar: navigator.onLine, motivo: "visivel" });
+    }
+  });
 }
 
 // 'admin' tem os mesmos poderes do professor e vê as mesmas telas — é assim
@@ -124,9 +195,29 @@ export function rotaInicial() {
 // Liga timeout de inatividade. Após `minutos` sem interação, chama `aoExpirar`.
 // Eventos considerados "atividade": toque, clique, tecla, movimento do mouse.
 // Só conta enquanto há sessão ativa — o timer para sozinho após o logout.
-export function ligarTimeoutDeSessao(minutos, aoExpirar) {
+export function ligarTimeoutDeSessao(minutos, aoExpirar, { deveAdiar = () => false } = {}) {
   const MS = minutos * 60 * 1000;
   let timer = null;
+
+  async function expirar() {
+    if (!usuario) return;
+    // Treino em andamento, fila pendente ou uso offline: encerrar a sessão
+    // aqui impediria reabrir justamente os dados prometidos sem internet.
+    // Reavaliamos em um minuto, sem transformar atividade automática em
+    // prorrogação permanente quando o app volta a um ponto seguro.
+    if (deveAdiar()) {
+      timer = setTimeout(expirar, Math.min(MS, 60_000));
+      return;
+    }
+    // `aoExpirar()` tem de rodar mesmo se a saída der erro: o que protege o
+    // aparelho emprestado é a tela voltar para o login.
+    try {
+      await sair();
+    } catch (err) {
+      registrarErro(err, { origem: "sessao", contexto: { acao: "expirarSessao" } });
+    }
+    aoExpirar();
+  }
 
   function resetar() {
     // Limpar antes da guarda: no logout, `usuario` já é null e o timer antigo
@@ -134,19 +225,7 @@ export function ligarTimeoutDeSessao(minutos, aoExpirar) {
     // mas ficava rodando sem dono.
     clearTimeout(timer);
     if (!usuario) return; // sem sessão, não há o que expirar
-    timer = setTimeout(async () => {
-      if (!usuario) return;
-      // `aoExpirar()` tem de rodar mesmo se a saída der erro: o que protege o
-      // aparelho emprestado é a tela voltar para o login. Sem este try, um
-      // `signOut` recusado virava rejeição solta e a sessão expirada ficava na
-      // tela como se nada tivesse acontecido.
-      try {
-        await sair();
-      } catch (err) {
-        registrarErro(err, { origem: "sessao", contexto: { acao: "expirarSessao" } });
-      }
-      aoExpirar();
-    }, MS);
+    timer = setTimeout(expirar, MS);
   }
 
   const EVENTOS = ["mousemove", "keydown", "touchstart", "click"];

@@ -19,7 +19,7 @@
 // 3. **Sem dado sensível.** Vai mensagem, rota e um contexto que o chamador
 //    escolhe. Senha, token e conteúdo de campo não entram aqui.
 
-import { DATA_SOURCE } from "./config.js";
+import { DATA_SOURCE, RELEASE_ID } from "./config.js";
 
 const CHAVE_LOCAL = "lpt:erros";
 const JANELA_REPETICAO = 60_000;
@@ -29,6 +29,31 @@ let sb = null;
 let usuario = () => null;
 let enviando = false;
 const novoIdLocal = () => crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+
+const CHAVES_SENSIVEIS = /senha|password|token|authorization|cookie|secret|anonkey|apikey|chave/i;
+
+// O contexto vem de muitos catches diferentes. Saneá-lo num único lugar é
+// mais seguro que depender de cada chamador lembrar o que não pode registrar.
+// IDs operacionais permanecem: eles permitem localizar a operação sem expor
+// senha, token, email ou telefone digitado.
+export function sanitizarParaLog(valor, chave = "", vistos = new WeakSet()) {
+  if (CHAVES_SENSIVEIS.test(chave)) return "[removido]";
+  if (valor == null || typeof valor === "boolean" || typeof valor === "number") return valor;
+  if (typeof valor === "string") {
+    return valor
+      .replace(/Bearer\s+[A-Za-z0-9._~+\/-]+=*/gi, "Bearer [removido]")
+      .replace(/[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}\.[A-Za-z0-9_-]{16,}/g, "[token removido]")
+      .replace(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/g, "[email removido]")
+      .replace(/(?:\+?55\s*)?(?:\(?\d{2}\)?\s*)?9?\d{4}[-\s]?\d{4}/g, "[telefone removido]");
+  }
+  if (typeof valor !== "object") return String(valor);
+  if (vistos.has(valor)) return "[referência circular]";
+  vistos.add(valor);
+  if (Array.isArray(valor)) return valor.slice(0, 20).map((item) => sanitizarParaLog(item, chave, vistos));
+  return Object.fromEntries(
+    Object.entries(valor).slice(0, 40).map(([nome, item]) => [nome, sanitizarParaLog(item, nome, vistos)])
+  );
+}
 
 // Injetado pelo app.js. Este módulo não importa db.js nem auth.js de propósito:
 // ele precisa funcionar mesmo quando é justamente um deles que está quebrado.
@@ -104,7 +129,7 @@ export async function enviarErrosGuardados() {
 
 export async function registrarErro(erro, { origem = "tela", contexto = null } = {}) {
   try {
-    const mensagem = String(erro?.message ?? erro ?? "erro sem mensagem").slice(0, 500);
+    const mensagem = sanitizarParaLog(String(erro?.message ?? erro ?? "erro sem mensagem")).slice(0, 500);
     const rota = location.hash.replace(/^#/, "") || "/";
     const chave = `${origem}|${rota}|${mensagem}`;
     const agora = Date.now();
@@ -119,8 +144,8 @@ export async function registrarErro(erro, { origem = "tela", contexto = null } =
       rota,
       origem,
       mensagem,
-      detalhe: String(erro?.stack ?? "").slice(0, 2000) || null,
-      contexto,
+      detalhe: sanitizarParaLog(String(erro?.stack ?? "")).slice(0, 2000) || null,
+      contexto: sanitizarParaLog({ release: RELEASE_ID, codigo: erro?.code ?? null, ...contexto }),
       navegador: navigator.userAgent.slice(0, 300),
       online: navigator.onLine,
     };

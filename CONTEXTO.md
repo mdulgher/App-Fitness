@@ -953,6 +953,22 @@ publicado e por teste read-only contra o Supabase real: relacionamentos
 embutidos, duas sessões do mesmo aluno no mesmo dia, cargas com exercício, RLS
 do professor sobre a carteira e isolamento entre alunos.
 
+**Lote AT-05/13/16/18 em 16/09/2026.** A sessão agora acompanha logout em outra
+aba, revalida ao retomar/reconectar e preserva o uso offline quando a rede não
+consegue confirmar o token. O timeout aguarda um ponto seguro se houver treino
+aberto ou fila pendente. Logs carregam `release`, código e saneamento central de
+senha/token/email/telefone; o teste de segurança passou a falhar se uma senha
+atual aparecer no Git e limpa a fixture de Storage em `finally`.
+
+O editor de ficha passou a editar `load_notes` (carga sugerida) e `group_label`
+(A1/A2/circuito), exibidos separadamente da carga executada na tela do aluno.
+A lista de alunos ganhou filtros combináveis por situação, ficha, treino recente
+e mensalidade. No treino, a data é fixada ao abrir/retomar a intenção e o
+cronômetro calcula o restante pelo instante final, portanto a suspensão do
+navegador não alonga o descanso. O roteiro visual confirmou filtros, prescrição,
+cronômetro e logout entre duas abas; contratos reais de smoke, segurança e
+histórico passaram contra o Supabase.
+
 ### Decisões em aberto (perguntar ao dono, não decidir sozinho)
 
 - A lista de alunos (`#/professor/alunos`) mostra mensalidade e situação de

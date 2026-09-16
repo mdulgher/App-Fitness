@@ -32,6 +32,7 @@ node scripts/test-pagination.mjs
 node scripts/test-offline-snapshot.mjs
 node scripts/test-pwa.mjs
 node scripts/test-supabase-smoke.mjs
+node scripts/test-security.mjs
 node scripts/test-treinos-realizados.mjs
 ```
 
@@ -39,11 +40,14 @@ Resultados esperados:
 
 - Nenhum erro de sintaxe.
 - Catálogo, imagens, URLs, importação e preservação de fichas: `OK`.
-- Fila concorrente, isolamento por aluno, persistência e domingo: `OK`.
+- Fila concorrente, isolamento, data estável do treino, saneamento do log,
+  release, prescrição, filtros e domingo: `OK`.
 - Paginação sem corte em 1.001 e 10.000 linhas: `OK`.
 - Snapshot offline isolado por usuário e removido no logout: `OK`.
 - Manifest, ícones, app shell e política de atualização da PWA: `OK`.
 - Login, leitura protegida, log e ativação transacional no Supabase: `OK`.
+- Acesso anônimo, isolamento, promoção de papel, Storage e ausência de senhas
+  atuais no Git: `OK`. O teste agora falha — não apenas informa — se achar uma.
 - Histórico real com relacionamentos embutidos, sessões separadas e RLS: `OK AT-01`.
 
 O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e reativa uma ficha que já estava ativa. Portanto, valida o RPC sem mudar a ficha escolhida.
@@ -55,6 +59,11 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 - [ ] Professor entra no painel do professor.
 - [ ] Aluno entra no painel do aluno.
 - [ ] Atualizar a página mantém a sessão e a rota permitida.
+- [ ] Sair em outra aba leva a primeira ao Login e explica que a sessão terminou.
+- [ ] Ao voltar ao app ou recuperar a rede, sessão expirada/bloqueio são
+  reconciliados; falha de rede não apaga uma sessão utilizável offline.
+- [ ] Inatividade encerra em tela segura, mas não durante treino, offline ou
+  enquanto houver registros na fila.
 - [ ] Professor tentando abrir uma rota de aluno volta à própria área.
 - [ ] Aluno tentando abrir uma rota de professor volta à própria área.
 - [ ] Rota inexistente volta à tela inicial correta.
@@ -101,6 +110,8 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 - [ ] Marcar dias da semana atualiza a frequência calculada.
 - [ ] Adicionar exercício preserva séries, repetições, descanso e observação.
 - [ ] Alterar campos ao sair deles persiste após recarregar.
+- [ ] Carga sugerida e grupo (`A1`, `A2` etc.) persistem; o grupo é normalizado
+  em maiúsculas e ambos aparecem com rótulo explícito para o aluno.
 - [ ] Excluir divisão exige o segundo toque e remove seus itens.
 - [ ] Excluir ficha exige o segundo toque.
 - [ ] Ativar ficha deixa exatamente uma ficha ativa para o aluno.
@@ -156,7 +167,10 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 - [ ] Salvar peso e depois repetições atualiza a mesma série.
 - [ ] Corrigir uma série salva o valor mais novo.
 - [ ] Progresso conta séries com peso ou repetição registrada.
-- [ ] Cronômetro inicia, para e chega a zero corretamente.
+- [ ] Cronômetro inicia, para e chega a zero pelo horário final; ao minimizar e
+  voltar não ganha segundos extras pela pausa do navegador.
+- [ ] Treino aberto antes da meia-noite mantém a mesma data nas séries e na
+  conclusão; reabertura com fila pendente retoma a data original.
 - [ ] Foto, vídeo e passo a passo abrem e fecham sem áudio residual.
 - [ ] Concluir treino registra presença sem exigir todas as séries.
 - [ ] Série continua editável depois da conclusão.
@@ -258,6 +272,8 @@ limit 100;
 - [ ] Erro offline fica em `lpt:erros` e sobe ao reconectar, sem exigir um novo erro.
 - [ ] Logs de uma conta não são enviados como se pertencessem a outra.
 - [ ] Mensagens, pilhas e contexto não incluem senha, token ou conteúdo sensível de campos.
+- [ ] Todo evento novo inclui o mesmo `release` de `config.js` e do cache do
+  service worker.
 
 ## 10. Pós-publicação
 

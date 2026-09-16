@@ -6,7 +6,7 @@
 
 import { APP_NAME, DATA_SOURCE } from "../config.js";
 import { db } from "../db.js";
-import { entrar, criarConta, entrarComoId } from "../auth.js";
+import { entrar, criarConta, entrarComoId, consumirAvisoDaSessao } from "../auth.js";
 import { esc, iniciais } from "../utils.js";
 
 const LOCAL = DATA_SOURCE === "local";
@@ -87,6 +87,9 @@ export async function render(alvo) {
     erroTexto.textContent = msg;
     erro.classList.remove("hidden");
   }
+
+  const avisoDaSessao = consumirAvisoDaSessao();
+  if (avisoDaSessao) mostrarErro(avisoDaSessao);
 
   alvo.querySelector("#alternar")?.addEventListener("click", () => {
     modoCadastro = !modoCadastro;

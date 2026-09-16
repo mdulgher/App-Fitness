@@ -88,6 +88,18 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
       : 0;
   }
 
+
+  // Se o app atravessa a meia-noite ou é reaberto com uma intenção antiga,
+  // a tela precisa continuar usando a data que já identifica aquele treino.
+  // Escolhemos a mais recente quando há mais de uma pendência para a divisão.
+  function dataPendenteDoTreino(alunoId, diaId) {
+    if (usuarioAtual()?.id !== alunoId) return null;
+    return minhas(ler(true))
+      .map(([, treino]) => treino)
+      .filter((treino) => treino.diaId === diaId)
+      .sort((a, b) => b.data.localeCompare(a.data))[0]?.data ?? null;
+  }
+
   async function enfileirar(dados, conclusao) {
     if (usuarioAtual()?.id !== dados.alunoId) {
       throw new Error("Sua sessão mudou. Entre novamente para registrar o treino.");
@@ -244,6 +256,7 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
   return {
     pendentes: () => contar(),
     pendentesDoTreino: contarTreino,
+    dataPendenteDoTreino,
     precisamAtencao: () => contarAtencao(),
     seriesNaFila: (...args) => doTreino(...args)?.series ?? {},
     conclusaoNaFila: (...args) => Boolean(doTreino(...args)?.concluir),

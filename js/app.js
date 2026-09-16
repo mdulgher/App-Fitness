@@ -2,7 +2,10 @@
 
 import { APP_NAME, DATA_SOURCE, SUPABASE } from "./config.js";
 import { db } from "./db.js";
-import { restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial, ligarTimeoutDeSessao } from "./auth.js";
+import {
+  restaurarSessao, usuarioAtual, ehProfessor, sair, rotaInicial,
+  ligarTimeoutDeSessao, ligarReconciliacaoDeSessao,
+} from "./auth.js";
 import { iniciar, resolver, navegar, definirCallbackDeTroca, destinoAposLogin } from "./router.js";
 import { esc, primeiroNome, iniciais, urlDeAvatarSeguro } from "./utils.js";
 import { icone } from "./icons.js";
@@ -238,11 +241,15 @@ definirCallbackDeTroca((caminho) => {
 });
 
 await restaurarSessao();
+ligarReconciliacaoDeSessao();
 // A fila precisa saber qual aluno está autenticado antes da primeira tentativa.
 ligarSincronizacaoAutomatica();
 ligarTimeoutDeSessao(5, () => {
   navegar("#/login");
   resolver();
+}, {
+  deveAdiar: () =>
+    !navigator.onLine || location.hash.startsWith("#/aluno/treino/") || pendentes() > 0,
 });
 iniciar();
 

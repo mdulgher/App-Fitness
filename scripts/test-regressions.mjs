@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { readFile, readdir } from "node:fs/promises";
 import { criarFila } from "../js/sync-queue.js";
+import { sanitizarParaLog } from "../js/log.js";
 
 function ambiente() {
   let texto = "{}";
@@ -39,6 +40,7 @@ const dados = {
 // Uma correção durante o envio não pode ser apagada pela confirmação antiga.
 const a = ambiente();
 await a.fila.enfileirarSerie(dados);
+assert.equal(a.fila.dataPendenteDoTreino(dados.alunoId, dados.diaId), dados.data);
 const envio = a.fila.sincronizar();
 await a.primeiroIniciado;
 await a.fila.enfileirarSerie({ ...dados, peso: 25 });
@@ -53,6 +55,7 @@ a.usuario.id = "aluno-2";
 assert.equal(a.fila.pendentes(), 0);
 assert.equal((await a.fila.sincronizar()).enviados, 0);
 assert.equal(Object.keys(a.ler()).length, 1);
+assert.equal(a.fila.dataPendenteDoTreino("aluno-1", "dia-1"), null);
 
 // Falha ao persistir deve chegar à tela, sem confirmação falsa de salvamento.
 const quebrado = criarFila({
@@ -115,6 +118,19 @@ await filaComErro.sincronizar();
 assert.deepEqual(enviadosDepoisDaCorrecao.map((s) => s.peso), [25]);
 assert.equal(filaComErro.pendentes(), 0);
 
+// Logger é uma fronteira única: nenhum catch precisa saber mascarar segredo,
+// email, telefone ou token por conta própria.
+const contextoSaneado = sanitizarParaLog({
+  email: "aluno@example.com",
+  telefone: "(11) 99999-8888",
+  senha: "NaoPodeSair123",
+  cabecalho: "Bearer abcdefghijklmnopqrstuvwxyz.abcdefghijklmnop.qrstuvwxyzabcdefghijkl",
+});
+assert.equal(contextoSaneado.email, "[email removido]");
+assert.equal(contextoSaneado.telefone, "[telefone removido]");
+assert.equal(contextoSaneado.senha, "[removido]");
+assert.doesNotMatch(contextoSaneado.cabecalho, /abcdefghijklmnop/);
+
 // Remoção é uma saída deliberada e isolada: outra conta não consegue apagar.
 recusar = true;
 await filaComErro.enfileirarSerie(dados);
@@ -166,7 +182,30 @@ const semImplementacao = [...chamadas].filter(
 );
 assert.deepEqual(semImplementacao, [], `telas chamam sem as duas implementações: ${semImplementacao.join(", ")}`);
 
+// O release visto no log e o cache instalado precisam apontar para o mesmo
+// conjunto. Divergir aqui tornaria o diagnóstico de produção ambíguo.
+const config = await readFile(new URL("../js/config.js", import.meta.url), "utf8");
+const worker = await readFile(new URL("../service-worker.js", import.meta.url), "utf8");
+const release = /RELEASE_ID\s*=\s*"([^"]+)"/.exec(config)?.[1];
+const versaoWorker = /VERSAO\s*=\s*"([^"]+)"/.exec(worker)?.[1];
+assert.equal(release, versaoWorker);
+
+// AT-16/18: conferir o caminho completo, não apenas a existência das colunas
+// no modelo. O professor edita e o aluno recebe rótulo explícito; a execução
+// usa uma data fixa em todos os enfileiramentos.
+const editor = await readFile(new URL("../js/views/professor-ficha.js", import.meta.url), "utf8");
+const treino = await readFile(new URL("../js/views/aluno-treino.js", import.meta.url), "utf8");
+const listaAlunos = await readFile(new URL("../js/views/professor-alunos.js", import.meta.url), "utf8");
+for (const campo of ["load_notes", "group_label"]) {
+  assert.match(editor, new RegExp(`data-campo=["']${campo}["']`));
+  assert.match(treino, new RegExp(`item\\.${campo}`));
+}
+assert.match(treino, /data:\s*dataTreino/);
+assert.doesNotMatch(treino, /data:\s*hoje\(\)/);
+assert.match(listaAlunos, /filtro-situacao/);
+assert.match(listaAlunos, /filtro-atencao/);
+
 console.log(
-  `OK: fila concorrente, isolamento por aluno, persistência, domingo e ` +
+  `OK: fila concorrente, isolamento, data estável, log saneado, release, prescrição, filtros, domingo e ` +
   `contrato de dados (${noLocal.size} funções nas duas, ${chamadas.size} usadas pelas telas).`
 );

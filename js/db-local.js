@@ -122,13 +122,22 @@ export async function sairDaConta() {
   } catch {}
 }
 
-export async function usuarioDaSessao() {
+export async function usuarioDaSessao(_opcoes = {}) {
   try {
     const id = localStorage.getItem(CHAVE_SESSAO);
     return id ? { id } : null;
   } catch {
     return null;
   }
+}
+
+export function observarSessao(aoMudar) {
+  const observar = (evento) => {
+    if (evento.key !== CHAVE_SESSAO) return;
+    aoMudar(evento.newValue ? { id: evento.newValue } : null, "STORAGE");
+  };
+  window.addEventListener("storage", observar);
+  return () => window.removeEventListener("storage", observar);
 }
 
 /* ==================== perfis ==================== */
