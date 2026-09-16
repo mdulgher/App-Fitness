@@ -612,15 +612,30 @@ export async function historicoDeSessoes(alunoId, { de = null, ate = null, limit
   );
 }
 
+// Ler e depois inserir é uma corrida: entre as duas chamadas, outra aba, outro
+// aparelho ou um reenvio da fila pode criar a mesma sessão. O índice único
+// `attendance_uma_por_dia` (aluno, data, divisão) recusava a segunda inserção,
+// e o aluno via o texto cru do Postgres sobre violação de restrição — para uma
+// situação em que o que ele queria (a sessão existir) já tinha acontecido.
+//
+// A restrição do banco é a fonte da verdade, então a duplicidade não é erro
+// aqui: é a resposta de que alguém chegou primeiro. Relê e segue.
 export async function abrirSessao(alunoId, diaId, data = hoje()) {
-  const existente = ok(
+  const buscar = async () => ok(
     await sb.from("attendance").select("*").eq("student_id", alunoId).eq("date", data).eq("workout_day_id", diaId).maybeSingle()
   );
+
+  const existente = await buscar();
   if (existente) return existente;
 
-  return ok(
-    await sb.from("attendance").insert({ student_id: alunoId, workout_day_id: diaId, date: data }).select().single()
-  );
+  const criada = await sb.from("attendance")
+    .insert({ student_id: alunoId, workout_day_id: diaId, date: data }).select().single();
+  if (!criada.error) return criada.data;
+  if (criada.error.code !== "23505") throw new Error(criada.error.message);
+
+  const jaCriada = await buscar();
+  if (!jaCriada) throw new Error(criada.error.message);
+  return jaCriada;
 }
 
 export async function concluirSessao(sessaoId, porQuem = "student") {

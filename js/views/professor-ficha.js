@@ -73,10 +73,43 @@ export async function render(alvo, { params }) {
     }
   }
 
+  // Uma escrita por vez, e o botão que a disparou sai do ar enquanto ela corre.
+  //
+  // Dois toques em "+ Nova divisão" antes de a lista recarregar criavam duas
+  // divisões. A letra já vinha certa (ver `proximaLetra`), então o professor
+  // ganhava um "Treino B" e um "Treino C" quando queria um — e precisava
+  // excluir um dos dois. O dedo no celular repete o toque quando a tela demora.
+  //
+  // Só vale para botões. O salvamento dos campos fica de fora de propósito:
+  // recusar a segunda escrita ali perderia uma alteração do professor que
+  // digitou rápido, em vez de evitar uma duplicada.
+  let escrevendo = false;
+  function aoClicar(botao, acao) {
+    botao?.addEventListener("click", async () => {
+      if (escrevendo) return;
+      escrevendo = true;
+      botao.disabled = true;
+      try {
+        await acao();
+      } finally {
+        escrevendo = false;
+        botao.disabled = false;
+      }
+    });
+  }
+
+  // A versão descarta resposta atrasada: duas cargas em sequência podiam
+  // terminar fora de ordem e a tela ficava com a ficha antiga. `fichas` e
+  // `ficha` só passam a valer depois das duas consultas, nunca no meio.
+  let versaoDaCarga = 0;
   async function carregar(idPreferido = null) {
-    fichas = await db.listarFichas(alunoId);
-    const escolhida = idPreferido ?? ficha?.id ?? fichas.find((f) => f.active)?.id ?? fichas[0]?.id;
-    ficha = escolhida ? await db.buscarFicha(escolhida) : null;
+    const minhaVersao = ++versaoDaCarga;
+    const listadas = await db.listarFichas(alunoId);
+    const escolhida = idPreferido ?? ficha?.id ?? listadas.find((f) => f.active)?.id ?? listadas[0]?.id;
+    const buscada = escolhida ? await db.buscarFicha(escolhida) : null;
+    if (minhaVersao !== versaoDaCarga || !alvo.isConnected) return;
+    fichas = listadas;
+    ficha = buscada;
     desenhar();
   }
 
@@ -132,13 +165,24 @@ export async function render(alvo, { params }) {
 
   // A letra vem do que já existe, não da contagem: dois cliques seguidos em
   // "nova divisão" (antes de a lista recarregar) criavam dois "Treino B".
+  //
+  // A comparação é pela letra extraída do rótulo, não pelo rótulo inteiro.
+  // Comparar o texto todo parecia resolver e não resolvia: o professor renomeia
+  // para "Treino A — Peito e Tríceps", nenhum rótulo casava com "TREINO A", e o
+  // botão voltava a oferecer "Treino A" mesmo com A, B e C na ficha. Rótulo sem
+  // letra nenhuma ("Superior") não entra na conta, e é o certo — ele não ocupa
+  // letra.
   function proximaLetra() {
-    const usadas = new Set((ficha?.dias ?? []).map((d) => d.label.trim().toUpperCase()));
+    const usadas = new Set(
+      (ficha?.dias ?? [])
+        .map((d) => /^treino\s+([a-z])\b/i.exec(d.label.trim())?.[1]?.toUpperCase())
+        .filter(Boolean)
+    );
     for (let i = 0; i < 26; i++) {
       const letra = String.fromCharCode(65 + i);
-      if (!usadas.has(`TREINO ${letra}`)) return letra;
+      if (!usadas.has(letra)) return letra;
     }
-    return String(usadas.size + 1);
+    return String((ficha?.dias?.length ?? 0) + 1);
   }
 
   function meta(treinos, alvoSemanal) {
@@ -209,7 +253,7 @@ export async function render(alvo, { params }) {
   /* ---------- eventos ---------- */
 
   function ligarEventos() {
-    corpo.querySelector("[data-ativar]")?.addEventListener("click", async () => {
+    aoClicar(corpo.querySelector("[data-ativar]"), async () => {
       if (await proteger(() => db.ativarFicha(ficha.id))) {
         await carregar(ficha.id);
         avisar("Ficha ativada. O aluno já vê esse treino.");
@@ -217,7 +261,7 @@ export async function render(alvo, { params }) {
     });
 
     corpo.querySelector("[data-editar-ficha]")?.addEventListener("click", () => formularioDaFicha(ficha));
-    corpo.querySelector("[data-novo-dia]")?.addEventListener("click", async () => {
+    aoClicar(corpo.querySelector("[data-novo-dia]"), async () => {
       const rotulo = `Treino ${proximaLetra()}`;
       // A ordem vem do maior índice existente, não da contagem: divisões
       // criadas em sequência rápida acabavam com o mesmo order_index e a ficha
@@ -229,7 +273,7 @@ export async function render(alvo, { params }) {
     });
 
     corpo.querySelectorAll("[data-toggle-dia]").forEach((b) =>
-      b.addEventListener("click", async () => {
+      aoClicar(b, async () => {
         const dia = ficha.dias.find((d) => d.id === b.dataset.toggleDia);
         const valor = Number(b.dataset.valor);
         const atuais = new Set((dia.weekdays ?? []).map(Number));
@@ -240,7 +284,7 @@ export async function render(alvo, { params }) {
     );
 
     corpo.querySelectorAll("[data-remover-dia]").forEach((b) =>
-      b.addEventListener("click", async () => {
+      aoClicar(b, async () => {
         const dia = ficha.dias.find((d) => d.id === b.dataset.removerDia);
         if (!confirm(`Excluir ${dia.label} e seus exercícios?`)) return;
         if (await proteger(() => db.removerDia(dia.id))) await carregar(ficha.id);
@@ -264,7 +308,7 @@ export async function render(alvo, { params }) {
     );
 
     corpo.querySelectorAll("[data-remover-item]").forEach((b) =>
-      b.addEventListener("click", async () => {
+      aoClicar(b, async () => {
         if (await proteger(() => db.removerItemDoDia(b.dataset.removerItem))) await carregar(ficha.id);
       })
     );
