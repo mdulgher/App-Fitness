@@ -106,18 +106,36 @@ Deno.serve(async (req) => {
 
   // Derruba as sessoes abertas: sem isto, um aparelho que ficou logado continua
   // logado com a senha antiga, e "redefinir" nao teria tirado ninguem de lugar
-  // nenhum — foi exatamente o que aconteceu com o "Sair" em 16/09.
+  // nenhum — foi exatamente o que aconteceu com o "Sair" em 16/09. Trocar a
+  // senha, sozinho, NAO invalida os refresh tokens que ja existem.
+  //
+  // Chamada HTTP direta, e nao `auth.admin.signOut()`: aquele metodo recebe o
+  // JWT do usuario, e aqui nao ha JWT do aluno — quem esta logado e o professor.
+  // Passar o id no lugar do token falha em silencio, e a primeira versao desta
+  // funcao fazia exatamente isso: respondia `sessoesEncerradas: false` e o
+  // aparelho antigo continuava dentro. So apareceu no teste contra o servidor.
   //
   // Vai depois da troca, e uma falha aqui nao desfaz a senha nova: avisa. O
   // professor precisa saber a diferenca entre "a senha mudou e os aparelhos
   // cairam" e "a senha mudou e alguem pode continuar dentro".
-  const { error: erroSessoes } = await admin.auth.admin.signOut(alunoId, "global");
+  let sessoesEncerradas = false;
+  try {
+    // `encerrar_sessoes_do_aluno` apaga as linhas de `auth.sessions` do aluno.
+    // Nao ha endpoint administrativo para isso nesta versao do GoTrue — medido,
+    // nao suposto: `DELETE /admin/users/{id}/sessions` responde 404. A funcao
+    // e `security definer`, so o `service_role` pode executar, e ela confere
+    // por conta propria que o alvo e aluno.
+    const { error: erroSessoes } = await admin.rpc("encerrar_sessoes_do_aluno", { aluno: alunoId });
+    sessoesEncerradas = !erroSessoes;
+  } catch {
+    sessoesEncerradas = false;
+  }
 
   return responder({
     id: alunoId,
     email: alvo.email,
     full_name: alvo.full_name,
     senha,
-    sessoesEncerradas: !erroSessoes,
+    sessoesEncerradas,
   }, 200);
 });

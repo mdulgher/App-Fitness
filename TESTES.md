@@ -34,6 +34,7 @@ node scripts/test-pwa.mjs
 node scripts/test-supabase-smoke.mjs
 node scripts/test-security.mjs
 node scripts/test-treinos-realizados.mjs
+node scripts/test-cadastro-e-senha.mjs
 ```
 
 Resultados esperados:
@@ -46,6 +47,12 @@ Resultados esperados:
 - Snapshot offline isolado por usuário e removido no logout: `OK`.
 - Manifest, ícones, app shell e política de atualização da PWA: `OK`.
 - Login, leitura protegida, log e ativação transacional no Supabase: `OK`.
+- Cadastro retomável e redefinição de senha (AT-06): `OK AT-06`, com 27
+  verificações. Cria e apaga uma conta descartável em `@example.com` — nenhum
+  aluno fictício é tocado, porque as oito FKs de `students` são `on delete
+  cascade` e apagar a linha de um aluno levaria junto presença, carga,
+  pagamento e ficha. Se o teste cair no meio, sobra uma conta `at06.*` órfã: o
+  id sai na linha de limpeza, e ela se apaga no painel.
 - Acesso anônimo, isolamento, promoção de papel, Storage e ausência de senhas
   atuais no Git: `OK`. O teste agora falha — não apenas informa — se achar uma.
 - Histórico real com relacionamentos embutidos, sessões separadas e RLS: `OK AT-01`.
