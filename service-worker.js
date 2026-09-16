@@ -1,4 +1,4 @@
-const VERSAO = "2026.09.15-3";
+const VERSAO = "2026.09.15-4";
 const PREFIXO = "lpt-";
 const CACHE_SHELL = `${PREFIXO}shell-${VERSAO}`;
 const CACHE_RUNTIME = `${PREFIXO}runtime-${VERSAO}`;
@@ -75,12 +75,38 @@ const ORIGENS_ESTATICAS = new Set([
   "https://fonts.gstatic.com",
 ]);
 
+// O Pages responde `Cache-Control: max-age=600` em TUDO — inclusive neste
+// arquivo — e manda ETag. Dentro desses 10 minutos o navegador devolve o corpo
+// guardado sem falar com o servidor, e `fetch` dentro do service worker também
+// passa por esse cache.
+//
+// Foi assim que uma versão nova pré-cacheou arquivo velho: em 15/09/2026 o
+// shell `lpt-shell-2026.09.15-3` guardou o JS da versão anterior, e o app
+// publicado mostrou texto antigo com o deploy já pronto. Bater o número da
+// versão não resolvia nada, porque o problema não era o nome do cache.
+//
+// `no-cache` força requisição condicional, e o Pages responde 304 com corpo
+// vazio quando o arquivo não mudou — custo quase zero. Não é `reload` de
+// propósito: aquele ignora o cache e baixaria os 55 arquivos inteiros a cada
+// verificação, no 4G do aluno dentro da academia.
+const revalidando = (url) => new Request(url, { cache: "no-cache" });
+
 self.addEventListener("install", (evento) => {
   evento.waitUntil((async () => {
     const cache = await caches.open(CACHE_SHELL);
-    await cache.addAll(ARQUIVOS_DO_APP);
+
+    // Busca tudo antes de gravar qualquer coisa. `addAll` é tudo-ou-nada, e
+    // perder essa garantia deixaria um shell pela metade parecendo instalado —
+    // pior que não instalar, porque o offline passaria a mentir.
+    const respostas = await Promise.all(ARQUIVOS_DO_APP.map((url) => fetch(revalidando(url))));
+    const ruim = respostas.find((r) => !r.ok);
+    if (ruim) throw new Error(`Instalação abortada: HTTP ${ruim.status} em ${ruim.url}`);
+    await Promise.all(respostas.map((resposta, i) => cache.put(ARQUIVOS_DO_APP[i], resposta)));
+
     // O SDK também faz parte do app shell. Sem suas dependências, a primeira
     // reabertura offline poderia falhar mesmo com todo o código local salvo.
+    // Aqui o `addAll` normal serve: a versão está na própria URL (`@2.45.4`),
+    // então esses arquivos não envelhecem sem trocar de endereço.
     await cache.addAll(DEPENDENCIAS_EXTERNAS);
     await self.skipWaiting();
   })());
@@ -104,9 +130,12 @@ async function guardarEmRuntime(requisicao, resposta) {
   return resposta;
 }
 
-async function redePrimeiro(requisicao, fallback = null) {
+// `paraBuscar` permite ir à rede com revalidação sem trocar a chave do cache,
+// que continua sendo a requisição original — senão o que ficaria guardado não
+// casaria com o que a página pede depois.
+async function redePrimeiro(requisicao, { fallback = null, paraBuscar = requisicao } = {}) {
   try {
-    return await guardarEmRuntime(requisicao, await fetch(requisicao));
+    return await guardarEmRuntime(requisicao, await fetch(paraBuscar));
   } catch {
     return (await caches.match(requisicao))
       ?? (fallback ? await caches.match(fallback) : null)
@@ -128,11 +157,22 @@ self.addEventListener("fetch", (evento) => {
   if (!ORIGENS_ESTATICAS.has(url.origin)) return;
 
   if (requisicao.mode === "navigate") {
-    evento.respondWith(redePrimeiro(requisicao, new URL("./index.html", self.registration.scope)));
+    evento.respondWith(redePrimeiro(requisicao, {
+      fallback: new URL("./index.html", self.registration.scope),
+    }));
     return;
   }
 
   const destino = requisicao.destination;
   const mudaComRelease = destino === "script" || destino === "style" || destino === "worker";
-  evento.respondWith(mudaComRelease ? redePrimeiro(requisicao) : cachePrimeiro(requisicao));
+
+  // Só o que é nosso vai com revalidação. O SDK externo tem a versão na URL,
+  // então revalidar seria pedido condicional a cada abertura sem nada a ganhar.
+  const nosso = url.origin === self.location.origin;
+
+  evento.respondWith(
+    mudaComRelease
+      ? redePrimeiro(requisicao, nosso ? { paraBuscar: revalidando(requisicao.url) } : {})
+      : cachePrimeiro(requisicao)
+  );
 });

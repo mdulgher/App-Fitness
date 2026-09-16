@@ -38,7 +38,13 @@ export async function registrarPWA({ ehSeguroRecarregar = () => true } = {}) {
   window.addEventListener("hashchange", tentarRecarregar);
   window.addEventListener("lpt:fila", tentarRecarregar);
 
-  const registro = await navigator.serviceWorker.register("./service-worker.js");
+  // `updateViaCache: "none"` porque o Pages manda `max-age=600` no próprio
+  // service-worker.js. Sem isso, a checagem de versão podia ser respondida pelo
+  // cache HTTP com o arquivo antigo — e uma atualização que não é percebida
+  // nunca acontece.
+  const registro = await navigator.serviceWorker.register("./service-worker.js", {
+    updateViaCache: "none",
+  });
   // Navegadores já verificam periodicamente, mas isto evita deixar uma versão
   // antiga aberta por dias quando o aluno usa sempre o mesmo atalho.
   registro.update().catch(() => {});
