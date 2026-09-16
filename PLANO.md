@@ -1,5 +1,11 @@
 # Leo Personal Trainning — Plano do Projeto (v3)
 
+> **Planejamento de expansão — 15/09/2026:** o dono solicitou especificação de
+> admin geral → professores → alunos próprios, com um professor por aluno e
+> **sem transferência**. Não foi autorizada implementação. O dossiê interno
+> está em `log-de-evolucao/dossie-multiprofessor/00-LEIA-PRIMEIRO.md` (local,
+> fora do Git). Este plano v3 continua descrevendo o produto de professor único.
+
 > **Este arquivo é o produto: decisões, modelo de dados, telas e fases.**
 > Para o estado atual do código, a arquitetura, o contrato da camada de dados e
 > as armadilhas conhecidas, veja [`CONTEXTO.md`](CONTEXTO.md) — é por lá que

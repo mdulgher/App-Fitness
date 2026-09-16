@@ -892,6 +892,21 @@ Cada uma destas já foi causa de um erro real no projeto ou está documentada em
 
 ## 9. Onde paramos e o que fazer a seguir
 
+### Planejamento novo — vários professores (15/09/2026, não implementado)
+
+O dono pediu um dossiê para evoluir para administrador geral, que cadastra
+professores, e carteiras isoladas de alunos por professor. **Um professor por
+aluno, sem transferência**, por decisão explícita. Professor/aluno mantêm os
+fluxos atuais. O pedido foi **planejar e especificar, sem executar**.
+
+A especificação interna, os lotes para outras IAs, critérios de aceite e o
+parking lot consolidado começam em
+[`log-de-evolucao/dossie-multiprofessor/00-LEIA-PRIMEIRO.md`](log-de-evolucao/dossie-multiprofessor/00-LEIA-PRIMEIRO.md).
+Essa pasta é local e ignorada pelo Git; não acompanha clone novo. O código
+continua no modelo de um professor descrito abaixo. A antiga equivalência
+admin/professor não é isolamento e deverá ser substituída conforme o dossiê,
+somente quando a implementação for solicitada.
+
 **Atualizado em 14/09/2026.** As **Fases 4 e 5 estão prontas**: treino do dia
 com registro de carga, evolução, frequência e recados — com **fila offline** —
 e progressão por exercício no perfil visto pelo professor. O app segue
