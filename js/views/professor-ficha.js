@@ -3,17 +3,19 @@
 // A ficha é uma lista fechada: o aluno só recebe o que está aqui, e quem
 // escreve é só o professor (garantido pelo RLS, não por esconder o botão).
 //
-// A "frequência" não é um número digitado à parte. Cada divisão (Treino A, B…)
-// marca os dias da semana em que acontece, e as vezes na semana são a contagem
-// desses dias. Assim o número nunca diverge do calendário: mudar o dia muda a
-// frequência sozinho.
+// Cuidado com "frequência semanal": são três números diferentes, e o app já os
+// confundiu entre si. A **agenda** é a contagem dos dias marcados nas divisões
+// desta ficha, e muda sozinha quando o professor marca outro dia. A **meta** é
+// o combinado com o aluno, digitada em "Editar ficha", e é contra ela que a
+// tela de Frequência mede. Os **dias treinados** são o que o aluno fez. A
+// explicação de por que os três continuam separados está em `textoDaAgenda`.
 
 import { db } from "../db.js";
 import { registrarErro } from "../log.js";
 import { BANNERS, caminhoDoBanner, rotuloDoBanner } from "../catalogo-banners.js";
 import {
   esc, plural, formatarData, hoje, somarMeses, DIAS_SEMANA, rotuloDiasSemana,
-  isoParaDataBR, dataBRParaIso, ligarMascaraDeData,
+  isoParaDataBR, dataBRParaIso, ligarMascaraDeData, metaEfetiva,
 } from "../utils.js";
 
 // As restrições ficam no perfil do aluno, e o perfil é outra tela. Quem está
@@ -156,11 +158,11 @@ export async function render(alvo, { params }) {
       <div class="card" style="margin-bottom:var(--sp-4)">
         <div class="row-between" style="flex-wrap:wrap;gap:var(--sp-3)">
           <div>
-            <div class="eyebrow">Frequência da ficha</div>
+            <div class="eyebrow">Agenda desta ficha</div>
             <div class="numeric" style="font-size:24px;font-weight:800;letter-spacing:-.03em">
-              ${plural(diasOcupados.size, "treino", "treinos")} por semana
+              ${plural(diasOcupados.size, "dia marcado", "dias marcados")}
             </div>
-            <div class="muted small">${meta(diasOcupados.size, aluno.weekly_target)}</div>
+            <div class="muted small">${textoDaAgenda(diasOcupados.size, metaEfetiva(ficha, aluno))}</div>
           </div>
           <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
             <button class="btn btn-sm" data-editar-ficha>Editar ficha</button>
@@ -206,11 +208,33 @@ export async function render(alvo, { params }) {
     return String((ficha?.dias?.length ?? 0) + 1);
   }
 
-  function meta(treinos, alvoSemanal) {
-    if (!alvoSemanal) return "sem meta semanal definida";
-    if (treinos === alvoSemanal) return `bate a meta de ${plural(alvoSemanal, "treino", "treinos")} do aluno`;
-    if (treinos < alvoSemanal) return `a meta do aluno é ${plural(alvoSemanal, "treino", "treinos")} por semana`;
-    return `acima da meta de ${plural(alvoSemanal, "treino", "treinos")} do aluno`;
+  // AT-12. Três números de frequência vivem perto um do outro e vinham sendo
+  // lidos como se fossem o mesmo:
+  //
+  //   AGENDA  — dias da semana marcados nas divisões desta ficha. É o plano.
+  //   META    — o combinado com o aluno (`metaEfetiva`: a da ficha, ou a do
+  //             cadastro quando a ficha não tem). É o alvo.
+  //   FEITOS  — dias em que ele realmente treinou, na tela de Frequência.
+  //
+  // Os dois primeiros aparecem aqui, e agora com nomes que os separam: antes o
+  // cartão dizia "N treinos por semana" para a agenda e o campo do diálogo se
+  // chamava "Treinos por semana" para a meta — mesmo nome, coisas diferentes,
+  // na mesma tela.
+  //
+  // A comparação passa por `metaEfetiva`. Esta era a única tela que lia
+  // `aluno.weekly_target` direto, então uma ficha com meta própria mostrava um
+  // número aqui e outro na Frequência do aluno.
+  //
+  // As duas colunas continuam existindo de propósito: qual delas manda, e se
+  // uma deve sumir, é decisão do dono e está no parking lot — não dá para
+  // apagar coluna sem antes decidir o significado.
+  function textoDaAgenda(diasMarcados, metaDaFicha) {
+    if (!metaDaFicha) return "nenhuma meta combinada — defina em “Editar ficha”";
+    const alvo = `${plural(metaDaFicha, "treino", "treinos")} por semana`;
+    if (!diasMarcados) return `meta de ${alvo}. Marque os dias em cada divisão abaixo.`;
+    if (diasMarcados === metaDaFicha) return `bate a meta de ${alvo}`;
+    if (diasMarcados < metaDaFicha) return `abaixo da meta de ${alvo}`;
+    return `acima da meta de ${alvo}`;
   }
 
   function cartaoDoDia(dia, posicao, total) {
@@ -475,10 +499,14 @@ export async function render(alvo, { params }) {
                    placeholder="dd/mm/aaaa" value="${esc(isoParaDataBR(existente?.end_date ?? padraoFim))}" />
             <div class="field-hint">Padrão: 3 meses. Deixe em branco para ficha sem prazo.</div></div>
         </div>
-        <div class="field"><label for="ff-meta">Treinos por semana</label>
+        <div class="field"><label for="ff-meta">Meta de treinos por semana</label>
           <input id="ff-meta" name="weekly_target" type="number" inputmode="numeric" min="1" max="14"
                  value="${esc(existente?.weekly_target ?? aluno.weekly_target ?? 3)}" />
-          <div class="field-hint">Meta de frequência desta ficha.</div></div>
+          <div class="field-hint">
+            O combinado com o aluno, e é contra isso que a Frequência dele é
+            medida. Não é o mesmo que a agenda: os dias de cada divisão você
+            marca nos cartões, e eles podem não fechar com esta meta.
+          </div></div>
         <div data-erro class="alert hidden" role="alert"></div>
         <div class="dialog-actions">
           ${existente ? `<button type="button" class="btn" id="excluir">Excluir ficha</button>` : ""}
