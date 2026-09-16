@@ -61,6 +61,71 @@ const quebrado = criarFila({
 });
 await assert.rejects(quebrado.enfileirarSerie(dados), (err) => err.code === "LOCAL_STORAGE");
 
+// Erro permanente não pode fingir falta de internet nem ser repetido a cada
+// minuto. A intenção fica acessível, uma tentativa manual pode forçar novo
+// envio e uma edição nova libera a fila automaticamente.
+let textoComErro = "{}";
+let tentativasComErro = 0;
+let recusar = true;
+const usuarioComErro = { id: "aluno-1" };
+const enviadosDepoisDaCorrecao = [];
+const filaComErro = criarFila({
+  usuarioAtual: () => usuarioComErro,
+  online: () => true,
+  storage: {
+    getItem: () => textoComErro,
+    setItem: (_chave, valor) => { textoComErro = valor; },
+  },
+  db: {
+    abrirSessao: async () => {
+      tentativasComErro += 1;
+      if (recusar) throw new Error("permission denied for table attendance");
+      return { id: "sessao-recuperada" };
+    },
+    registrarSerie: async (registro) => enviadosDepoisDaCorrecao.push(registro),
+    concluirSessao: async () => {},
+  },
+});
+
+await filaComErro.enfileirarSerie(dados);
+const recusada = await filaComErro.sincronizar();
+assert.equal(recusada.restantes, 1);
+assert.equal(recusada.precisamAtencao, 1);
+assert.equal(filaComErro.pendentesDoTreino(dados.alunoId, dados.diaId, dados.data), 1);
+assert.match(filaComErro.erroNaFila(dados.alunoId, dados.diaId, dados.data), /permission denied/);
+assert.equal(tentativasComErro, 1);
+
+// Sincronização automática ignora a entrada bloqueada; botão explícito força
+// uma nova tentativa, mas nunca apaga a intenção quando ela falha outra vez.
+await filaComErro.sincronizar();
+assert.equal(tentativasComErro, 1);
+await filaComErro.sincronizar({ forcar: true });
+assert.equal(tentativasComErro, 2);
+assert.equal(filaComErro.pendentes(), 1);
+assert.match(
+  filaComErro.textoParaRecuperar(dados.alunoId, dados.diaId, dados.data),
+  /peso 20 kg.*repetições 10/
+);
+assert.match(filaComErro.textoParaRecuperarTudo(), /Registros de treino ainda não sincronizados/);
+
+recusar = false;
+await filaComErro.enfileirarSerie({ ...dados, peso: 25 });
+assert.equal(filaComErro.precisamAtencao(), 0);
+await filaComErro.sincronizar();
+assert.deepEqual(enviadosDepoisDaCorrecao.map((s) => s.peso), [25]);
+assert.equal(filaComErro.pendentes(), 0);
+
+// Remoção é uma saída deliberada e isolada: outra conta não consegue apagar.
+recusar = true;
+await filaComErro.enfileirarSerie(dados);
+await filaComErro.sincronizar();
+usuarioComErro.id = "aluno-2";
+assert.equal(await filaComErro.descartarTreino(dados.alunoId, dados.diaId, dados.data), false);
+assert.equal(await filaComErro.descartarComAtencao(), 0);
+usuarioComErro.id = "aluno-1";
+assert.equal(await filaComErro.descartarComAtencao(), 1);
+assert.equal(filaComErro.pendentes(), 0);
+
 // A contagem semanal usa as chaves (datas) do Map, inclusive o domingo.
 const dias = new Map([["2026-09-13", { id: "domingo" }]]);
 const feitos = [...dias.keys()].filter((data) => data >= "2026-09-07" && data <= "2026-09-13").length;

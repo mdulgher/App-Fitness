@@ -152,14 +152,20 @@ desatualizada; se o banco recusou, diz que é regra de acesso. **Não volte a us
     `abrirSessao` + `registrarSerie` + `concluirSessao`.
   - Reenviar é seguro porque as três são idempotentes (a sessão é única por
     aluno/dia/divisão e a carga é upsert na chave sessão+exercício+série).
-  - **Só erro de rede entra na fila** (`pareceFaltaDeRede`). "Permissão negada"
-    reenviado mil vezes continuaria falhando, e esconder isso seria pior.
+  - Toda intenção é persistida antes do envio. Falha de rede fica no reenvio
+    automático; recusa de acesso ou erro permanente vira **precisa de atenção**
+    e não é repetida a cada minuto. O aluno pode tentar de novo manualmente,
+    copiar os dados e removê-los somente após uma confirmação explícita.
   - Reenvia quando a rede volta, quando o app volta para a frente e a cada 60s;
     `ligarSincronizacaoAutomatica()` roda no `app.js`, então a fila anda mesmo
     com o aluno fora da tela de treino. A tela escuta o evento `lpt:fila`.
-  - Na tela, série guardada aparece com **⏳ e borda tracejada**, conta no
-    progresso e tem uma faixa com "Tentar agora". Nada de vermelho: para o
-    aluno aquilo está registrado.
+  - Na tela, série guardada aparece com **⏳ e borda tracejada**, inclusive
+    quando corrige uma carga que já existia. O estado normal oferece "Tentar
+    agora"; o permanente explica que precisa de atenção. O painel também mostra
+    recuperação global, inclusive se a divisão foi removida da ficha.
+  - A primeira abertura offline de uma divisão já presente na ficha deriva o
+    dia do snapshot da ficha ativa; não exige que aquela divisão tenha sido
+    aberta anteriormente.
 
 ### Fase 4 — a área do aluno inteira — 12/09/2026
 

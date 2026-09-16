@@ -15,7 +15,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4?bundle
 import { SUPABASE } from "./config.js";
 import { validarExercicio } from "./exercise-validation.js";
 import { buscarTodasAsPaginas } from "./supabase-pagination.js";
-import { comSnapshot, apagarSnapshots } from "./offline-snapshot.js";
+import {
+  comSnapshot, comSnapshotOuDerivado, lerSnapshot, apagarSnapshots,
+} from "./offline-snapshot.js";
 import {
   hoje, somarDias, diasEntre, inicioDaSemana, mesDeReferencia, resumoDoSaldo,
   diasDistintos, metaEfetiva, montarSessaoRealizada, ordemAoMover,
@@ -677,7 +679,14 @@ export async function buscarDiaDeTreino(diaId) {
     const ficha = await buscarFicha(dia.workout_plan_id);
     return ficha?.dias.find((d) => d.id === diaId) ?? null;
   };
-  return alunoId ? comSnapshot(alunoId, `dia:${diaId}`, buscar) : buscar();
+  return alunoId
+    ? comSnapshotOuDerivado(
+      alunoId,
+      `dia:${diaId}`,
+      buscar,
+      (storage) => lerSnapshot(alunoId, "ficha-ativa", storage).valor?.dias?.find((d) => d.id === diaId) ?? null,
+    )
+    : buscar();
 }
 
 /* ==================== sessões de treino ==================== */

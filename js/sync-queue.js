@@ -54,6 +54,13 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
     );
   }
 
+  function contarAtencao(fila = ler(true)) {
+    return minhas(fila).reduce((total, [, treino]) => {
+      if (!treino.precisaAtencao) return total;
+      return total + Object.keys(treino.series ?? {}).length + (treino.concluir ? 1 : 0);
+    }, 0);
+  }
+
   async function alterar(fn) {
     const resultado = await lock(`${CHAVE}:storage`, () => {
       const fila = ler();
@@ -74,6 +81,13 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
     return ler(true)[chaveTreino(alunoId, diaId, data)] ?? null;
   }
 
+  function contarTreino(alunoId, diaId, data) {
+    const treino = doTreino(alunoId, diaId, data);
+    return treino
+      ? Object.keys(treino.series ?? {}).length + (treino.concluir ? 1 : 0)
+      : 0;
+  }
+
   async function enfileirar(dados, conclusao) {
     if (usuarioAtual()?.id !== dados.alunoId) {
       throw new Error("Sua sessão mudou. Entre novamente para registrar o treino.");
@@ -91,6 +105,7 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
         treino.series[`${itemId}:${serie}`] = { itemId, exercicioId, serie, peso, reps, versao };
       }
       delete treino.erro;
+      delete treino.precisaAtencao;
       fila[chave] = treino;
     });
   }
@@ -100,15 +115,19 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
     if (treino && !Object.keys(treino.series ?? {}).length && !treino.concluir) delete fila[chave];
   }
 
-  async function enviar() {
+  async function enviar({ forcar = false } = {}) {
     let enviados = 0;
     let erro = null;
     const alunoId = usuarioAtual()?.id;
-    if (!alunoId || !online()) return { enviados, restantes: contar(), erro };
+    if (!alunoId || !online()) {
+      return { enviados, restantes: contar(), precisamAtencao: contarAtencao(), erro };
+    }
 
     const bloqueados = new Set();
     while (online() && usuarioAtual()?.id === alunoId) {
-      const entrada = minhas(ler(true)).find(([chave]) => !bloqueados.has(chave));
+      const entrada = minhas(ler(true)).find(
+        ([chave, treino]) => !bloqueados.has(chave) && (forcar || !treino.precisaAtencao)
+      );
       if (!entrada) break;
       const [chave, treino] = entrada;
       try {
@@ -123,7 +142,11 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
           });
           await alterar((fila) => {
             const atual = fila[chave];
-            if (atual && atual.series?.[id]?.versao === serie.versao) delete atual.series[id];
+            if (atual && atual.series?.[id]?.versao === serie.versao) {
+              delete atual.series[id];
+              delete atual.erro;
+              delete atual.precisaAtencao;
+            }
             limparSeVazio(fila, chave);
           });
           enviados += 1;
@@ -131,7 +154,11 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
           const versao = treino.concluir;
           await db.concluirSessao(sessao.id, "student");
           await alterar((fila) => {
-            if (fila[chave]?.concluir === versao) fila[chave].concluir = false;
+            if (fila[chave]?.concluir === versao) {
+              fila[chave].concluir = false;
+              delete fila[chave].erro;
+              delete fila[chave].precisaAtencao;
+            }
             limparSeVazio(fila, chave);
           });
           enviados += 1;
@@ -143,27 +170,88 @@ export function criarFila({ db, storage, usuarioAtual, online, avisar = () => {}
         if (err.code === "LOCAL_STORAGE") throw err;
         if (pareceErroDeRede(err, online())) break;
         bloqueados.add(chave);
-        await alterar((fila) => { if (fila[chave]) fila[chave].erro = err.message; });
+        await alterar((fila) => {
+          if (!fila[chave]) return;
+          fila[chave].erro = err.message;
+          fila[chave].precisaAtencao = true;
+        });
         registrarErro(err, { origem: "fila", contexto: { acao: "sincronizar", diaId: treino.diaId } });
       }
     }
-    return { enviados, restantes: contar(), erro };
+    return { enviados, restantes: contar(), precisamAtencao: contarAtencao(), erro };
   }
 
-  function sincronizar() {
+  function sincronizar(opcoes) {
     if (!rodando) {
       rodando = Promise.resolve()
-        .then(() => lock(`${CHAVE}:envio`, enviar))
+        .then(() => lock(`${CHAVE}:envio`, () => enviar(opcoes)))
         .finally(() => { rodando = null; });
     }
     return rodando;
   }
 
+  function textoParaRecuperar(alunoId, diaId, data) {
+    const treino = doTreino(alunoId, diaId, data);
+    if (!treino) return "";
+    const linhas = [
+      "Registros de treino ainda não sincronizados",
+      `Data: ${treino.data}`,
+      `Divisão: ${treino.diaId}`,
+    ];
+    Object.values(treino.series ?? {})
+      .sort((a, b) => String(a.itemId).localeCompare(String(b.itemId)) || a.serie - b.serie)
+      .forEach((serie) => linhas.push(
+        `Exercício ${serie.exercicioId} · série ${serie.serie} · ` +
+        `peso ${serie.peso ?? "—"} kg · repetições ${serie.reps ?? "—"}`
+      ));
+    if (treino.concluir) linhas.push("Conclusão do treino: pendente");
+    if (treino.erro) linhas.push(`Motivo informado pelo app: ${treino.erro}`);
+    return linhas.join("\n");
+  }
+
+  function textoParaRecuperarTudo() {
+    return minhas(ler(true))
+      .filter(([, treino]) => treino.precisaAtencao)
+      .map(([, treino]) => textoParaRecuperar(treino.alunoId, treino.diaId, treino.data))
+      .filter(Boolean)
+      .join("\n\n---\n\n");
+  }
+
+  async function descartarTreino(alunoId, diaId, data) {
+    if (usuarioAtual()?.id !== alunoId) return false;
+    return alterar((fila) => {
+      const chave = chaveTreino(alunoId, diaId, data);
+      if (!Object.prototype.hasOwnProperty.call(fila, chave)) return false;
+      delete fila[chave];
+      return true;
+    });
+  }
+
+  async function descartarComAtencao() {
+    const alunoId = usuarioAtual()?.id;
+    if (!alunoId) return 0;
+    return alterar((fila) => {
+      let removidos = 0;
+      for (const [chave, treino] of Object.entries(fila)) {
+        if (treino?.alunoId !== alunoId || !treino.precisaAtencao) continue;
+        removidos += Object.keys(treino.series ?? {}).length + (treino.concluir ? 1 : 0);
+        delete fila[chave];
+      }
+      return removidos;
+    });
+  }
+
   return {
     pendentes: () => contar(),
+    pendentesDoTreino: contarTreino,
+    precisamAtencao: () => contarAtencao(),
     seriesNaFila: (...args) => doTreino(...args)?.series ?? {},
     conclusaoNaFila: (...args) => Boolean(doTreino(...args)?.concluir),
     erroNaFila: (...args) => doTreino(...args)?.erro ?? null,
+    textoParaRecuperar,
+    textoParaRecuperarTudo,
+    descartarTreino,
+    descartarComAtencao,
     enfileirarSerie: (dados) => enfileirar(dados, false),
     enfileirarConclusao: (dados) => enfileirar(dados, true),
     sincronizar,

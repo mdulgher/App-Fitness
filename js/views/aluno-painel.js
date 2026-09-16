@@ -4,6 +4,9 @@ import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import { blocoProfessor } from "./professor-perfil.js";
 import {
+  precisamAtencao, textoParaRecuperarTudo, descartarComAtencao,
+} from "../sync.js";
+import {
   esc,
   primeiroNome,
   plural,
@@ -29,6 +32,7 @@ export async function render(alvo) {
   // Sem meta combinada não existe denominador: mostrar "/0" ou "/null" faria o
   // aluno achar que está devendo treino que ninguém pediu.
   const alvoDaSemana = semana.meta ? ` / ${semana.meta}` : "";
+  const totalComAtencao = precisamAtencao();
 
   alvo.innerHTML = `
     <div class="wrap student-dashboard">
@@ -39,6 +43,7 @@ export async function render(alvo) {
       </div>
 
       ${blocoRestricoes(aluno)}
+      ${blocoFilaComAtencao(totalComAtencao)}
       ${blocoSugerido(sugerido)}
       <div class="card weekly-card" style="margin-bottom:var(--sp-5)">
         <div class="progress-ring" style="--progress:${pct}%" role="img" aria-label="${semana.feitos}${semana.meta ? ` de ${semana.meta}` : ""} dias treinados nesta semana"><span>${semana.feitos}<small>${alvoDaSemana}</small></span></div>
@@ -69,6 +74,65 @@ export async function render(alvo) {
       ${blocoProfessor()}
     </div>
   `;
+
+  if (totalComAtencao) ligarRecuperacaoDaFila(alvo);
+}
+
+function blocoFilaComAtencao(total) {
+  if (!total) return "";
+  return `
+    <div class="alert" id="fila-com-atencao" role="alert" style="margin-bottom:var(--sp-5)">
+      <div class="eyebrow">Registros precisam de atenção</div>
+      <p style="margin:var(--sp-2) 0">
+        ${plural(total, "registro não foi enviado", "registros não foram enviados")}.
+        Os dados continuam guardados neste aparelho.
+      </p>
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <button class="btn btn-sm" id="copiar-fila">Copiar dados</button>
+        <button class="btn btn-sm" id="abrir-descarte-fila">Remover pendências…</button>
+      </div>
+      <textarea id="dados-fila-painel" class="hidden" rows="8" readonly
+                aria-label="Cópia dos registros pendentes" style="margin-top:var(--sp-3)"></textarea>
+      <div id="confirmar-descarte-fila" class="hidden" style="margin-top:var(--sp-3)">
+        <p><strong>Já copiou?</strong> Remover apaga somente as pendências que precisam de atenção.</p>
+        <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+          <button class="btn btn-sm" id="cancelar-descarte-fila">Manter</button>
+          <button class="btn btn-sm btn-primary" id="confirmar-descarte-fila-botao">Remover do aparelho</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function ligarRecuperacaoDaFila(alvo) {
+  const bloco = alvo.querySelector("#fila-com-atencao");
+  const copiar = bloco.querySelector("#copiar-fila");
+  copiar.addEventListener("click", async () => {
+    const texto = textoParaRecuperarTudo();
+    const campo = bloco.querySelector("#dados-fila-painel");
+    campo.value = texto;
+    try {
+      await navigator.clipboard.writeText(texto);
+      copiar.textContent = "Dados copiados";
+    } catch {
+      campo.classList.remove("hidden");
+      campo.focus();
+      campo.select();
+      copiar.textContent = "Selecione e copie o texto";
+    }
+  });
+
+  const confirmacao = bloco.querySelector("#confirmar-descarte-fila");
+  bloco.querySelector("#abrir-descarte-fila").addEventListener("click", () => {
+    confirmacao.classList.remove("hidden");
+    bloco.querySelector("#confirmar-descarte-fila-botao").focus();
+  });
+  bloco.querySelector("#cancelar-descarte-fila").addEventListener("click", () => {
+    confirmacao.classList.add("hidden");
+  });
+  bloco.querySelector("#confirmar-descarte-fila-botao").addEventListener("click", async () => {
+    await descartarComAtencao();
+    bloco.remove();
+  });
 }
 
 function blocoRestricoes(aluno) {

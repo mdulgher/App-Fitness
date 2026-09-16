@@ -174,6 +174,17 @@ O smoke test do Supabase lê `CREDENCIAIS.local.md`, não imprime credenciais e 
 9. Durante um envio lento, altere outra série; ela também deve ser enviada, sem desaparecer.
 10. Entre com outro aluno no mesmo aparelho; ele não deve ver nem enviar a fila do primeiro.
 11. Bloqueie ou lote o armazenamento do navegador; o app deve avisar que não conseguiu guardar, sem afirmar que salvou.
+12. Com a ficha já carregada, abra pela primeira vez outra divisão sem rede; ela deve vir do snapshot da ficha.
+13. Uma correção pendente sobre carga já existente continua com `⏳` e borda tracejada.
+
+### Fila que precisa de atenção — reprodução local do AT-08
+
+1. Rode `node scripts/preview.cjs --demo --fila-com-erro` e entre como Carla.
+2. O painel deve anunciar “1 registro não foi enviado”, mesmo que a divisão simulada não exista mais.
+3. “Copiar dados” muda para “Dados copiados” e preserva peso, repetições e identificadores para suporte.
+4. “Remover pendências…” apenas abre a confirmação; “Manter” não apaga nada.
+5. “Remover do aparelho” apaga somente depois da confirmação explícita.
+6. `test-regressions.mjs` confirma que outra conta não copia, envia nem remove essa fila.
 
 ### Evolução, frequência, lista e recados
 

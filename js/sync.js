@@ -16,12 +16,18 @@ const fila = criarFila({
 });
 
 export const pendentes = fila.pendentes;
+export const pendentesDoTreino = fila.pendentesDoTreino;
+export const precisamAtencao = fila.precisamAtencao;
 export const seriesNaFila = fila.seriesNaFila;
 export const conclusaoNaFila = fila.conclusaoNaFila;
 export const enfileirarSerie = fila.enfileirarSerie;
 export const enfileirarConclusao = fila.enfileirarConclusao;
 export const sincronizar = fila.sincronizar;
 export const erroNaFila = fila.erroNaFila;
+export const textoParaRecuperar = fila.textoParaRecuperar;
+export const textoParaRecuperarTudo = fila.textoParaRecuperarTudo;
+export const descartarTreino = fila.descartarTreino;
+export const descartarComAtencao = fila.descartarComAtencao;
 export const pareceFaltaDeRede = (err) => pareceErroDeRede(err, navigator.onLine);
 
 let ligada = false;

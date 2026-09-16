@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
-import { comSnapshot, apagarSnapshots, lerSnapshot } from "../js/offline-snapshot.js";
+import {
+  comSnapshot, comSnapshotOuDerivado, apagarSnapshots, lerSnapshot,
+} from "../js/offline-snapshot.js";
 import { pareceErroDeRede } from "../js/sync-queue.js";
 
 function memoria() {
@@ -21,6 +23,30 @@ const offline = await comSnapshot("aluno-a", "ficha", async () => {
   throw new TypeError("Failed to fetch");
 }, { storage, online: false });
 assert.deepEqual(offline, { id: "f1" });
+
+// A ficha ativa já contém as divisões. A primeira abertura de uma divisão sem
+// rede deriva o snapshot menor, mesmo que `dia:id` nunca tenha sido aberto.
+await comSnapshot("aluno-a", "ficha-ativa", async () => ({
+  id: "ficha-1", dias: [{ id: "dia-1", label: "Treino A" }],
+}), { storage });
+const diaDerivado = await comSnapshotOuDerivado(
+  "aluno-a",
+  "dia:dia-1",
+  async () => { throw new TypeError("Failed to fetch"); },
+  (s) => lerSnapshot("aluno-a", "ficha-ativa", s).valor?.dias?.find((d) => d.id === "dia-1"),
+  { storage, online: false },
+);
+assert.deepEqual(diaDerivado, { id: "dia-1", label: "Treino A" });
+await assert.rejects(
+  comSnapshotOuDerivado(
+    "aluno-a",
+    "dia:recusado",
+    async () => { throw new Error("permission denied for table workout_days"); },
+    () => ({ id: "dia-1", label: "não pode ressuscitar" }),
+    { storage, online: false },
+  ),
+  /permission denied/,
+);
 
 await assert.rejects(
   comSnapshot("aluno-b", "ficha", async () => { throw new TypeError("Failed to fetch"); }, { storage, online: false }),

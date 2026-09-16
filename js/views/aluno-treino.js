@@ -19,14 +19,14 @@ import { db } from "../db.js";
 import { usuarioAtual } from "../auth.js";
 import {
   esc, plural, hoje, formatarData, textoTempoRelativo, capaDoVideo, urlDeEmbed,
-  horaDe,
+  horaDe, ehRecusaDeAcesso,
 } from "../utils.js";
 import { cartaoDeSessaoRealizada } from "../treinos-realizados.js";
 import { urlDeImagemSegura, videoSeguro } from "../exercise-validation.js";
 import { caminhoDoBanner } from "../catalogo-banners.js";
 import {
   enfileirarSerie, enfileirarConclusao, seriesNaFila, conclusaoNaFila,
-  sincronizar, pendentes,
+  sincronizar, pendentesDoTreino, erroNaFila, textoParaRecuperar, descartarTreino,
 } from "../sync.js";
 import { registrarErro } from "../log.js";
 
@@ -114,25 +114,110 @@ export async function render(alvo, { params }) {
   }
 
   function desenharPendencias() {
-    const total = pendentes();
+    const total = pendentesDoTreino(alunoId, diaId, hoje());
     pendenciasEl.classList.toggle("hidden", total === 0);
     if (!total) return;
 
+    const erro = erroNaFila(alunoId, diaId, hoje());
+    const precisaAtencao = Boolean(erro);
+    pendenciasEl.classList.toggle("precisa-atencao", precisaAtencao);
+    pendenciasEl.setAttribute("role", precisaAtencao ? "alert" : "status");
+
     pendenciasEl.innerHTML = `
       <div>
-        <strong>${plural(total, "registro guardado", "registros guardados")} no aparelho.</strong>
-        <span class="muted small">Envio sozinho assim que a internet voltar.</span>
+        <strong>${precisaAtencao ? "Seus registros precisam de atenção." : `${plural(total, "registro guardado", "registros guardados")} no aparelho.`}</strong>
+        <span class="muted small">${precisaAtencao
+          ? esc(mensagemDeAtencao(erro))
+          : "Envio sozinho assim que a internet voltar."}</span>
       </div>
-      <button class="btn btn-sm" id="enviar-agora">Tentar agora</button>`;
+      <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+        <button class="btn btn-sm" id="enviar-agora">${precisaAtencao ? "Tentar novamente" : "Tentar agora"}</button>
+        ${precisaAtencao ? `<button class="btn btn-sm" id="recuperar-registros">Ver e copiar dados</button>` : ""}
+      </div>`;
 
     pendenciasEl.querySelector("#enviar-agora").addEventListener("click", async (ev) => {
       const botao = ev.currentTarget;
       botao.disabled = true;
       botao.textContent = "Enviando…";
-      const { enviados } = await sincronizar();
+      const resultado = await sincronizar({ forcar: precisaAtencao });
       await recarregarDoBanco();
-      avisar(enviados ? "Tudo enviado." : "Ainda sem internet. Seus registros continuam guardados.");
+      if (!resultado.restantes) {
+        avisar("Tudo enviado.");
+      } else if (resultado.precisamAtencao) {
+        avisar("Ainda não foi possível enviar. Seus registros continuam guardados e podem ser copiados.");
+      } else {
+        avisar("Ainda sem internet. Seus registros continuam guardados.");
+      }
     });
+
+    pendenciasEl.querySelector("#recuperar-registros")?.addEventListener("click", mostrarRecuperacaoDaFila);
+  }
+
+  function mensagemDeAtencao(erro) {
+    return ehRecusaDeAcesso(erro)
+      ? "Sua sessão ou permissão precisa ser conferida. Entre novamente; os dados continuam guardados neste aparelho."
+      : "A ficha pode ter mudado e o envio não pôde ser aplicado. Copie os dados antes de remover a pendência.";
+  }
+
+  function mostrarRecuperacaoDaFila() {
+    const texto = textoParaRecuperar(alunoId, diaId, hoje());
+    dialogoConteudo.innerHTML = `
+      <div class="dialog-top">
+        <span class="eyebrow">Recuperar registros</span>
+        <button class="dialog-close" data-fechar aria-label="Fechar">×</button>
+      </div>
+      <h2>Seus dados continuam neste aparelho</h2>
+      <p class="muted">Copie antes de remover. Você pode guardar o texto ou enviá-lo ao professor por conta própria.</p>
+      <textarea id="dados-da-fila" rows="8" readonly aria-label="Cópia dos registros pendentes">${esc(texto)}</textarea>
+      <div id="confirmar-descarte" class="alert hidden" role="alert">
+        <strong>Remover sem enviar?</strong>
+        <p>Faça isso somente depois de copiar. Esta ação apaga estes registros pendentes do aparelho.</p>
+        <div class="row" style="gap:var(--sp-2);flex-wrap:wrap">
+          <button class="btn btn-sm" data-cancelar-descarte>Manter registros</button>
+          <button class="btn btn-sm btn-primary" data-confirmar-descarte>Remover do aparelho</button>
+        </div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn" id="copiar-registros">Copiar dados</button>
+        <button class="btn" id="descartar-registros">Remover pendência…</button>
+      </div>`;
+
+    const fechar = () => dialogo.close();
+    dialogoConteudo.querySelector("[data-fechar]").addEventListener("click", fechar);
+    dialogoConteudo.querySelector("#copiar-registros").addEventListener("click", async (ev) => {
+      const botao = ev.currentTarget;
+      try {
+        await navigator.clipboard.writeText(texto);
+        botao.textContent = "Dados copiados";
+      } catch {
+        const campo = dialogoConteudo.querySelector("#dados-da-fila");
+        campo.focus();
+        campo.select();
+        botao.textContent = "Selecione e copie o texto";
+      }
+    });
+
+    const confirmacao = dialogoConteudo.querySelector("#confirmar-descarte");
+    dialogoConteudo.querySelector("#descartar-registros").addEventListener("click", () => {
+      confirmacao.classList.remove("hidden");
+      confirmacao.querySelector("[data-confirmar-descarte]").focus();
+    });
+    confirmacao.querySelector("[data-cancelar-descarte]").addEventListener("click", () => {
+      confirmacao.classList.add("hidden");
+    });
+    confirmacao.querySelector("[data-confirmar-descarte]").addEventListener("click", async () => {
+      await descartarTreino(alunoId, diaId, hoje());
+      fila = {};
+      conclusaoPendente = false;
+      dialogo.close();
+      desenharProgresso();
+      desenharExercicios();
+      desenharFim();
+      desenharPendencias();
+      avisar("Pendência removida deste aparelho.");
+    });
+
+    dialogo.showModal();
   }
 
   // Depois que a fila vai embora, quem manda é o banco.
@@ -224,15 +309,15 @@ export async function render(alvo, { params }) {
         conclusaoPendente = true;
         desenharFim();
         desenharPendencias();
-        const { erro } = await sincronizar();
+        await sincronizar();
         await recarregarDoBanco(false);
         desenharProgresso();
         desenharFim();
         desenharPendencias();
         if (!conclusaoNaFila(alunoId, diaId, hoje())) {
           avisar("Presença registrada. Bom treino feito.");
-        } else if (erro) {
-          avisar(`Presença guardada, mas ainda não enviada: ${erro.message}`);
+        } else if (erroNaFila(alunoId, diaId, hoje())) {
+          avisar(`Presença guardada. ${mensagemDeAtencao(erroNaFila(alunoId, diaId, hoje()))}`);
         } else {
           avisar("Sem internet. Presença guardada no aparelho — mando sozinho quando a rede voltar.");
         }
@@ -317,7 +402,7 @@ export async function render(alvo, { params }) {
     // levantou.
     const anterior = ultima?.series?.find((s) => s.set_number === serie) ?? null;
     const feita = Boolean(registro && (registro.weight_kg != null || registro.reps_done != null));
-    const pendente = Boolean(guardada) && !cargaDe(item.id, serie);
+    const pendente = Boolean(guardada);
 
     return `
       <div class="serie${feita ? " serie-feita" : ""}${pendente ? " serie-pendente" : ""}" data-serie="${serie}">
@@ -383,7 +468,7 @@ export async function render(alvo, { params }) {
       marcarLinha(linha, peso != null || reps != null, true);
       desenharProgresso();
       desenharPendencias();
-      const { erro } = await sincronizar();
+      await sincronizar();
       await recarregarDoBanco(false);
       const continuaPendente = Boolean(seriesNaFila(alunoId, diaId, hoje())?.[`${item.id}:${serie}`]);
       marcarLinha(linha, peso != null || reps != null, continuaPendente);
@@ -391,8 +476,8 @@ export async function render(alvo, { params }) {
       desenharPendencias();
       if (!continuaPendente) {
         avisar("Série registrada.");
-      } else if (erro) {
-        avisar(`Série guardada, mas ainda não enviada: ${erro.message}`);
+      } else if (erroNaFila(alunoId, diaId, hoje())) {
+        avisar(`Série guardada. ${mensagemDeAtencao(erroNaFila(alunoId, diaId, hoje()))}`);
       } else {
         avisar("Sem internet. Série guardada no aparelho — mando sozinho quando a rede voltar.");
       }

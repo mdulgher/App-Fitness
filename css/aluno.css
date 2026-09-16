@@ -55,6 +55,7 @@
   margin-bottom: var(--sp-4); padding: 12px 16px;
   border: 1px dashed #999; border-radius: 12px; background: #fafafa; font-size: 14px;
 }
+.aviso-fila.precisa-atencao { border-style: solid; border-width: 2px; background: #f5f5f5; }
 .serie-pendente { border-style: dashed; border-color: #999; }
 
 .descanso { margin-top: var(--sp-3); }

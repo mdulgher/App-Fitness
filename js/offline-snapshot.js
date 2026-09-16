@@ -62,6 +62,26 @@ export async function comSnapshot(usuarioId, nome, buscar, {
   }
 }
 
+// Algumas telas já têm tudo de que precisam dentro de um snapshot maior. A
+// ficha ativa, por exemplo, contém todas as divisões. Se o aluno abre uma delas
+// pela primeira vez sem sinal, ainda não existe `dia:id`, mas não há motivo
+// para negar o treino que já está no aparelho. A derivação só acontece em erro
+// real de rede; resposta vazia ou recusa de acesso nunca ressuscita dado velho.
+export async function comSnapshotOuDerivado(usuarioId, nome, buscar, derivar, {
+  storage = globalThis.localStorage,
+  online = globalThis.navigator?.onLine !== false,
+} = {}) {
+  try {
+    return await comSnapshot(usuarioId, nome, buscar, { storage, online });
+  } catch (err) {
+    if (!pareceFalhaDeRede(err, online)) throw err;
+    const valor = derivar?.(storage);
+    if (valor == null) throw err;
+    gravarSnapshot(usuarioId, nome, valor, storage);
+    return valor;
+  }
+}
+
 export function apagarSnapshots(usuarioId, storage = globalThis.localStorage) {
   if (!usuarioId || !storage) return;
   const inicio = `${PREFIXO}${usuarioId}:`;
